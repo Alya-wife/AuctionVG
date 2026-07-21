@@ -211,16 +211,13 @@ function initCardForm() {
         btn.disabled = true;
         btn.textContent = 'Menyimpan...';
         try {
-            const fileInput = document.getElementById('cardImageFile');
-            const fileData = await UI.readFileAsBase64(fileInput.files[0]);
-
             await API.request('saveCard', {
                 id:     document.getElementById('cardId').value || undefined,
                 name:   document.getElementById('cardName').value,
                 nation: document.getElementById('cardNation').value,
                 owner:  document.getElementById('cardOwner').value,
                 date:   document.getElementById('cardDateReceived').value,
-                file:   fileData // send fileData instead of image URL directly
+                image:  document.getElementById('cardImageUrl').value
             });
             UI.showToast('Kartu berhasil disimpan');
             UI.closeModal('modalCard');

@@ -27,15 +27,12 @@ function initForm() {
         e.preventDefault();
         const btn = e.target.querySelector('[type=submit]'); btn.disabled = true;
         try {
-            const fileInput = document.getElementById('payProofFile');
-            const fileData = await UI.readFileAsBase64(fileInput.files[0]);
-
             await API.request('updateCardStatus', {
                 id: document.getElementById('payCardId').value,
                 status: 'Completed',
                 extra: {
                     payoutDate: document.getElementById('payDate').value,
-                    file: fileData
+                    payoutProofUrl: document.getElementById('payProofUrl').value
                 }
             });
             UI.showToast('Transaksi selesai!');

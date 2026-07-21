@@ -83,8 +83,14 @@ function getSheetData(sheetName) {
 
 function doLogin(username, password) {
   const ss = SpreadsheetApp.openById(SHEET_LOGIN_ID);
-  const sheet = ss.getSheetByName("Users");
-  if (!sheet) throw new Error("Sheet Users tidak ditemukan di Spreadsheet Login");
+  let sheet = ss.getSheetByName("Users");
+  
+  // Jika sheet belum ada, otomatis buat dan isi dengan default admin
+  if (!sheet) {
+    sheet = ss.insertSheet("Users");
+    sheet.appendRow(["Username", "Password", "Name", "Role"]);
+    sheet.appendRow(["admin", "admin123", "Admin Antigravity", "admin"]);
+  }
   
   const data = sheet.getDataRange().getValues();
   // Asumsi Kolom: Username (A), Password (B), Name (C), Role (D)
@@ -176,16 +182,8 @@ function updateCardStatus(data) {
       if (extra.shipDate) sheet.getRange(i + 1, headers.indexOf('shipDate') + 1).setValue(extra.shipDate);
       if (extra.trackingNumber) sheet.getRange(i + 1, headers.indexOf('trackingNumber') + 1).setValue(extra.trackingNumber);
       if (extra.payoutDate) sheet.getRange(i + 1, headers.indexOf('payoutDate') + 1).setValue(extra.payoutDate);
-      
-      // Handle file uploads for extra statuses (shipProof, payProof)
-      if (extra.file) {
-        const fileUrl = uploadImageToDrive(extra.file);
-        if (data.status === 'Waiting Payment') { // Just shipped
-           sheet.getRange(i + 1, headers.indexOf('shipProofUrl') + 1).setValue(fileUrl);
-        } else if (data.status === 'Completed') { // Just paid
-           sheet.getRange(i + 1, headers.indexOf('payoutProofUrl') + 1).setValue(fileUrl);
-        }
-      }
+      if (extra.shipProofUrl) sheet.getRange(i + 1, headers.indexOf('shipProofUrl') + 1).setValue(extra.shipProofUrl);
+      if (extra.payoutProofUrl) sheet.getRange(i + 1, headers.indexOf('payoutProofUrl') + 1).setValue(extra.payoutProofUrl);
       
       return true;
     }

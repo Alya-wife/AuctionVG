@@ -27,16 +27,13 @@ function initForm() {
         e.preventDefault();
         const btn = e.target.querySelector('[type=submit]'); btn.disabled = true;
         try {
-            const fileInput = document.getElementById('shipProofFile');
-            const fileData = await UI.readFileAsBase64(fileInput.files[0]);
-
             await API.request('updateCardStatus', {
                 id: document.getElementById('shipCardId').value,
                 status: 'Waiting Payment',
                 extra: {
                     shipDate: document.getElementById('shipDate').value,
                     trackingNumber: document.getElementById('shipTracking').value,
-                    file: fileData
+                    shipProofUrl: document.getElementById('shipProofUrl').value
                 }
             });
             UI.showToast('Pengiriman dikonfirmasi');
