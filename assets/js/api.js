@@ -24,7 +24,7 @@ const API = {
         const res = await fetch(CONFIG.GAS_URL, {
             method: 'POST',
             body,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
         const json = await res.json();
         if (json.status === 'error') throw new Error(json.message);
