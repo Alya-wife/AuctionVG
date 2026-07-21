@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lelang – Antigravity Card Inventory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <main class="main-content">
+      <header class="top-bar">
+        <button class="hamburger" id="hamburgerBtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="page-title">
+          <h2>Manajemen Lelang</h2>
+          <span>Kelola sesi lelang kartu</span>
+        </div>
+        <div class="top-bar-right">
+          <button class="btn-primary" id="btnNewAuction">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Buat Lelang Baru
+          </button>
+        </div>
+      </header>
+      <div class="content-body">
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="active">Lelang Aktif</button>
+          <button class="tab-btn" data-tab="finished">Selesai</button>
+        </div>
+        <div id="auctionList" class="auction-grid">
+          <div class="loading-state"><div class="spinner"></div><p>Memuat lelang...</p></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: New Auction -->
+  <div class="modal-overlay" id="modalNewAuction">
+    <div class="modal-box large">
+      <div class="modal-header">
+        <h3>Buat Lelang Baru</h3>
+        <button class="modal-close" id="modalNewAuctionClose"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <form id="newAuctionForm" class="modal-form">
+        <div class="form-group">
+          <label for="auctionFbUrl">URL Post Facebook *</label>
+          <input type="url" id="auctionFbUrl" required placeholder="https://www.facebook.com/..." />
+        </div>
+        <div class="form-group">
+          <label>Pilih Kartu untuk Dilelang *</label>
+          <div class="card-picker">
+            <div class="search-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="cardPickerSearch" placeholder="Cari kartu available..." />
+            </div>
+            <div id="cardPickerList" class="card-picker-list">
+              <div class="loading-state-sm"><div class="spinner-sm"></div></div>
+            </div>
+            <div class="card-picker-selected">
+              <strong>Dipilih: <span id="selectedCount">0</span> kartu</strong>
+              <div id="selectedCardsList" class="selected-tags"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" id="cancelNewAuctionBtn">Batal</button>
+          <button type="submit" class="btn-primary">Mulai Lelang</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Finish Auction -->
+  <div class="modal-overlay" id="modalFinishAuction">
+    <div class="modal-box large">
+      <div class="modal-header">
+        <h3>Selesaikan Lelang</h3>
+        <button class="modal-close" id="modalFinishAuctionClose"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="modal-form">
+        <p class="modal-subtitle">Tentukan hasil untuk setiap kartu yang dilelang:</p>
+        <div id="auctionResultList" class="auction-result-list"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" id="cancelFinishBtn">Batal</button>
+          <button type="button" class="btn-primary" id="confirmFinishBtn">Simpan Hasil</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/auction.js"></script>
+</body>
+</html>
+
+
+

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pemilik – Antigravity Card Inventory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <main class="main-content">
+      <header class="top-bar">
+        <button class="hamburger" id="hamburgerBtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="page-title">
+          <h2>Halaman Pemilik</h2>
+          <span>Kelola kartu berdasarkan pemilik</span>
+        </div>
+      </header>
+      <div class="content-body">
+        <div class="search-box mb-3">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="ownerSearch" placeholder="Cari pemilik..." />
+        </div>
+        <div id="ownerGrid" class="owners-grid">
+          <div class="loading-state"><div class="spinner"></div><p>Memuat data pemilik...</p></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: Owner Detail -->
+  <div class="modal-overlay" id="modalOwnerDetail">
+    <div class="modal-box large">
+      <div class="modal-header">
+        <h3 id="ownerDetailName">Detail Pemilik</h3>
+        <button class="modal-close" id="modalOwnerDetailClose"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div id="ownerDetailContent" class="modal-form"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/owners.js"></script>
+</body>
+</html>
+
+
+
