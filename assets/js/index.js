@@ -13,7 +13,7 @@ async function loadPublicOwners() {
     try {
         inventoryData = await API.request('getInventory');
         // Show initial empty state message instead of rendering all owners
-        container.innerHTML = '<p class="empty-msg">Ketik minimal 3 huruf nama pemilik untuk mencari.</p>';
+        container.innerHTML = '';
     } catch(e) {
         container.innerHTML = '<p class="empty-msg">Gagal memuat data. Silakan coba lagi.</p>';
     }
@@ -31,7 +31,7 @@ function renderPublicOwners() {
 
     // Show prompt message if no search input or less than 3 chars
     if (search.length < 3) {
-        container.innerHTML = '<p class="empty-msg">Ketik minimal 3 huruf nama pemilik untuk mencari.</p>';
+        container.innerHTML = '';
         return;
     }
 

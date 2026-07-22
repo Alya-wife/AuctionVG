@@ -244,7 +244,10 @@ window.editCard = function(id) {
     document.getElementById('cardNation').value = c.nation;
     document.getElementById('cardOwner').value = c.owner;
     document.getElementById('cardDateReceived').value = c.date;
-    document.getElementById('cardImageUrl').value = c.image || '';
+    // reset file input because we can't set it to existing URL
+    const fileInput = document.getElementById('cardImageFile');
+    if (fileInput) fileInput.value = '';
+    
     document.getElementById('modalCardTitle').textContent = 'Edit Kartu';
     UI.openModal('modalCard');
 };

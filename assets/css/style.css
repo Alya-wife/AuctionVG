@@ -729,7 +729,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 .login-subtitle {
   color: var(--text-muted);
-  margin-bottom: 40px;
+  margin-bottom: 0px;
 }
 .login-form .form-group {
   margin-bottom: 20px;
@@ -786,7 +786,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Public Search Section */
 .public-search-section {
-  margin-top: 32px;
+  margin-top: 24px;
   margin-bottom: 24px;
 }
 
