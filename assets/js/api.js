@@ -62,7 +62,7 @@ const API = {
             case 'login': {
                 const { username, password } = payload;
                 if (username === 'admin' && password === 'admin123')
-                    return { id: 1, username: 'admin', name: 'Admin', role: 'admin' };
+                    return { id: 1, username: 'admin', name: 'Pacar Alya', role: 'Pacar Alya' };
                 throw new Error('Username atau password salah.');
             }
 

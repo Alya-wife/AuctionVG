@@ -39,10 +39,10 @@ const UI = {
             <nav class="sidebar-nav">${links}</nav>
             <div class="sidebar-footer">
                 <div class="user-info">
-                    <div class="user-avatar">${user ? user.name.charAt(0).toUpperCase() : 'A'}</div>
+                    <div class="user-avatar">${user && user.name ? user.name.charAt(0).toUpperCase() : 'P'}</div>
                     <div class="user-details">
-                        <span class="user-name">${user ? user.name : 'Admin'}</span>
-                        <span class="user-role">Administrator</span>
+                        <span class="user-name">${user && user.name ? user.name : 'Pacar Alya'}</span>
+                        <span class="user-role">Pacar Alya</span>
                     </div>
                 </div>
                 <button class="btn-logout" id="logoutBtn" title="Keluar">
@@ -119,7 +119,6 @@ const UI = {
         
         const formData = new FormData();
         formData.append('image', file);
-        // ImgBB requires the API key in the URL
         const url = `https://api.imgbb.com/1/upload?key=${CONFIG.IMGBB_API_KEY}`;
         
         const response = await fetch(url, {
@@ -129,7 +128,8 @@ const UI = {
         
         const data = await response.json();
         if (data.success) {
-            return data.data.url;
+            // Return direct image link display_url, image.url or url
+            return data.data.display_url || data.data.image?.url || data.data.url;
         } else {
             UI.showToast('Gagal upload gambar ke ImgBB', 'error');
             throw new Error(data.error?.message || 'ImgBB upload failed');
@@ -137,7 +137,15 @@ const UI = {
     },
 
     cardImage(card) {
-        if (card.image) return card.image;
+        if (card && card.image && typeof card.image === 'string' && card.image.trim() !== '') {
+            let imgUrl = card.image.trim();
+            // Convert ibb.co viewer URLs to direct images if needed
+            if (imgUrl.includes('ibb.co/') && !imgUrl.includes('i.ibb.co/')) {
+                // If it's a viewer link, leave it or let error handler catch if it fails
+                return imgUrl;
+            }
+            return imgUrl;
+        }
         const m = {
             'Dragon Empire': 'https://images.unsplash.com/photo-1542204637-e67bc7d41e48?w=500&q=80',
             'Keter Sanctuary': 'https://images.unsplash.com/photo-1517960413843-0aee8e2b3285?w=500&q=80',
@@ -146,7 +154,13 @@ const UI = {
             'Brandt Gate': 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=500&q=80',
             'Lyrical Monasterio': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&q=80'
         };
-        return m[card.nation] || 'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?w=500&q=80';
+        return (card && m[card.nation]) || 'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?w=500&q=80';
+    },
+
+    handleImgError(imgEl, nation) {
+        if (!imgEl) return;
+        imgEl.onerror = null;
+        imgEl.src = this.cardImage({ nation });
     },
 
     statusClass(status) {

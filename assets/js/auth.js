@@ -10,7 +10,18 @@ const Auth = {
     },
     getUser: function() {
         const u = localStorage.getItem('ag_user');
-        return u ? JSON.parse(u) : null;
+        if (!u) return null;
+        try {
+            const user = JSON.parse(u);
+            if (user && (user.name === 'Admin' || user.role === 'admin' || user.role === 'Administrator')) {
+                user.name = 'Pacar Alya';
+                user.role = 'Pacar Alya';
+                localStorage.setItem('ag_user', JSON.stringify(user));
+            }
+            return user;
+        } catch(e) {
+            return null;
+        }
     },
     setUser: function(user) {
         localStorage.setItem('ag_user', JSON.stringify(user));

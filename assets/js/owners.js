@@ -78,7 +78,7 @@ window.openOwnerDetail = function(ownerName) {
         return `
             <div class="detail-card-row">
                 <div class="detail-card-img">
-                    <img src="${UI.cardImage(c)}" alt="${c.name}">
+                    <img src="${UI.cardImage(c)}" alt="${c.name}" referrerpolicy="no-referrer" onerror="UI.handleImgError(this, '${c.nation}')">
                 </div>
                 <div class="detail-card-info">
                     <div class="detail-card-name">${c.name}</div>

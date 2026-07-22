@@ -89,7 +89,7 @@ function doLogin(username, password) {
   if (!sheet) {
     sheet = ss.insertSheet("Users");
     sheet.appendRow(["Username", "Password", "Name", "Role"]);
-    sheet.appendRow(["admin", "admin123", "Admin NitipPro", "admin"]);
+    sheet.appendRow(["admin", "admin123", "Pacar Alya", "Pacar Alya"]);
   }
   
   const data = sheet.getDataRange().getValues();

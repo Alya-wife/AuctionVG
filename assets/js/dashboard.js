@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = Auth.getUser();
     const greetEl = document.getElementById('greetingMsg');
     const dateEl  = document.getElementById('currentDate');
-    if (greetEl) greetEl.textContent = `${greeting}, ${user?.name || 'Admin'}!`;
+    if (greetEl) greetEl.textContent = `${greeting}, ${user?.name || 'Pacar Alya'}!`;
     if (dateEl)  dateEl.textContent  = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
     try {
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         el.innerHTML = recent.map(c => `
             <div class="activity-row">
                 <div class="activity-img">
-                    <img src="${UI.cardImage(c)}" alt="${c.name}">
+                    <img src="${UI.cardImage(c)}" alt="${c.name}" referrerpolicy="no-referrer" onerror="UI.handleImgError(this, '${c.nation}')">
                 </div>
                 <div class="activity-info">
                     <strong>${c.name}</strong>

@@ -115,7 +115,7 @@ function renderGrid(container, page) {
         return `
         <div class="card-item">
             <div class="card-img-wrap" onclick="viewDetail('${card.id}')">
-                <img src="${UI.cardImage(card)}" class="card-img" alt="${card.name}" loading="lazy">
+                <img src="${UI.cardImage(card)}" class="card-img" alt="${card.name}" loading="lazy" referrerpolicy="no-referrer" onerror="UI.handleImgError(this, '${card.nation}')">
                 <span class="card-nation-badge">${card.nation}</span>
                 <span class="card-status-badge status-badge status-${sc}">${card.status}</span>
             </div>
@@ -213,15 +213,17 @@ function initCardForm() {
         btn.disabled = true;
         btn.textContent = 'Menyimpan...';
         try {
+            const cardId = document.getElementById('cardId').value;
+            const existingCard = cardId ? allCards.find(c => c.id === cardId) : null;
             const fileInput = document.getElementById('cardImageFile');
-            let ImgBBl = '';
+            let ImgBBl = existingCard ? (existingCard.image || '') : '';
             
             if (fileInput.files.length > 0) {
                 ImgBBl = await UI.uploadToImgBB(fileInput.files[0]);
             }
 
             await API.request('saveCard', {
-                id:     document.getElementById('cardId').value || undefined,
+                id:     cardId || undefined,
                 name:   document.getElementById('cardName').value,
                 nation: document.getElementById('cardNation').value,
                 owner:  document.getElementById('cardOwner').value,
@@ -231,7 +233,10 @@ function initCardForm() {
             UI.showToast('Kartu berhasil disimpan');
             UI.closeModal('modalCard');
             loadInventory();
-        } catch { UI.showToast('Terjadi kesalahan', 'error'); }
+        } catch(err) {
+            console.error(err);
+            UI.showToast('Terjadi kesalahan', 'error');
+        }
         finally { btn.disabled = false; btn.textContent = 'Simpan Kartu'; }
     });
 }
@@ -351,7 +356,7 @@ window.viewDetail = function(id) {
 
     document.getElementById('cardDetailContent').innerHTML = `
         <div class="detail-hero">
-            <img src="${UI.cardImage(c)}" alt="${c.name}" class="detail-hero-img">
+            <img src="${UI.cardImage(c)}" alt="${c.name}" class="detail-hero-img" referrerpolicy="no-referrer" onerror="UI.handleImgError(this, '${c.nation}')">
         </div>
         <div class="detail-body">
             <div class="detail-title-row">
