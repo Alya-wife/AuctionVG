@@ -110,7 +110,7 @@ const UI = {
         return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d));
     },
 
-    async uploadToImgbb(file) {
+    async uploadToImgBB(file) {
         if (!file) return '';
         if (!CONFIG.IMGBB_API_KEY) {
             UI.showToast('ImgBB API Key belum dikonfigurasi', 'error');
