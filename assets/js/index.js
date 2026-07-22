@@ -9,12 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Load data for public search
 async function loadPublicOwners() {
+    const container = document.getElementById('publicOwnerResults');
     try {
         inventoryData = await API.request('getInventory');
-        renderPublicOwners();
+        // Show initial empty state message instead of rendering all owners
+        container.innerHTML = '<p class="empty-msg">Ketik nama pemilik untuk mencari kartu.</p>';
     } catch(e) {
-        document.getElementById('publicOwnerResults').innerHTML = 
-            '<p class="empty-msg">Gagal memuat data. Silakan coba lagi.</p>';
+        container.innerHTML = '<p class="empty-msg">Gagal memuat data. Silakan coba lagi.</p>';
     }
 }
 
@@ -26,6 +27,13 @@ function initPublicSearch() {
 // Render owner list for public search
 function renderPublicOwners() {
     const search = document.getElementById('publicOwnerSearch').value.toLowerCase().trim();
+    const container = document.getElementById('publicOwnerResults');
+
+    // Show prompt message if no search input
+    if (!search) {
+        container.innerHTML = '<p class="empty-msg">Ketik nama pemilik untuk mencari kartu.</p>';
+        return;
+    }
 
     const map = {};
     inventoryData.forEach(card => {
@@ -51,22 +59,10 @@ function renderPublicOwners() {
         if (card.status === 'Completed') o.completed++;
     });
 
-    let owners = Object.values(map);
-    
-    // Only filter if there's search input
-    if (search) {
-        owners = owners.filter(o => o.name.toLowerCase().includes(search));
-    }
+    let owners = Object.values(map).filter(o => o.name.toLowerCase().includes(search));
 
-    const container = document.getElementById('publicOwnerResults');
-    
-    if (!owners.length && search) {
+    if (!owners.length) {
         container.innerHTML = '<p class="empty-msg">Tidak ada pemilik ditemukan dengan nama tersebut.</p>';
-        return;
-    }
-
-    if (!owners.length && !search) {
-        container.innerHTML = '<p class="empty-msg">Ketik nama pemilik untuk mencari kartu.</p>';
         return;
     }
 
@@ -159,19 +155,19 @@ function initLoginModal() {
         const errorDiv = document.getElementById('loginError');
 
         btn.disabled = true;
-        btnText.style.display = 'none';
+        btnText.textContent = 'Memverifikasi...';
         spinner.classList.remove('hidden');
         errorDiv.classList.add('hidden');
 
         try {
-            const user = await API.request('login', { username, password });
-            Auth.setUser(user);
+            await Auth.login(username, password);
+            // Success - redirect
             window.location.href = 'dashboard.html';
         } catch (err) {
             errorDiv.classList.remove('hidden');
             document.getElementById('loginErrorMsg').textContent = err.message || 'Login gagal';
             btn.disabled = false;
-            btnText.style.display = 'inline';
+            btnText.textContent = 'Masuk';
             spinner.classList.add('hidden');
         }
     });

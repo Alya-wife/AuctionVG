@@ -12,6 +12,9 @@ const Auth = {
         const u = localStorage.getItem('ag_user');
         return u ? JSON.parse(u) : null;
     },
+    setUser: function(user) {
+        localStorage.setItem('ag_user', JSON.stringify(user));
+    },
     checkAuth: function() {
         const user = this.getUser();
         const onLogin = ['index.html', '/'].some(p => window.location.pathname.endsWith(p));
