@@ -22,7 +22,7 @@ const API = {
 
         const cacheKey = 'ag_cache_' + action;
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 detik max wait
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 detik max wait (GAS cold start)
 
         try {
             const body = JSON.stringify({ action, ...payload });
