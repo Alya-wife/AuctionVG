@@ -19,26 +19,56 @@ const API = {
         if (CONFIG.USE_LOCAL) {
             return this._localHandler(action, payload);
         }
-        // GAS request
-        const body = JSON.stringify({ action, ...payload });
-        const res = await fetch(CONFIG.GAS_URL, {
-            method: 'POST',
-            body,
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-        });
-        const text = await res.text();
-        let json;
+
+        const cacheKey = 'ag_cache_' + action;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 detik max wait
+
         try {
-            json = JSON.parse(text);
-        } catch (e) {
-            console.error('GAS Raw Response:', text);
-            if (text.includes('Script function not found: doGet')) {
-                throw new Error('Google Apps Script belum memiliki fungsi doGet(e). Silakan perbarui kode backend.gs di Google Apps Script dan Deploy ulang (New Deployment).');
+            const body = JSON.stringify({ action, ...payload });
+            const res = await fetch(CONFIG.GAS_URL, {
+                method: 'POST',
+                body,
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            const text = await res.text();
+            let json;
+            try {
+                json = JSON.parse(text);
+            } catch (e) {
+                console.error('GAS Raw Response:', text);
+                if (text.includes('Script function not found: doGet')) {
+                    throw new Error('Google Apps Script belum memiliki fungsi doGet(e). Silakan perbarui kode backend.gs di Google Apps Script dan Deploy ulang (New Deployment).');
+                }
+                throw new Error('Gagal memproses respon server: Respon bukan JSON yang valid.');
             }
-            throw new Error('Gagal memproses respon server: Respon bukan JSON yang valid.');
+            if (json.status === 'error') throw new Error(json.message);
+
+            // Simpan cache jika berhasil untuk request pembacaan data
+            if (['getInventory', 'getAuctions', 'getStats'].includes(action) && json.data) {
+                try { localStorage.setItem(cacheKey, JSON.stringify(json.data)); } catch(e){}
+            }
+            return json.data;
+
+        } catch (err) {
+            clearTimeout(timeoutId);
+            console.warn(`[API] Fetch '${action}' error atau timeout:`, err.message);
+
+            // Fallback ke data cache lokal jika koneksi GAS lambat/gagal
+            if (['getInventory', 'getAuctions', 'getStats'].includes(action)) {
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    try {
+                        console.info(`[API] Menggunakan cache lokal untuk '${action}'`);
+                        return JSON.parse(cached);
+                    } catch(e){}
+                }
+            }
+            throw err;
         }
-        if (json.status === 'error') throw new Error(json.message);
-        return json.data;
     },
 
     // ─── Seed Data ───────────────────────────────────────────────────────────
