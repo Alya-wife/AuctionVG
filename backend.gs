@@ -89,7 +89,7 @@ function doLogin(username, password) {
   if (!sheet) {
     sheet = ss.insertSheet("Users");
     sheet.appendRow(["Username", "Password", "Name", "Role"]);
-    sheet.appendRow(["admin", "admin123", "Admin Antigravity", "admin"]);
+    sheet.appendRow(["admin", "admin123", "Admin NitipPro", "admin"]);
   }
   
   const data = sheet.getDataRange().getValues();
@@ -295,3 +295,4 @@ function getStats() {
     completed: cards.filter(c => c.status === 'Completed').length
   };
 }
+

@@ -1,4 +1,4 @@
-# Antigravity Project Specification
+# NitipPro Project Specification
 
 ## Card Consignment Inventory System
 
@@ -350,3 +350,4 @@ Recommended practical limits:
 
 If the business grows significantly, migrate only the backend to
 Firebase or Supabase while keeping the same frontend.
+

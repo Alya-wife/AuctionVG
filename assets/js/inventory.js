@@ -60,12 +60,14 @@ function toggleViewBtn() {
 
 function applyFilters() {
     const q = document.getElementById('searchInput').value.toLowerCase();
+    const isValidSearch = q.length === 0 || q.length >= 3;
     const owner = document.getElementById('filterOwner').value;
     const nation = document.getElementById('filterNation').value;
     const status = document.getElementById('filterStatus').value;
     const sort = document.getElementById('sortBy').value;
 
     filteredCards = allCards.filter(c =>
+        isValidSearch &&
         (!q || c.name.toLowerCase().includes(q) || c.owner.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)) &&
         (!owner || c.owner === owner) &&
         (!nation || c.nation === nation) &&
@@ -211,13 +213,20 @@ function initCardForm() {
         btn.disabled = true;
         btn.textContent = 'Menyimpan...';
         try {
+            const fileInput = document.getElementById('cardImageFile');
+            let ImgBBl = '';
+            
+            if (fileInput.files.length > 0) {
+                ImgBBl = await UI.uploadToImgBB(fileInput.files[0]);
+            }
+
             await API.request('saveCard', {
                 id:     document.getElementById('cardId').value || undefined,
                 name:   document.getElementById('cardName').value,
                 nation: document.getElementById('cardNation').value,
                 owner:  document.getElementById('cardOwner').value,
                 date:   document.getElementById('cardDateReceived').value,
-                image:  document.getElementById('cardImageUrl').value
+                image:  ImgBBl // send ImgBB link directly to backend
             });
             UI.showToast('Kartu berhasil disimpan');
             UI.closeModal('modalCard');
@@ -354,3 +363,4 @@ window.viewDetail = function(id) {
 
     UI.openModal('modalDetail');
 };
+

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Inventory – Antigravity Card Inventory</title>
+  <title>Inventory – NitipPro Card Inventory</title>
   <meta name="description" content="Kelola inventory kartu Vanguard konsinyasi" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
@@ -137,9 +137,9 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="cardImageUrl">URL Gambar (Google Drive, opsional)</label>
-          <input type="url" id="cardImageUrl" placeholder="https://drive.google.com/..." />
-          <small>Isi URL publik dari Google Drive</small>
+          <label for="cardImageFile">Gambar Kartu (opsional)</label>
+          <input type="file" id="cardImageFile" accept="image/*" />
+          <small>Gambar akan otomatis diupload menggunakan ImgBB.</small>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn-ghost" id="cancelCardBtn">Batal</button>
@@ -204,6 +204,8 @@
   <script src="assets/js/inventory.js"></script>
 </body>
 </html>
+
+
 
 
 

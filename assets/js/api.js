@@ -1,5 +1,5 @@
 /**
- * API Layer - Antigravity Card Inventory
+ * API Layer - NitipPro Card Inventory
  * Mode saat ini: LocalStorage (localhost)
  * Untuk switch ke Google Apps Script: ubah CONFIG.USE_LOCAL = false
  * dan isi CONFIG.GAS_URL dengan URL deployment Apps Script Anda.
@@ -159,3 +159,4 @@ const API = {
         }
     }
 };
+

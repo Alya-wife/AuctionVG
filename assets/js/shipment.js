@@ -27,13 +27,20 @@ function initForm() {
         e.preventDefault();
         const btn = e.target.querySelector('[type=submit]'); btn.disabled = true;
         try {
+            const fileInput = document.getElementById('shipProofFile');
+            let proofUrl = '';
+            
+            if (fileInput.files.length > 0) {
+                proofUrl = await UI.uploadToImgBB(fileInput.files[0]);
+            }
+
             await API.request('updateCardStatus', {
                 id: document.getElementById('shipCardId').value,
                 status: 'Waiting Payment',
                 extra: {
                     shipDate: document.getElementById('shipDate').value,
                     trackingNumber: document.getElementById('shipTracking').value,
-                    shipProofUrl: document.getElementById('shipProofUrl').value
+                    shipProofUrl: proofUrl
                 }
             });
             UI.showToast('Pengiriman dikonfirmasi');
@@ -53,3 +60,4 @@ window.openShipModal = function(id) {
     document.getElementById('shipDate').value = new Date().toISOString().split('T')[0];
     UI.openModal('modalShipment');
 };
+

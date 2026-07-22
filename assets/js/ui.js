@@ -31,7 +31,7 @@ const UI = {
                 <div class="brand-icon-sm">
                     <svg width="32" height="32" viewBox="0 0 40 40"><polygon points="20,2 38,12 38,28 20,38 2,28 2,12" fill="url(#hg)"/><defs><linearGradient id="hg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4F8EF7"/><stop offset="100%" stop-color="#7B5CF7"/></linearGradient></defs><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="16" font-weight="bold" font-family="Outfit">A</text></svg>
                 </div>
-                <span class="brand-name">Antigravity</span>
+                <span class="brand-name">NitipPro</span>
                 <button class="sidebar-close" id="sidebarCloseBtn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
@@ -110,6 +110,32 @@ const UI = {
         return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d));
     },
 
+    async uploadToImgbb(file) {
+        if (!file) return '';
+        if (!CONFIG.IMGBB_API_KEY) {
+            UI.showToast('ImgBB API Key belum dikonfigurasi', 'error');
+            throw new Error('IMGBB_API_KEY missing');
+        }
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        // ImgBB requires the API key in the URL
+        const url = `https://api.imgbb.com/1/upload?key=${CONFIG.IMGBB_API_KEY}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            return data.data.url;
+        } else {
+            UI.showToast('Gagal upload gambar ke ImgBB', 'error');
+            throw new Error(data.error?.message || 'ImgBB upload failed');
+        }
+    },
+
     cardImage(card) {
         if (card.image) return card.image;
         const m = {
@@ -155,3 +181,4 @@ document.addEventListener('DOMContentLoaded', () => {
     const isLogin = ['index.html', '/'].some(p => location.pathname.endsWith(p));
     if (!isLogin) UI.init();
 });
+

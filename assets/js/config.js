@@ -9,6 +9,9 @@ const CONFIG = {
     // Google Drive folder untuk gambar
     DRIVE_FOLDER_ID: '1liegX11st8HsJ5KNAC_gVfHxslThH9N0',
 
+    // ImgBB API Key untuk upload gambar (daftar di api.imgbb.com)
+    IMGBB_API_KEY: 'ae5ebe0899da22c9c5fb0a0fe9293499',
+
     // Mode: true = pakai LocalStorage (localhost), false = pakai GAS
     USE_LOCAL: false
 };

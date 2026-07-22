@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pengiriman – Antigravity Card Inventory</title>
+  <title>Pengiriman – NitipPro Card Inventory</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/style.css" />
@@ -53,8 +53,9 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="shipProofUrl">Bukti Pengiriman (URL Drive, opsional)</label>
-          <input type="url" id="shipProofUrl" placeholder="https://drive.google.com/..." />
+          <label for="shipProofFile">Bukti Pengiriman (opsional)</label>
+          <input type="file" id="shipProofFile" accept="image/*,application/pdf" />
+          <small>Gambar akan diupload via ImgBB</small>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn-ghost" id="cancelShipBtn">Batal</button>
@@ -72,6 +73,8 @@
   <script src="assets/js/shipment.js"></script>
 </body>
 </html>
+
+
 
 
 

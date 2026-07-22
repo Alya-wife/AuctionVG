@@ -27,12 +27,19 @@ function initForm() {
         e.preventDefault();
         const btn = e.target.querySelector('[type=submit]'); btn.disabled = true;
         try {
+            const fileInput = document.getElementById('payProofFile');
+            let proofUrl = '';
+            
+            if (fileInput.files.length > 0) {
+                proofUrl = await UI.uploadToImgBB(fileInput.files[0]);
+            }
+
             await API.request('updateCardStatus', {
                 id: document.getElementById('payCardId').value,
                 status: 'Completed',
                 extra: {
                     payoutDate: document.getElementById('payDate').value,
-                    payoutProofUrl: document.getElementById('payProofUrl').value
+                    payoutProofUrl: proofUrl
                 }
             });
             UI.showToast('Transaksi selesai!');
@@ -53,3 +60,4 @@ window.openPayModal = function(id) {
     document.getElementById('payDate').value = new Date().toISOString().split('T')[0];
     UI.openModal('modalPayment');
 };
+
