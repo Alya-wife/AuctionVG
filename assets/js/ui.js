@@ -110,57 +110,15 @@ const UI = {
         return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(d));
     },
 
-    async uploadToImgBB(file) {
-        if (!file) return '';
-        if (!CONFIG.IMGBB_API_KEY) {
-            UI.showToast('ImgBB API Key belum dikonfigurasi', 'error');
-            throw new Error('IMGBB_API_KEY missing');
+    renderTypeBox(cardOrType, size = 'md') {
+        let val = 'JP';
+        if (typeof cardOrType === 'object' && cardOrType !== null) {
+            val = cardOrType.type || cardOrType.language || cardOrType.image || 'JP';
+        } else if (typeof cardOrType === 'string') {
+            val = cardOrType;
         }
-        
-        const formData = new FormData();
-        formData.append('image', file);
-        const url = `https://api.imgbb.com/1/upload?key=${CONFIG.IMGBB_API_KEY}`;
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            // Return direct image link display_url, image.url or url
-            return data.data.display_url || data.data.image?.url || data.data.url;
-        } else {
-            UI.showToast('Gagal upload gambar ke ImgBB', 'error');
-            throw new Error(data.error?.message || 'ImgBB upload failed');
-        }
-    },
-
-    cardImage(card) {
-        if (card && card.image && typeof card.image === 'string' && card.image.trim() !== '') {
-            let imgUrl = card.image.trim();
-            // Convert ibb.co viewer URLs to direct images if needed
-            if (imgUrl.includes('ibb.co/') && !imgUrl.includes('i.ibb.co/')) {
-                // If it's a viewer link, leave it or let error handler catch if it fails
-                return imgUrl;
-            }
-            return imgUrl;
-        }
-        const m = {
-            'Dragon Empire': 'https://images.unsplash.com/photo-1542204637-e67bc7d41e48?w=500&q=80',
-            'Keter Sanctuary': 'https://images.unsplash.com/photo-1517960413843-0aee8e2b3285?w=500&q=80',
-            'Stoicheia': 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=500&q=80',
-            'Dark States': 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=500&q=80',
-            'Brandt Gate': 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=500&q=80',
-            'Lyrical Monasterio': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500&q=80'
-        };
-        return (card && m[card.nation]) || 'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?w=500&q=80';
-    },
-
-    handleImgError(imgEl, nation) {
-        if (!imgEl) return;
-        imgEl.onerror = null;
-        imgEl.src = this.cardImage({ nation });
+        const t = val.toString().trim().toUpperCase() === 'EN' ? 'EN' : 'JP';
+        return `<div class="card-type-box type-${t.toLowerCase()} size-${size}"><span>${t}</span></div>`;
     },
 
     statusClass(status) {

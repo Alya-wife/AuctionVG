@@ -35,13 +35,26 @@ const API = {
     _seed() {
         if (!localStorage.getItem('ag_inventory')) {
             const data = [
-                { id: 'C001', name: 'Dragonic Overlord', nation: 'Dragon Empire', owner: 'Budi', date: '2026-07-15', image: '', status: 'Available' },
-                { id: 'C002', name: 'Alfred Early', nation: 'Keter Sanctuary', owner: 'Andi', date: '2026-07-16', image: '', status: 'Sold', buyer: 'Citra', price: 150000, soldDate: '2026-07-18' },
-                { id: 'C003', name: 'Sylvan Horned Beast', nation: 'Stoicheia', owner: 'Budi', date: '2026-07-17', image: '', status: 'Waiting Shipment', buyer: 'Doni', price: 120000, soldDate: '2026-07-19' },
-                { id: 'C004', name: 'Vairina Liber', nation: 'Dragon Empire', owner: 'Citra', date: '2026-07-18', image: '', status: 'Available' },
-                { id: 'C005', name: 'Phantom Blaster Dragon', nation: 'Dark States', owner: 'Andi', date: '2026-07-19', image: '', status: 'Waiting Payment', buyer: 'Eko', price: 200000, soldDate: '2026-07-20', shipDate: '2026-07-21', trackingNumber: 'JX123456789ID' }
+                { id: 'C001', name: 'Dragonic Overlord', type: 'JP', nation: 'Dragon Empire', owner: 'Budi', date: '2026-07-15', status: 'Available' },
+                { id: 'C002', name: 'Alfred Early', type: 'EN', nation: 'Keter Sanctuary', owner: 'Andi', date: '2026-07-16', status: 'Sold', buyer: 'Citra', price: 150000, soldDate: '2026-07-18' },
+                { id: 'C003', name: 'Sylvan Horned Beast', type: 'JP', nation: 'Stoicheia', owner: 'Budi', date: '2026-07-17', status: 'Waiting Shipment', buyer: 'Doni', price: 120000, soldDate: '2026-07-19' },
+                { id: 'C004', name: 'Vairina Liber', type: 'EN', nation: 'Dragon Empire', owner: 'Citra', date: '2026-07-18', status: 'Available' },
+                { id: 'C005', name: 'Phantom Blaster Dragon', type: 'JP', nation: 'Dark States', owner: 'Andi', date: '2026-07-19', status: 'Waiting Payment', buyer: 'Eko', price: 200000, soldDate: '2026-07-20', shipDate: '2026-07-21', trackingNumber: 'JX123456789ID' }
             ];
             localStorage.setItem('ag_inventory', JSON.stringify(data));
+        } else {
+            // Migrate existing inventory items to ensure type property exists
+            try {
+                let items = JSON.parse(localStorage.getItem('ag_inventory') || '[]');
+                let modified = false;
+                items.forEach(c => {
+                    if (!c.type) {
+                        c.type = (c.language || c.image || 'JP').toString().toUpperCase() === 'EN' ? 'EN' : 'JP';
+                        modified = true;
+                    }
+                });
+                if (modified) localStorage.setItem('ag_inventory', JSON.stringify(items));
+            } catch(e) {}
         }
         if (!localStorage.getItem('ag_auctions')) {
             localStorage.setItem('ag_auctions', JSON.stringify([]));
@@ -70,6 +83,7 @@ const API = {
             case 'getInventory': return inv();
             case 'saveCard': {
                 let list = inv();
+                payload.type = (payload.type || 'JP').toUpperCase();
                 if (payload.id) {
                     const i = list.findIndex(c => c.id === payload.id);
                     if (i !== -1) list[i] = { ...list[i], ...payload };

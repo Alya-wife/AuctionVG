@@ -30,9 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         el.innerHTML = recent.map(c => `
             <div class="activity-row">
-                <div class="activity-img">
-                    <img src="${UI.cardImage(c)}" alt="${c.name}" referrerpolicy="no-referrer" onerror="UI.handleImgError(this, '${c.nation}')">
-                </div>
+                ${UI.renderTypeBox(c, 'sm')}
                 <div class="activity-info">
                     <strong>${c.name}</strong>
                     <span>${c.nation} · ${c.owner}</span>

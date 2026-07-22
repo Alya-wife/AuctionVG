@@ -27,19 +27,11 @@ function initForm() {
         e.preventDefault();
         const btn = e.target.querySelector('[type=submit]'); btn.disabled = true;
         try {
-            const fileInput = document.getElementById('payProofFile');
-            let proofUrl = '';
-            
-            if (fileInput.files.length > 0) {
-                proofUrl = await UI.uploadToImgBB(fileInput.files[0]);
-            }
-
             await API.request('updateCardStatus', {
                 id: document.getElementById('payCardId').value,
                 status: 'Completed',
                 extra: {
-                    payoutDate: document.getElementById('payDate').value,
-                    payoutProofUrl: proofUrl
+                    payoutDate: document.getElementById('payDate').value
                 }
             });
             UI.showToast('Transaksi selesai!');

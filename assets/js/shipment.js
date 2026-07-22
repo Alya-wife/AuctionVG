@@ -27,20 +27,12 @@ function initForm() {
         e.preventDefault();
         const btn = e.target.querySelector('[type=submit]'); btn.disabled = true;
         try {
-            const fileInput = document.getElementById('shipProofFile');
-            let proofUrl = '';
-            
-            if (fileInput.files.length > 0) {
-                proofUrl = await UI.uploadToImgBB(fileInput.files[0]);
-            }
-
             await API.request('updateCardStatus', {
                 id: document.getElementById('shipCardId').value,
                 status: 'Waiting Payment',
                 extra: {
                     shipDate: document.getElementById('shipDate').value,
-                    trackingNumber: document.getElementById('shipTracking').value,
-                    shipProofUrl: proofUrl
+                    trackingNumber: document.getElementById('shipTracking').value
                 }
             });
             UI.showToast('Pengiriman dikonfirmasi');

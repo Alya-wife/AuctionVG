@@ -102,9 +102,7 @@ window.openPublicOwnerDetail = function(ownerName) {
 
         return `
             <div class="detail-card-row">
-                <div class="detail-card-img">
-                    <img src="${UI.cardImage(c)}" alt="${c.name}" referrerpolicy="no-referrer" onerror="UI.handleImgError(this, '${c.nation}')">
-                </div>
+                ${UI.renderTypeBox(c, 'sm')}
                 <div class="detail-card-info">
                     <div class="detail-card-name">${c.name}</div>
                     <div class="detail-meta">${c.nation} · Diterima ${UI.formatDate(c.date)}</div>

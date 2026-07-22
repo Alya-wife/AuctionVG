@@ -41,6 +41,11 @@
           <select id="filterOwner" class="filter-select">
             <option value="">Semua Pemilik</option>
           </select>
+          <select id="filterType" class="filter-select">
+            <option value="">Semua Jenis</option>
+            <option value="JP">JP (Jepang)</option>
+            <option value="EN">EN (Inggris)</option>
+          </select>
           <select id="filterNation" class="filter-select">
             <option value="">Semua Nation</option>
             <option value="Dragon Empire">Dragon Empire</option>
@@ -114,6 +119,15 @@
             <input type="text" id="cardName" required placeholder="cth. Dragonic Overlord" />
           </div>
           <div class="form-group">
+            <label for="cardType">Jenis Kartu *</label>
+            <select id="cardType" required>
+              <option value="JP">JP (Jepang)</option>
+              <option value="EN">EN (Inggris)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
             <label for="cardNation">Nation *</label>
             <select id="cardNation" required>
               <option value="">Pilih Nation</option>
@@ -125,22 +139,15 @@
               <option value="Keter Sanctuary">Keter Sanctuary</option>
             </select>
           </div>
-        </div>
-        <div class="form-row">
           <div class="form-group">
             <label for="cardOwner">Pemilik *</label>
             <input type="text" id="cardOwner" required placeholder="Nama pemilik kartu" list="ownerList" />
             <datalist id="ownerList"></datalist>
           </div>
-          <div class="form-group">
-            <label for="cardDateReceived">Tanggal Diterima *</label>
-            <input type="date" id="cardDateReceived" required />
-          </div>
         </div>
         <div class="form-group">
-          <label for="cardImageFile">Gambar Kartu (opsional)</label>
-          <input type="file" id="cardImageFile" accept="image/*" />
-          <small>Gambar akan otomatis diupload menggunakan ImgBB.</small>
+          <label for="cardDateReceived">Tanggal Diterima *</label>
+          <input type="date" id="cardDateReceived" required />
         </div>
         <div class="modal-footer">
           <button type="button" class="btn-ghost" id="cancelCardBtn">Batal</button>

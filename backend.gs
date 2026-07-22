@@ -119,13 +119,10 @@ function saveCard(data) {
   let sheet = ss.getSheetByName("Inventory");
   if (!sheet) {
     sheet = ss.insertSheet("Inventory");
-    sheet.appendRow(["id", "name", "nation", "owner", "date", "image", "status", "buyer", "price", "soldDate", "shipDate", "trackingNumber", "shipProofUrl", "payoutDate", "payoutProofUrl"]);
+    sheet.appendRow(["id", "name", "nation", "owner", "date", "type", "status", "buyer", "price", "soldDate", "shipDate", "trackingNumber", "shipProofUrl", "payoutDate", "payoutProofUrl"]);
   }
   
-  let imageUrl = data.image || '';
-  if (data.file) {
-    imageUrl = uploadImageToDrive(data.file);
-  }
+  const cardType = (data.type || data.language || 'JP').toString().toUpperCase() === 'EN' ? 'EN' : 'JP';
   
   if (data.id) {
     // Update existing
@@ -137,15 +134,15 @@ function saveCard(data) {
         sheet.getRange(i + 1, 3).setValue(data.nation);
         sheet.getRange(i + 1, 4).setValue(data.owner);
         sheet.getRange(i + 1, 5).setValue(data.date);
-        if (imageUrl) sheet.getRange(i + 1, 6).setValue(imageUrl);
-        return { ...data, image: imageUrl || rows[i][5] };
+        sheet.getRange(i + 1, 6).setValue(cardType);
+        return { ...data, type: cardType };
       }
     }
   } else {
     // Insert new
     const id = 'C' + new Date().getTime().toString().slice(-5);
-    sheet.appendRow([id, data.name, data.nation, data.owner, data.date, imageUrl, 'Available', '', '', '', '', '', '', '', '']);
-    return { ...data, id: id, status: 'Available', image: imageUrl };
+    sheet.appendRow([id, data.name, data.nation, data.owner, data.date, cardType, 'Available', '', '', '', '', '', '', '', '']);
+    return { ...data, id: id, status: 'Available', type: cardType };
   }
 }
 

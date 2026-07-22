@@ -39,12 +39,18 @@ function populateOwnerFilter() {
 }
 
 function initFilters() {
-    ['searchInput','filterOwner','filterNation','filterStatus','sortBy'].forEach(id => {
-        document.getElementById(id).addEventListener('input', () => { currentPage = 1; applyFilters(); });
-        document.getElementById(id).addEventListener('change', () => { currentPage = 1; applyFilters(); });
+    ['searchInput','filterOwner','filterType','filterNation','filterStatus','sortBy'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', () => { currentPage = 1; applyFilters(); });
+            el.addEventListener('change', () => { currentPage = 1; applyFilters(); });
+        }
     });
     document.getElementById('resetFilter').addEventListener('click', () => {
-        ['searchInput','filterOwner','filterNation','filterStatus'].forEach(id => document.getElementById(id).value = '');
+        ['searchInput','filterOwner','filterType','filterNation','filterStatus'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
         document.getElementById('sortBy').value = 'date_desc';
         currentPage = 1;
         applyFilters();
@@ -62,17 +68,21 @@ function applyFilters() {
     const q = document.getElementById('searchInput').value.toLowerCase();
     const isValidSearch = q.length === 0 || q.length >= 3;
     const owner = document.getElementById('filterOwner').value;
+    const typeEl = document.getElementById('filterType');
+    const typeVal = typeEl ? typeEl.value : '';
     const nation = document.getElementById('filterNation').value;
     const status = document.getElementById('filterStatus').value;
     const sort = document.getElementById('sortBy').value;
 
-    filteredCards = allCards.filter(c =>
-        isValidSearch &&
+    filteredCards = allCards.filter(c => {
+        const cType = (c.type || c.language || c.image || 'JP').toString().toUpperCase();
+        return isValidSearch &&
         (!q || c.name.toLowerCase().includes(q) || c.owner.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)) &&
         (!owner || c.owner === owner) &&
+        (!typeVal || cType === typeVal.toUpperCase()) &&
         (!nation || c.nation === nation) &&
-        (!status || c.status === status)
-    );
+        (!status || c.status === status);
+    });
 
     filteredCards.sort((a,b) => {
         if (sort === 'date_desc') return new Date(b.date) - new Date(a.date);
@@ -115,7 +125,7 @@ function renderGrid(container, page) {
         return `
         <div class="card-item">
             <div class="card-img-wrap" onclick="viewDetail('${card.id}')">
-                <img src="${UI.cardImage(card)}" class="card-img" alt="${card.name}" loading="lazy" referrerpolicy="no-referrer" onerror="UI.handleImgError(this, '${card.nation}')">
+                ${UI.renderTypeBox(card, 'md')}
                 <span class="card-nation-badge">${card.nation}</span>
                 <span class="card-status-badge status-badge status-${sc}">${card.status}</span>
             </div>
@@ -214,21 +224,16 @@ function initCardForm() {
         btn.textContent = 'Menyimpan...';
         try {
             const cardId = document.getElementById('cardId').value;
-            const existingCard = cardId ? allCards.find(c => c.id === cardId) : null;
-            const fileInput = document.getElementById('cardImageFile');
-            let ImgBBl = existingCard ? (existingCard.image || '') : '';
-            
-            if (fileInput.files.length > 0) {
-                ImgBBl = await UI.uploadToImgBB(fileInput.files[0]);
-            }
+            const cardTypeEl = document.getElementById('cardType');
+            const cardTypeVal = cardTypeEl ? cardTypeEl.value : 'JP';
 
             await API.request('saveCard', {
                 id:     cardId || undefined,
                 name:   document.getElementById('cardName').value,
+                type:   cardTypeVal,
                 nation: document.getElementById('cardNation').value,
                 owner:  document.getElementById('cardOwner').value,
-                date:   document.getElementById('cardDateReceived').value,
-                image:  ImgBBl // send ImgBB link directly to backend
+                date:   document.getElementById('cardDateReceived').value
             });
             UI.showToast('Kartu berhasil disimpan');
             UI.closeModal('modalCard');
@@ -246,12 +251,11 @@ window.editCard = function(id) {
     if (!c) return;
     document.getElementById('cardId').value = c.id;
     document.getElementById('cardName').value = c.name;
+    const cardTypeEl = document.getElementById('cardType');
+    if (cardTypeEl) cardTypeEl.value = (c.type || c.language || c.image || 'JP').toString().toUpperCase() === 'EN' ? 'EN' : 'JP';
     document.getElementById('cardNation').value = c.nation;
     document.getElementById('cardOwner').value = c.owner;
     document.getElementById('cardDateReceived').value = c.date;
-    // reset file input because we can't set it to existing URL
-    const fileInput = document.getElementById('cardImageFile');
-    if (fileInput) fileInput.value = '';
     
     document.getElementById('modalCardTitle').textContent = 'Edit Kartu';
     UI.openModal('modalCard');
@@ -355,8 +359,8 @@ window.viewDetail = function(id) {
     }
 
     document.getElementById('cardDetailContent').innerHTML = `
-        <div class="detail-hero">
-            <img src="${UI.cardImage(c)}" alt="${c.name}" class="detail-hero-img" referrerpolicy="no-referrer" onerror="UI.handleImgError(this, '${c.nation}')">
+        <div class="detail-hero" style="display:flex;align-items:center;justify-content:center;background:transparent;">
+            ${UI.renderTypeBox(c, 'detail')}
         </div>
         <div class="detail-body">
             <div class="detail-title-row">
