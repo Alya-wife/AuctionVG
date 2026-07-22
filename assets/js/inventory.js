@@ -18,7 +18,7 @@ async function loadInventory() {
         allCards = await API.request('getInventory');
         populateOwnerFilter();
         applyFilters();
-    } catch(e) {
+    } catch (e) {
         UI.showToast('Gagal memuat inventory', 'error');
     }
 }
@@ -30,7 +30,7 @@ function showGridLoading() {
 
 function populateOwnerFilter() {
     const sel = document.getElementById('filterOwner');
-    const dl  = document.getElementById('ownerList');
+    const dl = document.getElementById('ownerList');
     const owners = [...new Set(allCards.map(c => c.owner))].sort();
     const cur = sel.value;
     sel.innerHTML = '<option value="">Semua Pemilik</option>' + owners.map(o => `<option value="${o}">${o}</option>`).join('');
@@ -39,7 +39,7 @@ function populateOwnerFilter() {
 }
 
 function initFilters() {
-    ['searchInput','filterOwner','filterType','filterNation','filterStatus','sortBy'].forEach(id => {
+    ['searchInput', 'filterOwner', 'filterType', 'filterNation', 'filterStatus', 'sortBy'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', () => { currentPage = 1; applyFilters(); });
@@ -47,7 +47,7 @@ function initFilters() {
         }
     });
     document.getElementById('resetFilter').addEventListener('click', () => {
-        ['searchInput','filterOwner','filterType','filterNation','filterStatus'].forEach(id => {
+        ['searchInput', 'filterOwner', 'filterType', 'filterNation', 'filterStatus'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
@@ -77,17 +77,17 @@ function applyFilters() {
     filteredCards = allCards.filter(c => {
         const cType = (c.type || c.language || c.image || 'JP').toString().toUpperCase();
         return isValidSearch &&
-        (!q || c.name.toLowerCase().includes(q) || c.owner.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)) &&
-        (!owner || c.owner === owner) &&
-        (!typeVal || cType === typeVal.toUpperCase()) &&
-        (!nation || c.nation === nation) &&
-        (!status || c.status === status);
+            (!q || c.name.toLowerCase().includes(q) || c.owner.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)) &&
+            (!owner || c.owner === owner) &&
+            (!typeVal || cType === typeVal.toUpperCase()) &&
+            (!nation || c.nation === nation) &&
+            (!status || c.status === status);
     });
 
-    filteredCards.sort((a,b) => {
+    filteredCards.sort((a, b) => {
         if (sort === 'date_desc') return new Date(b.date) - new Date(a.date);
-        if (sort === 'date_asc')  return new Date(a.date) - new Date(b.date);
-        if (sort === 'name_asc')  return a.name.localeCompare(b.name);
+        if (sort === 'date_asc') return new Date(a.date) - new Date(b.date);
+        if (sort === 'name_asc') return a.name.localeCompare(b.name);
         if (sort === 'name_desc') return b.name.localeCompare(a.name);
     });
 
@@ -158,8 +158,8 @@ function renderList(container, page) {
             <thead><tr><th>ID</th><th>Kartu</th><th>Pemilik</th><th>Status</th><th style="text-align:right">Aksi</th></tr></thead>
             <tbody>
             ${page.map(c => {
-                const sc = UI.statusClass(c.status);
-                return `<tr>
+        const sc = UI.statusClass(c.status);
+        return `<tr>
                     <td class="text-muted">${c.id}</td>
                     <td>
                         <div style="font-weight:600;cursor:pointer" onclick="viewDetail('${c.id}')">${c.name}</div>
@@ -174,7 +174,7 @@ function renderList(container, page) {
                         </div>
                     </td>
                 </tr>`;
-            }).join('')}
+    }).join('')}
             </tbody>
         </table>
         </div>`;
@@ -185,19 +185,19 @@ function renderPagination() {
     const pag = document.getElementById('pagination');
     if (total <= 1) { pag.innerHTML = ''; return; }
 
-    let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+    let html = `<button class="page-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
     for (let i = 1; i <= total; i++) {
         if (i === 1 || i === total || Math.abs(i - currentPage) <= 1) {
-            html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+            html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
         } else if (Math.abs(i - currentPage) === 2) {
             html += `<span class="page-btn" style="cursor:default">…</span>`;
         }
     }
-    html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?'disabled':''}>›</button>`;
+    html += `<button class="page-btn" onclick="goPage(${currentPage + 1})" ${currentPage === total ? 'disabled' : ''}>›</button>`;
     pag.innerHTML = html;
 }
 
-window.goPage = function(p) {
+window.goPage = function (p) {
     const total = Math.ceil(filteredCards.length / PAGE_SIZE);
     if (p < 1 || p > total) return;
     currentPage = p;
@@ -228,17 +228,17 @@ function initCardForm() {
             const cardTypeVal = cardTypeEl ? cardTypeEl.value : 'JP';
 
             await API.request('saveCard', {
-                id:     cardId || undefined,
-                name:   document.getElementById('cardName').value,
-                type:   cardTypeVal,
+                id: cardId || undefined,
+                name: document.getElementById('cardName').value,
+                type: cardTypeVal,
                 nation: document.getElementById('cardNation').value,
-                owner:  document.getElementById('cardOwner').value,
-                date:   document.getElementById('cardDateReceived').value
+                owner: document.getElementById('cardOwner').value,
+                date: document.getElementById('cardDateReceived').value
             });
             UI.showToast('Kartu berhasil disimpan');
             UI.closeModal('modalCard');
             loadInventory();
-        } catch(err) {
+        } catch (err) {
             console.error(err);
             UI.showToast('Terjadi kesalahan', 'error');
         }
@@ -246,7 +246,7 @@ function initCardForm() {
     });
 }
 
-window.editCard = function(id) {
+window.editCard = function (id) {
     const c = allCards.find(c => c.id === id);
     if (!c) return;
     document.getElementById('cardId').value = c.id;
@@ -256,12 +256,12 @@ window.editCard = function(id) {
     document.getElementById('cardNation').value = c.nation;
     document.getElementById('cardOwner').value = c.owner;
     document.getElementById('cardDateReceived').value = c.date;
-    
+
     document.getElementById('modalCardTitle').textContent = 'Edit Kartu';
     UI.openModal('modalCard');
 };
 
-window.deleteCard = async function(id) {
+window.deleteCard = async function (id) {
     if (!confirm('Hapus kartu ini?')) return;
     try {
         await API.request('deleteCard', { id });
@@ -282,8 +282,8 @@ function initSoldForm() {
                 id: document.getElementById('soldCardId').value,
                 status: 'Waiting Shipment',
                 extra: {
-                    buyer:    document.getElementById('soldBuyer').value,
-                    price:    parseInt(document.getElementById('soldPrice').value),
+                    buyer: document.getElementById('soldBuyer').value,
+                    price: parseInt(document.getElementById('soldPrice').value),
                     soldDate: document.getElementById('soldDate').value
                 }
             });
@@ -295,11 +295,11 @@ function initSoldForm() {
     });
 }
 
-window.openSoldModal = function(id) {
+window.openSoldModal = function (id) {
     const c = allCards.find(c => c.id === id);
     if (!c) return;
     document.getElementById('soldForm').reset();
-    document.getElementById('soldCardId').value  = c.id;
+    document.getElementById('soldCardId').value = c.id;
     document.getElementById('soldCardName').textContent = c.name;
     document.getElementById('soldDate').value = new Date().toISOString().split('T')[0];
     UI.openModal('modalSold');
@@ -310,7 +310,7 @@ function initDetailClose() {
     document.getElementById('modalDetailClose').addEventListener('click', () => UI.closeModal('modalDetail'));
 }
 
-window.viewDetail = function(id) {
+window.viewDetail = function (id) {
     const c = allCards.find(c => c.id === id);
     if (!c) return;
     const sc = UI.statusClass(c.status);
@@ -328,9 +328,9 @@ window.viewDetail = function(id) {
             <div class="detail-section">
                 <div class="detail-section-title">Informasi Penjualan</div>
                 <div class="detail-grid">
-                    ${c.buyer    ? `<div class="detail-field"><div class="detail-label">Pembeli</div><div class="detail-value">${c.buyer}</div></div>` : ''}
+                    ${c.buyer ? `<div class="detail-field"><div class="detail-label">Pembeli</div><div class="detail-value">${c.buyer}</div></div>` : ''}
                     ${c.soldDate ? `<div class="detail-field"><div class="detail-label">Tanggal Jual</div><div class="detail-value">${UI.formatDate(c.soldDate)}</div></div>` : ''}
-                    ${c.price    ? `<div class="detail-field"><div class="detail-label">Harga</div><div class="detail-value">${UI.formatCurrency(c.price)}</div></div>` : ''}
+                    ${c.price ? `<div class="detail-field"><div class="detail-label">Harga</div><div class="detail-value">${UI.formatCurrency(c.price)}</div></div>` : ''}
                 </div>
             </div>`;
     }
@@ -341,7 +341,7 @@ window.viewDetail = function(id) {
                 <div class="detail-section-title">Informasi Pengiriman</div>
                 <div class="detail-grid">
                     ${c.trackingNumber ? `<div class="detail-field"><div class="detail-label">No. Resi</div><div class="detail-value">${c.trackingNumber}</div></div>` : ''}
-                    ${c.shipDate       ? `<div class="detail-field"><div class="detail-label">Tgl Kirim</div><div class="detail-value">${UI.formatDate(c.shipDate)}</div></div>` : ''}
+                    ${c.shipDate ? `<div class="detail-field"><div class="detail-label">Tgl Kirim</div><div class="detail-value">${UI.formatDate(c.shipDate)}</div></div>` : ''}
                 </div>
                 ${c.shipProofUrl ? `<a href="${c.shipProofUrl}" target="_blank" class="btn-link-block">Lihat Bukti Kirim →</a>` : ''}
             </div>`;

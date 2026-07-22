@@ -26,7 +26,17 @@ const API = {
             body,
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
-        const json = await res.json();
+        const text = await res.text();
+        let json;
+        try {
+            json = JSON.parse(text);
+        } catch (e) {
+            console.error('GAS Raw Response:', text);
+            if (text.includes('Script function not found: doGet')) {
+                throw new Error('Google Apps Script belum memiliki fungsi doGet(e). Silakan perbarui kode backend.gs di Google Apps Script dan Deploy ulang (New Deployment).');
+            }
+            throw new Error('Gagal memproses respon server: Respon bukan JSON yang valid.');
+        }
         if (json.status === 'error') throw new Error(json.message);
         return json.data;
     },
