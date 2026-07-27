@@ -150,6 +150,21 @@ const API = {
                 }
                 throw new Error('Card not found');
             }
+            case 'batchUpdateCardStatus': {
+                // Update banyak kartu sekaligus dengan status & extra yang sama
+                let list = inv();
+                const ids = payload.ids || [];
+                let updatedCount = 0;
+                for (const id of ids) {
+                    const idx = list.findIndex(c => c.id === id);
+                    if (idx !== -1) {
+                        list[idx] = { ...list[idx], status: payload.status, ...payload.extra };
+                        updatedCount++;
+                    }
+                }
+                save('ag_inventory', list);
+                return { updated: updatedCount };
+            }
 
             // Auctions
             case 'getAuctions': return aucs();
