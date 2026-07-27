@@ -145,6 +145,9 @@ const API = {
                 const i = list.findIndex(c => c.id === payload.id);
                 if (i !== -1) {
                     list[i] = { ...list[i], status: payload.status, ...payload.extra };
+                    if (payload.extra && payload.extra.commission !== undefined) {
+                        list[i].commission = payload.extra.commission;
+                    }
                     save('ag_inventory', list);
                     return list[i];
                 }
@@ -159,6 +162,9 @@ const API = {
                     const idx = list.findIndex(c => c.id === id);
                     if (idx !== -1) {
                         list[idx] = { ...list[idx], status: payload.status, ...payload.extra };
+                        if (payload.extra && payload.extra.commission !== undefined) {
+                            list[idx].commission = payload.extra.commission;
+                        }
                         updatedCount++;
                     }
                 }

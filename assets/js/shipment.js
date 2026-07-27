@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initSingleForm();
     initBatchForm();
     initToolbar();
+    initFilters();
 });
 
 // ─── Load Data ────────────────────────────────────────────────────────────────
@@ -27,22 +28,80 @@ async function load() {
         shipCards = inv.filter(c => c.status === 'Waiting Shipment');
         selectedIds.clear();
         updateToolbar();
-
-        if (!shipCards.length) {
-            document.getElementById('batchToolbar').style.display = 'none';
-            container.innerHTML = '<p class="empty-msg" style="padding:40px;text-align:center;">Tidak ada kartu menunggu pengiriman.</p>';
-            return;
-        }
-
-        document.getElementById('batchToolbar').style.display = 'flex';
-        renderTable(container);
+        populateFilterOptions();
+        applyFilters();
     } catch {
         UI.showToast('Gagal memuat data pengiriman', 'error');
     }
 }
 
+// ─── Filter Options ───────────────────────────────────────────────────────────
+function populateFilterOptions() {
+    const ownerSel = document.getElementById('shipFilterOwner');
+    const buyerSel = document.getElementById('shipFilterBuyer');
+
+    const owners = [...new Set(shipCards.map(c => c.owner).filter(Boolean))].sort();
+    const buyers = [...new Set(shipCards.map(c => c.buyer).filter(Boolean))].sort();
+
+    const savedOwner = ownerSel.value;
+    const savedBuyer = buyerSel.value;
+
+    ownerSel.innerHTML = '<option value="">Semua Pemilik</option>' +
+        owners.map(o => `<option value="${o}"${o === savedOwner ? ' selected' : ''}>${o}</option>`).join('');
+    buyerSel.innerHTML = '<option value="">Semua Pembeli</option>' +
+        buyers.map(b => `<option value="${b}"${b === savedBuyer ? ' selected' : ''}>${b}</option>`).join('');
+}
+
+function initFilters() {
+    document.getElementById('shipFilterOwner').addEventListener('change', applyFilters);
+    document.getElementById('shipFilterBuyer').addEventListener('change', applyFilters);
+    document.getElementById('shipFilterSearch').addEventListener('input', applyFilters);
+    document.getElementById('shipBtnClearFilter').addEventListener('click', () => {
+        document.getElementById('shipFilterOwner').value = '';
+        document.getElementById('shipFilterBuyer').value = '';
+        document.getElementById('shipFilterSearch').value = '';
+        applyFilters();
+    });
+}
+
+function applyFilters() {
+    const owner  = document.getElementById('shipFilterOwner').value;
+    const buyer  = document.getElementById('shipFilterBuyer').value;
+    const search = document.getElementById('shipFilterSearch').value.toLowerCase().trim();
+
+    const filtered = shipCards.filter(c => {
+        if (owner  && c.owner !== owner)  return false;
+        if (buyer  && c.buyer !== buyer)  return false;
+        if (search && !c.name.toLowerCase().includes(search)) return false;
+        return true;
+    });
+
+    // Uncheck items no longer visible
+    const visibleIds = new Set(filtered.map(c => c.id));
+    for (const id of [...selectedIds]) {
+        if (!visibleIds.has(id)) selectedIds.delete(id);
+    }
+
+    const container = document.getElementById('shipmentList');
+    if (!shipCards.length) {
+        document.getElementById('batchToolbar').style.display = 'none';
+        container.innerHTML = '<p class="empty-msg" style="padding:40px;text-align:center;">Tidak ada kartu menunggu pengiriman.</p>';
+        return;
+    }
+    document.getElementById('batchToolbar').style.display = 'flex';
+
+    if (!filtered.length) {
+        container.innerHTML = '<p class="empty-msg" style="padding:40px;text-align:center;">Tidak ada kartu yang cocok dengan filter.</p>';
+        updateToolbar();
+        return;
+    }
+
+    renderTable(container, filtered);
+    updateToolbar();
+}
+
 // ─── Render Tabel ─────────────────────────────────────────────────────────────
-function renderTable(container) {
+function renderTable(container, cards) {
     container.innerHTML = `
         <table class="data-table">
             <thead>
@@ -59,7 +118,7 @@ function renderTable(container) {
                 </tr>
             </thead>
             <tbody>
-                ${shipCards.map(c => `
+                ${cards.map(c => `
                 <tr id="row-${c.id}">
                     <td class="col-check">
                         <input type="checkbox" class="ship-checkbox" data-id="${c.id}" />
