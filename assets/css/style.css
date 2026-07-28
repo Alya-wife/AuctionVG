@@ -408,6 +408,10 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--primary);
   outline: none;
 }
+.form-group select option {
+  background: var(--bg-dark);
+  color: var(--text-main);
+}
 .modal-footer {
   padding-top: 16px;
   border-top: 1px solid var(--border-color);
@@ -645,6 +649,10 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: var(--radius-md);
   min-width: 150px;
 }
+.filter-select option {
+  background: #0f172a;
+  color: #f8fafc;
+}
 .sort-bar {
   display: flex;
   justify-content: space-between;
@@ -663,6 +671,10 @@ h1, h2, h3, h4, h5, h6 {
   padding: 6px 12px;
   border-radius: var(--radius-sm);
   font-size: 0.9rem;
+}
+.filter-select-sm option {
+  background: #0f172a;
+  color: #f8fafc;
 }
 
 /* Pagination */
