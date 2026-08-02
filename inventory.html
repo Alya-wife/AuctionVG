@@ -176,7 +176,10 @@
         <div class="form-row">
           <div class="form-group">
             <label for="soldPrice">Harga Jual (Rp) *</label>
-            <input type="number" id="soldPrice" required min="0" placeholder="150000" />
+            <div class="commission-input-wrap">
+              <span class="prefix">Rp</span>
+              <input type="text" class="currency-input" id="soldPrice" required placeholder="150000" />
+            </div>
           </div>
           <div class="form-group">
             <label for="soldDate">Tanggal Jual *</label>

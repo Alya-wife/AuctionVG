@@ -243,7 +243,7 @@ function initSingleForm() {
         const btn = e.target.querySelector('[type=submit]');
         btn.disabled = true;
         try {
-            const commission = parseFloat(document.getElementById('payCommission').value) || 0;
+            const commission = UI.parseCurrency(document.getElementById('payCommission').value);
             await API.request('updateCardStatus', {
                 id: document.getElementById('payCardId').value,
                 status: 'Completed',
@@ -300,18 +300,6 @@ function openBatchModal() {
                 <div class="bci-owner">Pemilik: ${c.owner || '-'} · Pembeli: ${c.buyer || '-'}</div>
             </div>
             <div class="bci-price">${c.price ? UI.formatCurrency(c.price) : '-'}</div>
-            <div class="bci-commission">
-                <span style="color:var(--text-muted);font-size:.75rem">Komisi Rp</span>
-                <input
-                    type="number"
-                    class="batch-commission-input"
-                    data-id="${c.id}"
-                    min="0"
-                    step="500"
-                    placeholder="0"
-                    title="Komisi untuk ${c.name}"
-                />
-            </div>
         </div>`).join('');
 
     const noteEl = document.getElementById('batchPaySummaryNote');
@@ -319,6 +307,7 @@ function openBatchModal() {
 
     document.getElementById('batchPayForm').reset();
     document.getElementById('batchPayDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('batchPayCommission').value = '';
 
     UI.openModal('modalBatchPayment');
 }
@@ -333,37 +322,17 @@ async function handleBatchSubmit(e) {
     btn.disabled = true;
 
     try {
-        // Kumpulkan komisi per kartu dari batch modal
-        const commissionMap = {};
-        document.querySelectorAll('.batch-commission-input').forEach(inp => {
-            commissionMap[inp.dataset.id] = parseFloat(inp.value) || 0;
-        });
+        const batchCommission = UI.parseCurrency(document.getElementById('batchPayCommission').value);
 
-        // Coba batchUpdateCardStatus jika semua komisi sama / bisa diperlakukan seragam
-        // Karena komisi bisa berbeda per kartu, kita lakukan sequential
         try {
             await API.request('batchUpdateCardStatus', {
                 ids,
                 status: 'Completed',
                 extra: {
                     payoutDate:  payDate,
-                    commission:  0 // default, akan di-override per kartu di bawah jika berbeda
+                    commission:  batchCommission
                 }
             });
-
-            // Override komisi per kartu jika ada yang tidak 0
-            const hasCustomComm = ids.some(id => commissionMap[id] > 0);
-            if (hasCustomComm) {
-                for (const id of ids) {
-                    if (commissionMap[id] > 0) {
-                        await API.request('updateCardStatus', {
-                            id,
-                            status: 'Completed',
-                            extra: { payoutDate: payDate, commission: commissionMap[id] }
-                        });
-                    }
-                }
-            }
         } catch (batchErr) {
             // Fallback sequential jika batch endpoint belum ada
             console.warn('[Batch Payment] Fallback ke sequential:', batchErr.message);
@@ -373,7 +342,7 @@ async function handleBatchSubmit(e) {
                     status: 'Completed',
                     extra: {
                         payoutDate: payDate,
-                        commission: commissionMap[id] || 0
+                        commission: batchCommission
                     }
                 });
             }

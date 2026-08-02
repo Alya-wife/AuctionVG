@@ -85,10 +85,15 @@ function applyFilters() {
     });
 
     filteredCards.sort((a, b) => {
+        const aAvail = a.status === 'Available' ? 0 : 1;
+        const bAvail = b.status === 'Available' ? 0 : 1;
+        if (aAvail !== bAvail) return aAvail - bAvail;
+
         if (sort === 'date_desc') return new Date(b.date) - new Date(a.date);
         if (sort === 'date_asc') return new Date(a.date) - new Date(b.date);
         if (sort === 'name_asc') return a.name.localeCompare(b.name);
         if (sort === 'name_desc') return b.name.localeCompare(a.name);
+        return 0;
     });
 
     document.getElementById('totalCount').textContent = `${filteredCards.length} kartu`;
@@ -283,7 +288,7 @@ function initSoldForm() {
                 status: 'Waiting Shipment',
                 extra: {
                     buyer: document.getElementById('soldBuyer').value,
-                    price: parseInt(document.getElementById('soldPrice').value),
+                    price: UI.parseCurrency(document.getElementById('soldPrice').value),
                     soldDate: document.getElementById('soldDate').value
                 }
             });

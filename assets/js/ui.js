@@ -12,6 +12,20 @@ const UI = {
         this.buildSidebar();
         this.initModals();
         this.initUserInfo();
+        this.initCurrencyInputs();
+    },
+
+    initCurrencyInputs() {
+        document.addEventListener('input', (e) => {
+            if (e.target && e.target.classList.contains('currency-input')) {
+                let value = e.target.value.replace(/[^0-9]/g, '');
+                if (value !== '') {
+                    e.target.value = parseInt(value, 10).toLocaleString('id-ID');
+                } else {
+                    e.target.value = '';
+                }
+            }
+        });
     },
 
     buildSidebar() {
@@ -103,6 +117,12 @@ const UI = {
 
     formatCurrency(n) {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
+    },
+
+    parseCurrency(value) {
+        if (!value) return 0;
+        if (typeof value === 'number') return value;
+        return parseFloat(value.toString().replace(/\./g, '')) || 0;
     },
 
     formatDate(d) {

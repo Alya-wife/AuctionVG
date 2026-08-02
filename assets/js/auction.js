@@ -143,7 +143,7 @@ window.openFinishModal = async function(id) {
             </div>
             <div id="inputs_${c.id}" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:8px;display:none">
                 <div><label class="form-label-sm">Pembeli</label><input type="text" id="buyer_${c.id}" class="input-sm" placeholder="Nama pembeli"></div>
-                <div><label class="form-label-sm">Harga</label><input type="number" id="price_${c.id}" class="input-sm" placeholder="Harga jual"></div>
+                <div><label class="form-label-sm">Harga</label><input type="text" id="price_${c.id}" class="currency-input input-sm" placeholder="Harga jual"></div>
             </div>
         </div>`).join('');
 };
@@ -161,9 +161,9 @@ async function confirmFinish() {
         const isSold = document.querySelector(`input[name="res_${c.id}"]:checked`)?.value === 'sold';
         if (isSold) {
             const buyer = document.getElementById(`buyer_${c.id}`).value;
-            const price = document.getElementById(`price_${c.id}`).value;
+            const price = UI.parseCurrency(document.getElementById(`price_${c.id}`).value);
             if (!buyer || !price) { valid = false; return; }
-            results.push({ cardId: c.id, sold: true, buyer, price: parseInt(price) });
+            results.push({ cardId: c.id, sold: true, buyer, price: price });
         } else {
             results.push({ cardId: c.id, sold: false });
         }

@@ -284,7 +284,7 @@
             <label for="payCommission">Komisi (Rp)</label>
             <div class="commission-input-wrap">
               <span class="prefix">Rp</span>
-              <input type="number" id="payCommission" min="0" step="500" placeholder="0" />
+              <input type="text" class="currency-input" id="payCommission" placeholder="0" />
             </div>
             <div class="commission-hint">Komisi yang dipotong dari harga jual</div>
           </div>
@@ -316,6 +316,14 @@
           <div class="form-group">
             <label for="batchPayDate">Tanggal Transfer *</label>
             <input type="date" id="batchPayDate" required />
+          </div>
+          <div class="form-group">
+            <label for="batchPayCommission">Komisi Batch (Rp)</label>
+            <div class="commission-input-wrap">
+              <span class="prefix">Rp</span>
+              <input type="text" class="currency-input" id="batchPayCommission" placeholder="0" />
+            </div>
+            <div class="commission-hint">Opsional. Disimpan ke setiap kartu</div>
           </div>
         </div>
 
