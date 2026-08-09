@@ -1,11 +1,13 @@
 let allCards = [];
 let filteredCards = [];
 let currentView = 'grid';
+let currentStatusFilter = 'Available'; // Default: tampilkan Available
 const PAGE_SIZE = 12;
 let currentPage = 1;
 
 document.addEventListener('DOMContentLoaded', () => {
     initFilters();
+    initStatusPills();
     initCardForm();
     initSoldForm();
     initDetailClose();
@@ -39,7 +41,7 @@ function populateOwnerFilter() {
 }
 
 function initFilters() {
-    ['searchInput', 'filterOwner', 'filterType', 'filterNation', 'filterStatus', 'sortBy'].forEach(id => {
+    ['searchInput', 'filterOwner', 'filterType', 'filterNation', 'sortBy'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', () => { currentPage = 1; applyFilters(); });
@@ -47,16 +49,36 @@ function initFilters() {
         }
     });
     document.getElementById('resetFilter').addEventListener('click', () => {
-        ['searchInput', 'filterOwner', 'filterType', 'filterNation', 'filterStatus'].forEach(id => {
+        ['searchInput', 'filterOwner', 'filterType', 'filterNation'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
         document.getElementById('sortBy').value = 'date_desc';
+        // Reset status ke Available
+        setStatusPill('Available');
         currentPage = 1;
         applyFilters();
     });
     document.getElementById('viewGrid').addEventListener('click', () => { currentView = 'grid'; toggleViewBtn(); renderCards(); });
     document.getElementById('viewList').addEventListener('click', () => { currentView = 'list'; toggleViewBtn(); renderCards(); });
+}
+
+function initStatusPills() {
+    document.querySelectorAll('.status-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const status = btn.dataset.status;
+            setStatusPill(status);
+            currentPage = 1;
+            applyFilters();
+        });
+    });
+}
+
+function setStatusPill(status) {
+    currentStatusFilter = status;
+    document.querySelectorAll('.status-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === status);
+    });
 }
 
 function toggleViewBtn() {
@@ -71,7 +93,7 @@ function applyFilters() {
     const typeEl = document.getElementById('filterType');
     const typeVal = typeEl ? typeEl.value : '';
     const nation = document.getElementById('filterNation').value;
-    const status = document.getElementById('filterStatus').value;
+    const status = currentStatusFilter; // gunakan state pill, bukan select
     const sort = document.getElementById('sortBy').value;
 
     filteredCards = allCards.filter(c => {

@@ -26,6 +26,12 @@ async function load() {
     try {
         const inv = await API.request('getInventory');
         shipCards = inv.filter(c => c.status === 'Waiting Shipment');
+        // Urutkan: tanggal jual terbaru dulu, lalu nama kartu A-Z sebagai tie-breaker
+        shipCards.sort((a, b) => {
+            const dateDiff = new Date(b.soldDate || b.date || 0) - new Date(a.soldDate || a.date || 0);
+            if (dateDiff !== 0) return dateDiff;
+            return (a.name || '').localeCompare(b.name || '', 'id');
+        });
         selectedIds.clear();
         updateToolbar();
         populateFilterOptions();

@@ -9,6 +9,69 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/style.css" />
+  <style>
+    /* ── Status Filter Pills ── */
+    .status-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .status-filter-group label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text-secondary, #8898aa);
+      white-space: nowrap;
+      margin-right: 2px;
+    }
+    .status-pill {
+      padding: 5px 13px;
+      border-radius: 20px;
+      border: 1.5px solid rgba(255,255,255,.12);
+      background: transparent;
+      color: var(--text-secondary, #8898aa);
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .status-pill:hover {
+      border-color: rgba(255,255,255,.3);
+      color: var(--text-primary, #f0f4ff);
+      background: rgba(255,255,255,.06);
+    }
+    .status-pill.active[data-status=""] {
+      border-color: #8898aa;
+      background: rgba(136,152,170,.15);
+      color: #d0dce8;
+    }
+    .status-pill.active[data-status="Available"] {
+      border-color: #10b981;
+      background: rgba(16,185,129,.15);
+      color: #10b981;
+    }
+    .status-pill.active[data-status="Auction"] {
+      border-color: #f59e0b;
+      background: rgba(245,158,11,.15);
+      color: #f59e0b;
+    }
+    .status-pill.active[data-status="Waiting Shipment"] {
+      border-color: #4F8EF7;
+      background: rgba(79,142,247,.15);
+      color: #4F8EF7;
+    }
+    .status-pill.active[data-status="Waiting Payment"] {
+      border-color: #a78bfa;
+      background: rgba(167,139,250,.15);
+      color: #a78bfa;
+    }
+    .status-pill.active[data-status="Completed"] {
+      border-color: #6b7a90;
+      background: rgba(107,122,144,.12);
+      color: #9aacbe;
+    }
+  </style>
 </head>
 <body>
   <div class="app-layout">
@@ -55,17 +118,18 @@
             <option value="Brandt Gate">Brandt Gate</option>
             <option value="Keter Sanctuary">Keter Sanctuary</option>
           </select>
-          <select id="filterStatus" class="filter-select">
-            <option value="">Semua Status</option>
-            <option value="Available">Available</option>
-            <option value="Auction">Di Lelang</option>
-            <option value="Sold">Sold</option>
-            <option value="Waiting Shipment">Menunggu Kirim</option>
-            <option value="Shipped">Dikirim</option>
-            <option value="Waiting Payment">Menunggu Bayar</option>
-            <option value="Completed">Selesai</option>
-          </select>
           <button class="btn-ghost" id="resetFilter">Reset</button>
+        </div>
+
+        <!-- Status Filter Pills -->
+        <div class="status-filter-group" id="statusFilterGroup">
+          <label>Status:</label>
+          <button class="status-pill active" data-status="Available" id="pillAvailable">✓ Available</button>
+          <button class="status-pill" data-status="Auction" id="pillAuction">🔨 Lelang</button>
+          <button class="status-pill" data-status="Waiting Shipment" id="pillWaitShip">📦 Waiting Shipment</button>
+          <button class="status-pill" data-status="Waiting Payment" id="pillWaitPay">💳 Waiting Payment</button>
+          <button class="status-pill" data-status="Completed" id="pillCompleted">✅ Completed</button>
+          <button class="status-pill" data-status="" id="pillAll">Semua</button>
         </div>
 
         <!-- Sort Bar -->
