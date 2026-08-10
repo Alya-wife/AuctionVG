@@ -212,6 +212,133 @@
       font-size: .78rem;
       text-align: right;
     }
+
+    /* ── Transfer Summary Panel ── */
+    .transfer-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .transfer-summary-title {
+      width: 100%;
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--text-secondary, #8898aa);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: -4px;
+    }
+    .transfer-owner-card {
+      flex: 1;
+      min-width: 180px;
+      background: linear-gradient(135deg, rgba(16,185,129,.12), rgba(5,150,105,.06));
+      border: 1px solid rgba(16,185,129,.25);
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: transform .2s, box-shadow .2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .transfer-owner-card::before {
+      content: '';
+      position: absolute;
+      top: -18px; right: -18px;
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,185,129,.18), transparent);
+    }
+    .transfer-owner-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,.2); }
+    .transfer-owner-name {
+      font-size: .78rem;
+      color: var(--text-secondary, #8898aa);
+      font-weight: 600;
+    }
+    .transfer-owner-cards-count {
+      font-size: .72rem;
+      color: var(--text-muted, #6b7a90);
+    }
+    .transfer-owner-amount {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #10b981;
+      margin-top: 4px;
+      font-family: 'Outfit', sans-serif;
+    }
+    .transfer-grand-total {
+      flex: 1;
+      min-width: 180px;
+      background: linear-gradient(135deg, rgba(99,102,241,.14), rgba(79,70,229,.08));
+      border: 1px solid rgba(99,102,241,.3);
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .transfer-grand-total::before {
+      content: '';
+      position: absolute;
+      top: -18px; right: -18px;
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99,102,241,.2), transparent);
+    }
+    .transfer-grand-total .transfer-owner-name { color: #a5b4fc; }
+    .transfer-grand-total .transfer-owner-amount { color: #818cf8; font-size: 1.25rem; }
+
+    /* ── Transfer amount in single modal ── */
+    .pay-transfer-box {
+      margin: 12px 0;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(16,185,129,.12), rgba(5,150,105,.06));
+      border: 1px solid rgba(16,185,129,.25);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .pay-transfer-label {
+      font-size: .8rem;
+      color: var(--text-secondary, #8898aa);
+      font-weight: 600;
+    }
+    .pay-transfer-amount {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #10b981;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* ── Batch total box ── */
+    .batch-total-box {
+      margin: 10px 0 4px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(79,70,229,.06));
+      border: 1px solid rgba(99,102,241,.25);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .batch-total-label {
+      font-size: .8rem;
+      color: #a5b4fc;
+      font-weight: 600;
+    }
+    .batch-total-amount {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #818cf8;
+      font-family: 'Outfit', sans-serif;
+    }
   </style>
 </head>
 <body>
@@ -240,6 +367,9 @@
           <input class="filter-search" type="search" id="filterSearch" placeholder="Cari nama kartu…" />
           <button class="btn-filter-clear" id="btnClearFilter">Reset</button>
         </div>
+
+        <!-- Transfer Summary Panel -->
+        <div class="transfer-summary" id="transferSummary" style="display:none"></div>
 
         <!-- Batch Toolbar -->
         <div class="batch-toolbar" id="batchToolbar">
@@ -273,6 +403,7 @@
       </div>
       <form id="paymentForm" class="modal-form">
         <input type="hidden" id="payCardId" />
+        <input type="hidden" id="payRawPrice" />
         <p class="modal-subtitle">Kartu: <strong id="payCardName"></strong></p>
         <p class="modal-subtitle">Pemilik: <strong id="payOwner"></strong> | Harga Jual: <strong id="payPrice"></strong></p>
         <div class="form-row">
@@ -288,6 +419,12 @@
             </div>
             <div class="commission-hint">Komisi yang dipotong dari harga jual</div>
           </div>
+        </div>
+
+        <!-- Total Transfer Display -->
+        <div class="pay-transfer-box">
+          <div class="pay-transfer-label">💸 Total yang Harus Ditransfer ke Pemilik</div>
+          <div class="pay-transfer-amount" id="payTransferAmount">Rp 0</div>
         </div>
 
         <div class="modal-footer">
@@ -318,13 +455,19 @@
             <input type="date" id="batchPayDate" required />
           </div>
           <div class="form-group">
-            <label for="batchPayCommission">Komisi Batch (Rp)</label>
+            <label for="batchPayCommission">Komisi per Kartu (Rp)</label>
             <div class="commission-input-wrap">
               <span class="prefix">Rp</span>
               <input type="text" class="currency-input" id="batchPayCommission" placeholder="0" />
             </div>
-            <div class="commission-hint">Opsional. Disimpan ke setiap kartu</div>
+            <div class="commission-hint">Dipotong dari tiap kartu. Opsional.</div>
           </div>
+        </div>
+
+        <!-- Batch Total Transfer Display -->
+        <div class="batch-total-box">
+          <div class="batch-total-label">💸 Total Transfer ke Semua Pemilik</div>
+          <div class="batch-total-amount" id="batchTransferTotal">Rp 0</div>
         </div>
 
         <div class="modal-footer">

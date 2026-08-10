@@ -90,7 +90,50 @@ function applyFilters() {
     }
 
     renderTable(filtered);
+    renderTransferSummary(filtered);
     updateToolbar();
+}
+
+// ─── Transfer Summary Per Pemilik ─────────────────────────────────────────────
+function renderTransferSummary(cards) {
+    const panel = document.getElementById('transferSummary');
+    if (!panel) return;
+
+    if (!cards || !cards.length) {
+        panel.style.display = 'none';
+        return;
+    }
+
+    // Kelompokkan per pemilik
+    const ownerMap = {};
+    let grandTotal = 0;
+
+    cards.forEach(c => {
+        const owner = c.owner || 'Tidak Diketahui';
+        const price = Number(c.price) || 0;
+        if (!ownerMap[owner]) ownerMap[owner] = { count: 0, total: 0 };
+        ownerMap[owner].count++;
+        ownerMap[owner].total += price;
+        grandTotal += price;
+    });
+
+    const owners = Object.entries(ownerMap).sort((a, b) => b[1].total - a[1].total);
+
+    panel.innerHTML = `
+        <div class="transfer-summary-title">💳 Ringkasan Transfer ke Pemilik</div>
+        ${owners.map(([name, data]) => `
+        <div class="transfer-owner-card">
+            <div class="transfer-owner-name">${name}</div>
+            <div class="transfer-owner-cards-count">${data.count} kartu menunggu</div>
+            <div class="transfer-owner-amount">${UI.formatCurrency(data.total)}</div>
+        </div>`).join('')}
+        <div class="transfer-grand-total">
+            <div class="transfer-owner-name">TOTAL SEMUA PEMILIK</div>
+            <div class="transfer-owner-cards-count">${cards.length} kartu</div>
+            <div class="transfer-owner-amount">${UI.formatCurrency(grandTotal)}</div>
+        </div>`;
+
+    panel.style.display = 'flex';
 }
 
 // ─── Render Tabel ─────────────────────────────────────────────────────────────
@@ -244,6 +287,9 @@ function initSingleForm() {
     document.getElementById('cancelPayBtn')?.addEventListener('click', () => UI.closeModal('modalPayment'));
     document.getElementById('modalPaymentClose')?.addEventListener('click', () => UI.closeModal('modalPayment'));
 
+    // Real-time transfer amount calculation
+    document.getElementById('payCommission')?.addEventListener('input', updateSingleTransferAmount);
+
     document.getElementById('paymentForm')?.addEventListener('submit', async e => {
         e.preventDefault();
         const btn = e.target.querySelector('[type=submit]');
@@ -274,19 +320,46 @@ window.openPayModal = function(id) {
     if (!c) return;
     document.getElementById('paymentForm').reset();
     document.getElementById('payCardId').value        = c.id;
+    document.getElementById('payRawPrice').value      = c.price || 0;
     document.getElementById('payCardName').textContent = c.name;
     document.getElementById('payOwner').textContent   = c.owner;
     document.getElementById('payPrice').textContent   = UI.formatCurrency(c.price || 0);
     document.getElementById('payDate').value          = new Date().toISOString().split('T')[0];
     document.getElementById('payCommission').value    = '';
+    updateSingleTransferAmount();
     UI.openModal('modalPayment');
 };
+
+function updateSingleTransferAmount() {
+    const rawPrice  = Number(document.getElementById('payRawPrice')?.value) || 0;
+    const commInput = document.getElementById('payCommission')?.value || '';
+    const commission = UI.parseCurrency(commInput);
+    const transfer  = Math.max(0, rawPrice - commission);
+    const el = document.getElementById('payTransferAmount');
+    if (el) el.textContent = UI.formatCurrency(transfer);
+}
 
 // ─── Batch Payment ────────────────────────────────────────────────────────────
 function initBatchForm() {
     document.getElementById('cancelBatchPayBtn')?.addEventListener('click', () => UI.closeModal('modalBatchPayment'));
     document.getElementById('modalBatchPayClose')?.addEventListener('click',  () => UI.closeModal('modalBatchPayment'));
     document.getElementById('batchPayForm')?.addEventListener('submit', handleBatchSubmit);
+
+    // Real-time total saat komisi batch diubah
+    document.getElementById('batchPayCommission')?.addEventListener('input', () => {
+        const selected = payCards.filter(c => selectedIds.has(c.id));
+        const commission = UI.parseCurrency(document.getElementById('batchPayCommission').value);
+        updateBatchTransferTotal(selected, commission);
+    });
+}
+
+function updateBatchTransferTotal(selected, commissionPerCard) {
+    const total = selected.reduce((sum, c) => {
+        const price = Number(c.price) || 0;
+        return sum + Math.max(0, price - commissionPerCard);
+    }, 0);
+    const el = document.getElementById('batchTransferTotal');
+    if (el) el.textContent = UI.formatCurrency(total);
 }
 
 function openBatchModal() {
@@ -314,6 +387,9 @@ function openBatchModal() {
     document.getElementById('batchPayForm').reset();
     document.getElementById('batchPayDate').value = new Date().toISOString().split('T')[0];
     document.getElementById('batchPayCommission').value = '';
+
+    // Hitung & tampilkan total awal (tanpa komisi)
+    updateBatchTransferTotal(selected, 0);
 
     UI.openModal('modalBatchPayment');
 }
