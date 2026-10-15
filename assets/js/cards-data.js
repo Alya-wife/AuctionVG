@@ -273,6 +273,28 @@ const CardDB = {
     return `assets/images/cards/${imageFileName}`;
   },
 
+  updateCard(id, updatedData) {
+    this.init();
+    const idx = this._cards.findIndex(c => c.id === id);
+    if (idx !== -1) {
+      this._cards[idx] = { ...this._cards[idx], ...updatedData };
+      try {
+        localStorage.setItem('nitip_card_database', JSON.stringify(this._cards));
+      } catch (e) {}
+      return this._cards[idx];
+    }
+    return null;
+  },
+
+  deleteCard(id) {
+    this.init();
+    this._cards = this._cards.filter(c => c.id !== id);
+    try {
+      localStorage.setItem('nitip_card_database', JSON.stringify(this._cards));
+    } catch (e) {}
+    return true;
+  },
+
   addCard(card) {
     this.init();
     this._cards.push(card);

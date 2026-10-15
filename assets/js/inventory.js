@@ -286,8 +286,91 @@ window.goPage = function (p) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// ──────────── CARD FORM & VISUAL CATALOG PICKER ──────────────────────────────
-let selectedPickerCard = null;
+// ════════════ CARD FORM & VISUAL CATALOG PICKER (2-COLUMN MULTI-CARD) ════════════
+let selectedTitipCards = [];
+
+function renderSelectedCardsList() {
+    const container = document.getElementById('selectedCardsContainer');
+    const countBadge = document.getElementById('selectedCardsCount');
+    const saveBtnText = document.getElementById('saveCardBtnText');
+
+    const count = selectedTitipCards.length;
+    if (countBadge) {
+        countBadge.textContent = `${count} Kartu`;
+    }
+    if (saveBtnText) {
+        saveBtnText.textContent = count > 0 ? `Simpan ${count} Kartu ke Inventory` : 'Simpan Kartu ke Inventory';
+    }
+
+    if (!container) return;
+
+    if (count === 0) {
+        container.innerHTML = `
+            <div class="selected-cards-empty">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                <p>Belum ada kartu dipilih</p>
+                <small>Klik gambar kartu di sebelah kanan untuk menambahkan (bisa lebih dari 1 kartu)</small>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = selectedTitipCards.map((c, idx) => {
+        const imgUrl = window.CardDB ? CardDB.getImageUrl(c.image) : (c.image || 'assets/images/cards/placeholder_card.svg');
+        return `
+            <div class="selected-card-chip">
+                <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
+                <div class="selected-card-chip-info">
+                    <div class="selected-card-chip-name" title="${c.name}">${c.name}</div>
+                    <div class="selected-card-chip-sub">${c.set || 'Promo'} &bull; ${c.nation || ''}</div>
+                </div>
+                <button type="button" class="btn-remove-selected-card" onclick="removeSelectedTitipCard(${idx})" title="Hapus kartu ini dari daftar titip">
+                    &times;
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+window.togglePickerCard = function(cardId) {
+    if (!window.CardDB) return;
+    const card = CardDB.getById(cardId);
+    if (!card) return;
+
+    // Tambahkan kartu ke daftar titipan
+    selectedTitipCards.push({
+        id: card.id,
+        name: card.name,
+        set: card.set || 'Promo',
+        grade: card.grade !== undefined ? card.grade : '3',
+        language: card.language || card.type || 'JP',
+        nation: card.nation || '',
+        image: card.image || ''
+    });
+
+    renderSelectedCardsList();
+
+    // Re-render gallery untuk update counter badge pada kartu
+    if (window._renderModalGalleryFn) {
+        window._renderModalGalleryFn();
+    }
+
+    // Auto-focus ke input pemilik jika masih kosong
+    const ownerInput = document.getElementById('cardOwner');
+    if (ownerInput && !ownerInput.value) {
+        ownerInput.focus();
+    }
+};
+
+window.removeSelectedTitipCard = function(index) {
+    if (index >= 0 && index < selectedTitipCards.length) {
+        selectedTitipCards.splice(index, 1);
+        renderSelectedCardsList();
+        if (window._renderModalGalleryFn) {
+            window._renderModalGalleryFn();
+        }
+    }
+};
 
 function initCardForm() {
     const searchInput = document.getElementById('modalPickerSearch');
@@ -295,7 +378,6 @@ function initCardForm() {
     const nationFilter = document.getElementById('modalPickerNation');
     const gradeFilter = document.getElementById('modalPickerGrade');
     const galleryContainer = document.getElementById('pickerCardsGallery');
-    const banner = document.getElementById('selectedCardBanner');
 
     function populateModalPickerSets() {
         if (!setFilter || !window.CardDB) return;
@@ -321,73 +403,29 @@ function initCardForm() {
         });
 
         if (!filtered.length) {
-            galleryContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 24px;">Tidak ada kartu ditemukan.</div>';
+            galleryContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 32px 16px;">Tidak ada kartu cocok dengan pencarian / filter.</div>';
             return;
         }
 
         galleryContainer.innerHTML = filtered.map(c => {
-            const isSel = selectedPickerCard && (selectedPickerCard.id === c.id || selectedPickerCard.name === c.name);
-            const lang = (c.language || c.type || 'JP').toUpperCase();
+            const countInSelected = selectedTitipCards.filter(sc => sc.id === c.id || sc.name === c.name).length;
+            const isSel = countInSelected > 0;
             const imgUrl = CardDB.getImageUrl(c.image);
-            const gradeBadge = (c.grade !== undefined && c.grade !== null && c.grade !== '') ? `<span class="card-grade-badge grade-${c.grade}" style="font-size:0.65rem;padding:1px 5px;">G${c.grade}</span>` : '';
-            const langBadge = `<span class="card-lang-badge lang-${lang.toLowerCase()}" style="font-size:0.62rem;padding:1px 4px;">${lang}</span>`;
+            const countBadge = isSel ? `<span class="picker-selected-badge">${countInSelected}x</span>` : '';
 
+            // HANYA GAMBAR KARTU SAJA (tanpa badge grade, nation, dkk)
             return `
-                <div class="picker-thumb-card ${isSel ? 'selected' : ''}" data-card-id="${c.id}" onclick="selectCardInModal('${c.id}')">
+                <div class="picker-thumb-card ${isSel ? 'selected' : ''}" data-card-id="${c.id}" onclick="togglePickerCard('${c.id}')" title="${c.name} - ${c.set || 'Promo'} (Klik untuk menambah)">
                     <div class="picker-thumb-img-wrap">
                         <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
-                        ${gradeBadge}
-                        ${langBadge}
-                    </div>
-                    <div class="picker-thumb-info">
-                        <div class="picker-thumb-name" title="${c.name}">${c.name}</div>
-                        <div class="picker-thumb-set">${c.nation}</div>
+                        ${countBadge}
                     </div>
                 </div>
             `;
         }).join('');
     }
 
-    window.selectCardInModal = function(cardId) {
-        const card = CardDB.getById(cardId);
-        if (!card) return;
-        selectedPickerCard = card;
-
-        // Set hidden form values
-        document.getElementById('cardName').value = card.name;
-        document.getElementById('cardSet').value = card.set || '';
-        document.getElementById('cardGrade').value = card.grade !== undefined ? card.grade : '3';
-        document.getElementById('cardType').value = (card.language || card.type || 'JP').toUpperCase();
-        document.getElementById('cardNation').value = card.nation || '';
-        document.getElementById('cardImage').value = card.image || '';
-
-        // Tampilkan Banner Kartu Terpilih
-        if (banner) {
-            document.getElementById('selectedCardTitle').textContent = card.name;
-            document.getElementById('selectedCardGrade').textContent = 'Grade ' + (card.grade !== undefined ? card.grade : '-');
-            document.getElementById('selectedCardNation').textContent = card.nation;
-            
-            const lang = (card.language || card.type || 'JP').toUpperCase();
-            const langEl = document.getElementById('selectedCardLang');
-            langEl.textContent = lang;
-            langEl.className = 'badge-lang ' + lang.toLowerCase();
-
-            document.getElementById('selectedCardSet').textContent = card.set || 'Promo';
-            document.getElementById('selectedCardThumbImg').src = CardDB.getImageUrl(card.image);
-            banner.style.display = 'flex';
-        }
-
-        // Highlight kartu yang dipilih di galeri
-        document.querySelectorAll('.picker-thumb-card').forEach(el => {
-            el.classList.toggle('selected', el.dataset.cardId === cardId);
-        });
-
-        // Fokus ke input nama pemilik
-        const ownerInput = document.getElementById('cardOwner');
-        if (ownerInput && !ownerInput.value) {
-            ownerInput.focus();
-        }
-    };
+    window._renderModalGalleryFn = renderModalGallery;
 
     [searchInput, setFilter, nationFilter, gradeFilter].forEach(el => {
         if (el) {
@@ -397,69 +435,99 @@ function initCardForm() {
     });
 
     // Buka Modal Tambah Kartu
-    document.getElementById('btnAddCard').addEventListener('click', () => {
-        document.getElementById('cardForm').reset();
-        document.getElementById('cardId').value = '';
-        selectedPickerCard = null;
+    const btnAddCard = document.getElementById('btnAddCard');
+    if (btnAddCard) {
+        btnAddCard.addEventListener('click', () => {
+            document.getElementById('cardForm').reset();
+            document.getElementById('cardId').value = '';
+            selectedTitipCards = [];
 
-        if (banner) banner.style.display = 'none';
-        if (searchInput) searchInput.value = '';
-        if (setFilter) setFilter.value = '';
-        if (nationFilter) nationFilter.value = '';
-        if (gradeFilter) gradeFilter.value = '';
+            if (searchInput) searchInput.value = '';
+            if (setFilter) setFilter.value = '';
+            if (nationFilter) nationFilter.value = '';
+            if (gradeFilter) gradeFilter.value = '';
 
-        document.getElementById('cardDateReceived').value = new Date().toISOString().split('T')[0];
-        document.getElementById('modalCardTitle').textContent = 'Pilih Kartu dari Database';
-        
-        populateModalPickerSets();
-        renderModalGallery();
-        UI.openModal('modalCard');
-    });
+            document.getElementById('cardDateReceived').value = new Date().toISOString().split('T')[0];
+            const titleEl = document.getElementById('modalCardTitle');
+            if (titleEl) titleEl.textContent = 'Input Titipan Kartu Baru';
 
-    document.getElementById('cancelCardBtn').addEventListener('click', () => UI.closeModal('modalCard'));
+            populateModalPickerSets();
+            renderSelectedCardsList();
+            renderModalGallery();
+            UI.openModal('modalCard');
+        });
+    }
+
+    const cancelCardBtn = document.getElementById('cancelCardBtn');
+    if (cancelCardBtn) {
+        cancelCardBtn.addEventListener('click', () => UI.closeModal('modalCard'));
+    }
 
     // Submit Form
-    document.getElementById('cardForm').addEventListener('submit', async e => {
-        e.preventDefault();
+    const cardForm = document.getElementById('cardForm');
+    if (cardForm) {
+        cardForm.addEventListener('submit', async e => {
+            e.preventDefault();
 
-        const cardName = document.getElementById('cardName').value.trim();
-        if (!cardName) {
-            UI.showToast('Silakan klik salah satu gambar kartu di galeri terlebih dahulu!', 'error');
-            return;
-        }
+            if (!selectedTitipCards.length) {
+                UI.showToast('Silakan klik minimal 1 gambar kartu di kotak kanan terlebih dahulu!', 'error');
+                return;
+            }
 
-        const btn = document.getElementById('saveCardBtn');
-        btn.disabled = true;
-        btn.textContent = 'Menyimpan...';
-
-        try {
-            const cardId = document.getElementById('cardId').value;
             const owner = document.getElementById('cardOwner').value.trim();
             const date = document.getElementById('cardDateReceived').value;
+            const editingId = document.getElementById('cardId').value;
 
-            await API.request('saveCard', {
-                id: cardId || undefined,
-                name: cardName,
-                set: document.getElementById('cardSet').value,
-                grade: document.getElementById('cardGrade').value,
-                type: document.getElementById('cardType').value,
-                nation: document.getElementById('cardNation').value,
-                image: document.getElementById('cardImage').value,
-                owner: owner,
-                date: date
-            });
+            const btn = document.getElementById('saveCardBtn');
+            btn.disabled = true;
+            btn.textContent = editingId ? 'Menyimpan perubahan...' : `Menyimpan ${selectedTitipCards.length} kartu...`;
 
-            UI.showToast(`Kartu "${cardName}" berhasil disimpan ke Inventory untuk ${owner}!`, 'success');
-            UI.closeModal('modalCard');
-            loadInventory();
-        } catch (err) {
-            console.error(err);
-            UI.showToast('Terjadi kesalahan saat menyimpan', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Simpan Kartu ke Inventory';
-        }
-    });
+            try {
+                if (editingId) {
+                    // Update satu kartu inventory yang sedang diedit
+                    const card = selectedTitipCards[0];
+                    await API.request('saveCard', {
+                        id: editingId,
+                        name: card.name,
+                        set: card.set || '',
+                        grade: card.grade !== undefined ? card.grade : '3',
+                        type: (card.language || card.type || 'JP').toUpperCase(),
+                        nation: card.nation || '',
+                        image: card.image || '',
+                        owner: owner,
+                        date: date
+                    });
+                    UI.showToast(`Data kartu "${card.name}" berhasil diperbarui!`, 'success');
+                } else {
+                    // Simpan satu atau banyak kartu titipan sekaligus
+                    for (const card of selectedTitipCards) {
+                        await API.request('saveCard', {
+                            name: card.name,
+                            set: card.set || '',
+                            grade: card.grade !== undefined ? card.grade : '3',
+                            type: (card.language || card.type || 'JP').toUpperCase(),
+                            nation: card.nation || '',
+                            image: card.image || '',
+                            owner: owner,
+                            date: date
+                        });
+                    }
+                    UI.showToast(`${selectedTitipCards.length} kartu berhasil disimpan ke Inventory untuk ${owner}!`, 'success');
+                }
+
+                UI.closeModal('modalCard');
+                selectedTitipCards = [];
+                loadInventory();
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Terjadi kesalahan saat menyimpan', 'error');
+            } finally {
+                btn.disabled = false;
+                const saveBtnText = document.getElementById('saveCardBtnText');
+                if (saveBtnText) saveBtnText.textContent = 'Simpan Kartu ke Inventory';
+            }
+        });
+    }
 }
 
 window.editCard = function (id) {
@@ -479,49 +547,35 @@ window.editCard = function (id) {
             set: c.set || 'Promo',
             grade: c.grade !== undefined ? c.grade : '3',
             language: c.type || 'JP',
-            nation: c.nation,
-            image: c.image
+            nation: c.nation || '',
+            image: c.image || ''
         };
     }
 
-    selectedPickerCard = master;
-    document.getElementById('cardName').value = master.name;
-    document.getElementById('cardSet').value = master.set || '';
-    document.getElementById('cardGrade').value = master.grade !== undefined ? master.grade : '3';
-    document.getElementById('cardType').value = (master.language || master.type || 'JP').toUpperCase();
-    document.getElementById('cardNation').value = master.nation || '';
-    document.getElementById('cardImage').value = master.image || '';
+    selectedTitipCards = [{
+        id: master.id,
+        name: master.name,
+        set: master.set || 'Promo',
+        grade: master.grade !== undefined ? master.grade : '3',
+        language: master.language || master.type || 'JP',
+        nation: master.nation || '',
+        image: master.image || ''
+    }];
 
-    const banner = document.getElementById('selectedCardBanner');
-    if (banner) {
-        document.getElementById('selectedCardTitle').textContent = master.name;
-        document.getElementById('selectedCardGrade').textContent = 'Grade ' + (master.grade !== undefined ? master.grade : '-');
-        document.getElementById('selectedCardNation').textContent = master.nation;
-        
-        const lang = (master.language || master.type || 'JP').toUpperCase();
-        const langEl = document.getElementById('selectedCardLang');
-        langEl.textContent = lang;
-        langEl.className = 'badge-lang ' + lang.toLowerCase();
+    const titleEl = document.getElementById('modalCardTitle');
+    if (titleEl) titleEl.textContent = 'Edit Data Titipan Kartu';
 
-        document.getElementById('selectedCardSet').textContent = master.set || 'Promo';
-        document.getElementById('selectedCardThumbImg').src = CardDB.getImageUrl(master.image);
-        banner.style.display = 'flex';
+    const saveBtnText = document.getElementById('saveCardBtnText');
+    if (saveBtnText) saveBtnText.textContent = 'Simpan Perubahan Kartu';
+
+    renderSelectedCardsList();
+    if (window._renderModalGalleryFn) {
+        window._renderModalGalleryFn();
     }
 
-    document.getElementById('modalCardTitle').textContent = 'Edit Data Titipan Kartu';
     UI.openModal('modalCard');
 };
 
-window.deleteCard = async function (id) {
-    if (!confirm('Hapus kartu ini dari inventory?')) return;
-    try {
-        await API.request('deleteCard', { id });
-        UI.showToast('Kartu berhasil dihapus');
-        loadInventory();
-    } catch {
-        UI.showToast('Gagal menghapus kartu', 'error');
-    }
-};
 
 // ──────────── SOLD FORM ──────────────────────────────────────────────────────
 function initSoldForm() {

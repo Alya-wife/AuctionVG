@@ -108,30 +108,30 @@ function renderCatalogGrid() {
     }
 
     container.innerHTML = filteredMasterCards.map(c => {
-        const lang = (c.language || c.type || 'JP').toUpperCase();
         const imgUrl = CardDB.getImageUrl(c.image);
-        const gradeBadge = (c.grade !== undefined && c.grade !== null && c.grade !== '') 
-            ? `<span class="card-grade-badge grade-${c.grade}">G${c.grade}</span>` : '';
-        const langBadge = `<span class="card-lang-badge lang-${lang.toLowerCase()}">${lang}</span>`;
-        const nationBadge = `<span class="card-nation-badge">${c.nation}</span>`;
 
         return `
-            <div class="catalog-card-item" onclick="openTitipModal('${c.id}')">
-                <div class="catalog-card-img-wrap">
+            <div class="catalog-card-item">
+                <div class="catalog-card-img-wrap" onclick="openTitipModal('${c.id}')" title="Klik gambar untuk titipkan kartu ini">
                     <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
-                    ${gradeBadge}
-                    ${nationBadge}
-                    ${langBadge}
                 </div>
                 <div class="catalog-card-body">
-                    <div style="font-size:0.75rem; color:#38bdf8; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${c.set}">
+                    <div style="font-size:0.75rem; color:#38bdf8; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${c.set || 'Promo'}">
                         ${c.set || 'Promo'}
                     </div>
-                    <div class="catalog-card-title">${c.name}</div>
-                    <button type="button" class="btn-quick-titip" onclick="event.stopPropagation(); openTitipModal('${c.id}')">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        + Titipkan Kartu
-                    </button>
+                    <div class="catalog-card-title" title="${c.name}">${c.name}</div>
+                    <div class="catalog-card-actions">
+                        <button type="button" class="btn-quick-titip" onclick="openTitipModal('${c.id}')" title="Titip ke Inventory">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Titipkan
+                        </button>
+                        <button type="button" class="btn-card-action edit" onclick="openEditMasterModal('${c.id}')" title="Edit Data Kartu">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        </button>
+                        <button type="button" class="btn-card-action delete" onclick="deleteMasterCard('${c.id}')" title="Hapus dari Database">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                        </button>
+                    </div>
                 </div>
             </div>`;
     }).join('');
