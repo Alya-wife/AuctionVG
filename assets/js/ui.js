@@ -132,13 +132,65 @@ const UI = {
 
     renderTypeBox(cardOrType, size = 'md') {
         let val = 'JP';
+        let card = null;
         if (typeof cardOrType === 'object' && cardOrType !== null) {
-            val = cardOrType.type || cardOrType.language || cardOrType.image || 'JP';
+            card = cardOrType;
+            val = card.type || card.language || 'JP';
         } else if (typeof cardOrType === 'string') {
             val = cardOrType;
         }
         const t = val.toString().trim().toUpperCase() === 'EN' ? 'EN' : 'JP';
-        return `<div class="card-type-box type-${t.toLowerCase()} size-${size}"><span>${t}</span></div>`;
+
+        // Jika hanya string bahasa (bukan objek kartu)
+        if (!card) {
+            return `<div class="card-type-box type-${t.toLowerCase()} size-${size}"><span>${t}</span></div>`;
+        }
+
+        // Resolusi gambar dan grade dari kartu atau CardDB
+        let imageName = card.image;
+        if (!imageName || imageName === 'JP' || imageName === 'EN') {
+            if (window.CardDB) {
+                const match = CardDB.findByName(card.name);
+                if (match && match.image) imageName = match.image;
+            }
+        }
+        let grade = card.grade;
+        if (grade === undefined || grade === null || grade === '') {
+            if (window.CardDB) {
+                const match = CardDB.findByName(card.name);
+                if (match && match.grade !== undefined) grade = match.grade;
+            }
+        }
+        const imgUrl = (window.CardDB && imageName) ? CardDB.getImageUrl(imageName) : 'assets/images/cards/placeholder_card.svg';
+        const gradeHtml = (grade !== undefined && grade !== null && grade !== '') 
+            ? `<span class="card-grade-badge grade-${grade}">G${grade}</span>` 
+            : '';
+        const langHtml = `<span class="card-lang-badge lang-${t.toLowerCase()}">${t}</span>`;
+
+        if (size === 'detail') {
+            return `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:10px 0;">
+                    <div style="position:relative;width:220px;height:308px;border-radius:12px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,0.6);border:2px solid rgba(255,255,255,0.18);background:#090d16;">
+                        <img src="${imgUrl}" alt="${card.name || 'Kartu'}" style="width:100%;height:100%;object-fit:cover;object-position:center top;" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
+                        ${gradeHtml}
+                        ${langHtml}
+                    </div>
+                </div>`;
+        }
+
+        if (size === 'sm') {
+            return `
+                <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;background:#090d16;border:1px solid rgba(255,255,255,0.15);flex-shrink:0;position:relative;">
+                    <img src="${imgUrl}" alt="${card.name || ''}" style="width:100%;height:100%;object-fit:cover;object-position:center top;" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
+                </div>`;
+        }
+
+        // Default size = 'md' (Card Grid)
+        return `
+            <img class="card-thumb-img" src="${imgUrl}" alt="${card.name || 'Kartu'}" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
+            ${gradeHtml}
+            ${langHtml}
+        `;
     },
 
     statusClass(status) {
@@ -166,6 +218,86 @@ const UI = {
             reader.onerror = error => reject(error);
             reader.readAsDataURL(file);
         });
+    },
+
+    /**
+     * Otomatis mengonversi gambar apapun (JPG, PNG, GIF, dll) ke format WebP terkompresi
+     */
+    async convertImageToWebP(file, options = {}) {
+        if (!file || !file.type.startsWith('image/')) {
+            throw new Error('File yang dipilih bukan gambar yang valid.');
+        }
+
+        const maxWidth = options.maxWidth || 900;
+        const maxHeight = options.maxHeight || 1260;
+        const quality = options.quality !== undefined ? options.quality : 0.84;
+
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(new Error('Gagal membaca file gambar.'));
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onerror = () => reject(new Error('Gagal memuat elemen gambar.'));
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth || height > maxHeight) {
+                        const ratio = Math.min(maxWidth / width, maxHeight / height);
+                        width = Math.round(width * ratio);
+                        height = Math.round(height * ratio);
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const webpBaseName = file.name.replace(/\.[^/.]+$/, "") || "card";
+                    const webpFileName = webpBaseName + ".webp";
+
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            return reject(new Error('Browser gagal mengekspor ke format WebP.'));
+                        }
+
+                        const webpFile = new File([blob], webpFileName, { type: 'image/webp' });
+                        const dataUrl = canvas.toDataURL('image/webp', quality);
+                        const savedBytes = Math.max(0, file.size - blob.size);
+                        const savedPercent = file.size > 0 ? Math.round((savedBytes / file.size) * 100) : 0;
+
+                        resolve({
+                            file: webpFile,
+                            blob: blob,
+                            dataUrl: dataUrl,
+                            name: webpFileName,
+                            originalSize: file.size,
+                            newSize: blob.size,
+                            savedPercent: savedPercent,
+                            width: width,
+                            height: height
+                        });
+                    }, 'image/webp', quality);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    },
+
+    downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
     }
 };
 

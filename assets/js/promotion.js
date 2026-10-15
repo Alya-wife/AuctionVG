@@ -54,6 +54,62 @@ function initPromoForm() {
     
     document.getElementById('cancelPromoBtn').addEventListener('click', () => UI.closeModal('modalPromo'));
     
+    // WebP Banner Uploader
+    const promoFileInput = document.getElementById('promoFileInput');
+    const btnBrowse = document.getElementById('btnBrowsePromoImg');
+    const promoDropzone = document.getElementById('promoDropzone');
+    const promoWebpStatus = document.getElementById('promoWebpStatus');
+
+    if (btnBrowse && promoFileInput) {
+        btnBrowse.addEventListener('click', (e) => {
+            e.stopPropagation();
+            promoFileInput.click();
+        });
+    }
+    if (promoDropzone && promoFileInput) {
+        promoDropzone.addEventListener('click', (e) => {
+            if (e.target !== btnBrowse) promoFileInput.click();
+        });
+        promoDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            promoDropzone.classList.add('dragover');
+        });
+        promoDropzone.addEventListener('dragleave', () => promoDropzone.classList.remove('dragover'));
+        promoDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            promoDropzone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files.length) {
+                handlePromoImageUpload(e.dataTransfer.files[0]);
+            }
+        });
+        promoFileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length) {
+                handlePromoImageUpload(e.target.files[0]);
+            }
+        });
+    }
+
+    async function handlePromoImageUpload(file) {
+        if (!file || !file.type.startsWith('image/')) {
+            UI.showToast('Harap pilih file gambar valid', 'error');
+            return;
+        }
+        try {
+            UI.showToast('Mengonversi banner ke WebP...', 'info');
+            const res = await UI.convertImageToWebP(file, { maxWidth: 1200, maxHeight: 600, quality: 0.82 });
+            document.getElementById('promoImageUrl').value = res.dataUrl;
+
+            if (promoWebpStatus) {
+                const newKb = (res.newSize / 1024).toFixed(1);
+                promoWebpStatus.innerHTML = `<span>⚡ <strong>WebP Ready:</strong> ${(res.originalSize/1024).toFixed(1)} KB → ${newKb} KB (Hemat ${res.savedPercent}%)</span>`;
+                promoWebpStatus.style.display = 'flex';
+            }
+            UI.showToast('Banner berhasil dikonversi ke WebP!', 'success');
+        } catch (err) {
+            UI.showToast('Gagal convert: ' + err.message, 'error');
+        }
+    }
+
     document.getElementById('promoForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         

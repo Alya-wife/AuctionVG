@@ -75,15 +75,15 @@ const API = {
     _seed() {
         if (!localStorage.getItem('ag_inventory')) {
             const data = [
-                { id: 'C001', name: 'Dragonic Overlord', type: 'JP', nation: 'Dragon Empire', owner: 'Budi', date: '2026-07-15', status: 'Available' },
-                { id: 'C002', name: 'Alfred Early', type: 'EN', nation: 'Keter Sanctuary', owner: 'Andi', date: '2026-07-16', status: 'Sold', buyer: 'Citra', price: 150000, soldDate: '2026-07-18' },
-                { id: 'C003', name: 'Sylvan Horned Beast', type: 'JP', nation: 'Stoicheia', owner: 'Budi', date: '2026-07-17', status: 'Waiting Shipment', buyer: 'Doni', price: 120000, soldDate: '2026-07-19' },
-                { id: 'C004', name: 'Vairina Liber', type: 'EN', nation: 'Dragon Empire', owner: 'Citra', date: '2026-07-18', status: 'Available' },
-                { id: 'C005', name: 'Phantom Blaster Dragon', type: 'JP', nation: 'Dark States', owner: 'Andi', date: '2026-07-19', status: 'Waiting Payment', buyer: 'Eko', price: 200000, soldDate: '2026-07-20', shipDate: '2026-07-21', trackingNumber: 'JX123456789ID' }
+                { id: 'C001', name: 'Dragonic Overlord', grade: '3', set: 'V-PR Promo Pack Vol. 1', type: 'JP', nation: 'Dragon Empire', owner: 'Budi', date: '2026-07-15', status: 'Available', image: 'V-PR-001.jpg' },
+                { id: 'C002', name: 'Alfred Early', grade: '2', set: 'V-PR Promo Pack Vol. 1', type: 'EN', nation: 'Keter Sanctuary', owner: 'Andi', date: '2026-07-16', status: 'Sold', buyer: 'Citra', price: 150000, soldDate: '2026-07-18', image: 'V-PR-005.jpg' },
+                { id: 'C003', name: 'Sylvan Horned Beast, Charis', grade: '1', set: 'V-PR Promo Pack Vol. 1', type: 'JP', nation: 'Stoicheia', owner: 'Budi', date: '2026-07-17', status: 'Waiting Shipment', buyer: 'Doni', price: 120000, soldDate: '2026-07-19', image: 'V-PR-006.jpg' },
+                { id: 'C004', name: 'Vairina Liber', grade: '2', set: 'V-PR Promo Pack Vol. 1', type: 'EN', nation: 'Dragon Empire', owner: 'Citra', date: '2026-07-18', status: 'Available', image: 'V-PR-004.jpg' },
+                { id: 'C005', name: 'Phantom Blaster Dragon', grade: '3', set: 'V-PR Promo Pack Vol. 1', type: 'JP', nation: 'Dark States', owner: 'Andi', date: '2026-07-19', status: 'Waiting Payment', buyer: 'Eko', price: 200000, soldDate: '2026-07-20', shipDate: '2026-07-21', trackingNumber: 'JX123456789ID', image: 'V-PR-003.jpg' }
             ];
             localStorage.setItem('ag_inventory', JSON.stringify(data));
         } else {
-            // Migrate existing inventory items to ensure type property exists
+            // Migrate existing inventory items to ensure type, grade, set, and image exist
             try {
                 let items = JSON.parse(localStorage.getItem('ag_inventory') || '[]');
                 let modified = false;
@@ -91,6 +91,14 @@ const API = {
                     if (!c.type) {
                         c.type = (c.language || c.image || 'JP').toString().toUpperCase() === 'EN' ? 'EN' : 'JP';
                         modified = true;
+                    }
+                    if (window.CardDB) {
+                        const matched = CardDB.findByName(c.name);
+                        if (matched) {
+                            if (!c.grade && matched.grade) { c.grade = matched.grade; modified = true; }
+                            if (!c.set && matched.set) { c.set = matched.set; modified = true; }
+                            if ((!c.image || c.image === 'JP' || c.image === 'EN') && matched.image) { c.image = matched.image; modified = true; }
+                        }
                     }
                 });
                 if (modified) localStorage.setItem('ag_inventory', JSON.stringify(items));

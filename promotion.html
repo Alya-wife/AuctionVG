@@ -49,8 +49,20 @@
           <input type="text" id="promoTitle" required placeholder="cth. Diskon Akhir Bulan" />
         </div>
         <div class="form-group">
-          <label for="promoImageUrl">URL Gambar Banner (Google Drive) *</label>
-          <input type="url" id="promoImageUrl" required placeholder="https://drive.google.com/..." />
+          <label>Gambar Banner (Otomatis Convert ke WebP) *</label>
+          <input type="file" id="promoFileInput" accept="image/*" style="display:none;" />
+          <div class="upload-dropzone" id="promoDropzone">
+            <div class="dropzone-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div class="dropzone-text">
+              <div class="dropzone-title">Upload Banner (Convert WebP)</div>
+              <div class="dropzone-sub">Pilih file gambar &bull; Otomatis di-convert ke <strong>WebP</strong> agar ringan</div>
+            </div>
+            <button type="button" class="btn-ghost btn-sm" id="btnBrowsePromoImg">Pilih File</button>
+          </div>
+          <div id="promoWebpStatus" class="webp-status-box" style="display:none;"></div>
+          <input type="text" id="promoImageUrl" required placeholder="URL gambar atau data WebP..." style="margin-top:8px;" />
         </div>
         <div class="form-group">
           <label for="promoDesc">Deskripsi</label>
