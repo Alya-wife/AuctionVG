@@ -1453,7 +1453,136 @@ h1, h2, h3, h4, h5, h6 {
 .loading-state-sm { display:flex;align-items:center;justify-content:center;padding:24px; }
 
 /* ── Checkbox label ──────────────────────── */
-.checkbox-label { display:flex;align-items:center;gap:8px;cursor:pointer; }
+/* ── Visual Card Picker Gallery ── */
+.card-picker-filter-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.card-picker-filter-row .search-box {
+  flex: 1 1 200px;
+}
+.card-picker-filter-row .filter-select {
+  flex: 0 1 140px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+}
+.card-picker-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  max-height: 290px;
+  overflow-y: auto;
+  padding: 10px;
+  margin-bottom: 18px;
+  border-radius: var(--radius-md);
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--border-color);
+}
+.picker-thumb-card {
+  background: var(--bg-card);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.picker-thumb-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(56, 189, 248, 0.5);
+}
+.picker-thumb-card.selected {
+  border-color: #38bdf8;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.5);
+  background: rgba(56, 189, 248, 0.1);
+}
+.picker-thumb-card.selected::after {
+  content: '✓ Terpilih';
+  position: absolute;
+  top: 8px; right: 8px;
+  background: #38bdf8;
+  color: #0f172a;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 5;
+}
+.picker-thumb-img-wrap {
+  width: 100%;
+  height: 140px;
+  position: relative;
+  background: #090d16;
+}
+.picker-thumb-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.picker-thumb-info {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.picker-thumb-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.picker-thumb-set {
+  font-size: 0.7rem;
+  color: #38bdf8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.selected-card-banner {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(79, 142, 247, 0.15));
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.selected-card-thumb {
+  width: 52px;
+  height: 72px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1.5px solid rgba(255,255,255,0.25);
+  flex-shrink: 0;
+  background: #090d16;
+}
+.selected-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.selected-card-details {
+  flex: 1;
+  min-width: 0;
+}
+.selected-card-details h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ── Responsive ──────────────────────────── */
 @media (max-width: 1024px) {

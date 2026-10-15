@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Database Kartu – NitipPro</title>
+  <meta name="description" content="Database master kartu Vanguard per set promo" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <style>
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .catalog-card-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    .catalog-card-item:hover {
+      transform: translateY(-5px);
+      border-color: #38bdf8;
+      box-shadow: 0 12px 25px rgba(56, 189, 248, 0.15);
+    }
+    .catalog-card-img-wrap {
+      width: 100%;
+      height: 230px;
+      position: relative;
+      background: #090d16;
+      overflow: hidden;
+    }
+    .catalog-card-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      transition: transform 0.3s ease;
+    }
+    .catalog-card-item:hover .catalog-card-img-wrap img {
+      transform: scale(1.07);
+    }
+    .catalog-card-body {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+    .catalog-card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      font-family: var(--font-display);
+      line-height: 1.3;
+    }
+    .catalog-card-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .btn-quick-titip {
+      margin-top: auto;
+      padding: 9px 12px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(79, 142, 247, 0.2));
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+      font-weight: 600;
+      font-size: 0.82rem;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-quick-titip:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .hero-stat-banner {
+      background: linear-gradient(135deg, rgba(79, 142, 247, 0.1), rgba(123, 92, 247, 0.08));
+      border: 1px solid rgba(79, 142, 247, 0.2);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .hsb-text h3 {
+      font-size: 1.15rem;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+    .hsb-text p {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <button class="hamburger" id="hamburgerBtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="page-title">
+          <h2>Database Kartu Promo</h2>
+          <span>Katalog master kartu Vanguard per set promo</span>
+        </div>
+        <div class="top-bar-right">
+          <button class="btn-primary" id="btnOpenNewMaster">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Tambah Master Kartu
+          </button>
+        </div>
+      </header>
+
+      <div class="content-body">
+        <!-- Banner Info -->
+        <div class="hero-stat-banner">
+          <div class="hsb-text">
+            <h3>Katalog Kartu Siap Titip</h3>
+            <p>Klik gambar kartu apa pun untuk langsung memasukkannya ke daftar titipan Inventory.</p>
+          </div>
+          <div>
+            <span class="record-count" id="catalogCardCount" style="font-size:0.95rem;">– kartu terdaftar</span>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="cardSearchInput" placeholder="Cari nama kartu di database..." />
+          </div>
+          <select id="cardFilterSet" class="filter-select">
+            <option value="">Semua Set Promo</option>
+          </select>
+          <select id="cardFilterNation" class="filter-select">
+            <option value="">Semua Nation</option>
+            <option value="Dragon Empire">Dragon Empire</option>
+            <option value="Dark States">Dark States</option>
+            <option value="Stoicheia">Stoicheia</option>
+            <option value="Lyrical Monasterio">Lyrical Monasterio</option>
+            <option value="Brandt Gate">Brandt Gate</option>
+            <option value="Keter Sanctuary">Keter Sanctuary</option>
+          </select>
+          <select id="cardFilterGrade" class="filter-select">
+            <option value="">Semua Grade</option>
+            <option value="0">Grade 0</option>
+            <option value="1">Grade 1</option>
+            <option value="2">Grade 2</option>
+            <option value="3">Grade 3</option>
+            <option value="4">Grade 4</option>
+          </select>
+          <select id="cardFilterLang" class="filter-select">
+            <option value="">Semua Bahasa</option>
+            <option value="JP">JP (Jepang)</option>
+            <option value="EN">EN (Inggris)</option>
+          </select>
+          <button class="btn-ghost" id="btnResetFilter">Reset</button>
+        </div>
+
+        <!-- Cards Grid -->
+        <div id="catalogGrid" class="catalog-grid">
+          <div class="loading-state" style="grid-column: 1/-1;">
+            <div class="spinner"></div>
+            <p>Memuat database kartu...</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal 1: Titip Kartu ke Inventory -->
+  <div class="modal-overlay" id="modalTitip">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Titipkan Kartu ke Inventory</h3>
+        <button class="modal-close" id="modalTitipClose"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <form id="titipForm" class="modal-form">
+        <input type="hidden" id="titipCardMasterId" />
+        
+        <!-- Preview Kartu yang Dipilih -->
+        <div class="card-preview-card" style="margin-bottom: 16px;">
+          <div class="card-preview-thumb">
+            <img id="titipCardImg" src="assets/images/cards/placeholder_card.svg" alt="Kartu" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
+          </div>
+          <div class="card-preview-info">
+            <div class="card-preview-name" id="titipCardName">-</div>
+            <div class="card-preview-badges">
+              <span class="badge-grade" id="titipCardGrade">Grade -</span>
+              <span class="badge-nation" id="titipCardNation">Nation -</span>
+              <span class="badge-lang jp" id="titipCardLang">JP</span>
+              <span style="font-size:0.75rem; color:#38bdf8;" id="titipCardSet">-</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="modal-subtitle" style="margin-bottom: 14px;">Masukkan identitas titipan untuk kartu ini:</p>
+
+        <div class="form-group">
+          <label for="titipOwner">Nama Pemilik Kartu *</label>
+          <input type="text" id="titipOwner" required placeholder="Nama pemilik (cth. Budi)" list="ownerDatalist" />
+          <datalist id="ownerDatalist"></datalist>
+        </div>
+
+        <div class="form-group">
+          <label for="titipDate">Tanggal Diterima *</label>
+          <input type="date" id="titipDate" required />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" id="cancelTitipBtn">Batal</button>
+          <button type="submit" class="btn-primary" id="saveTitipBtn">
+            <span>Simpan ke Inventory</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Tambah Master Kartu Baru ke Database -->
+  <div class="modal-overlay" id="modalMaster">
+    <div class="modal-box large">
+      <div class="modal-header">
+        <h3>Daftarkan Kartu Master Baru</h3>
+        <button class="modal-close" id="modalMasterClose"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <form id="masterForm" class="modal-form">
+        <input type="hidden" id="masterImageFileName" />
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="masterName">Nama Kartu *</label>
+            <input type="text" id="masterName" required placeholder="cth. Dragonic Overlord The End" />
+          </div>
+          <div class="form-group">
+            <label for="masterSet">Set Promo *</label>
+            <input type="text" id="masterSet" required placeholder="cth. D-PR 2024 Promo Series" list="masterSetDatalist" />
+            <datalist id="masterSetDatalist"></datalist>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="masterGrade">Grade *</label>
+            <select id="masterGrade" required>
+              <option value="3">Grade 3</option>
+              <option value="2">Grade 2</option>
+              <option value="1">Grade 1</option>
+              <option value="0">Grade 0</option>
+              <option value="4">Grade 4</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="masterLang">Bahasa *</label>
+            <select id="masterLang" required>
+              <option value="JP">JP (Jepang)</option>
+              <option value="EN">EN (Inggris)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="masterNation">Nation *</label>
+            <select id="masterNation" required>
+              <option value="Dragon Empire">Dragon Empire</option>
+              <option value="Dark States">Dark States</option>
+              <option value="Stoicheia">Stoicheia</option>
+              <option value="Lyrical Monasterio">Lyrical Monasterio</option>
+              <option value="Brandt Gate">Brandt Gate</option>
+              <option value="Keter Sanctuary">Keter Sanctuary</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Upload & Convert to WebP -->
+        <div class="card-upload-box">
+          <input type="file" id="masterFileInput" accept="image/*" style="display: none;" />
+          <div class="upload-dropzone" id="masterDropzone">
+            <div class="dropzone-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div class="dropzone-text">
+              <div class="dropzone-title">Upload Gambar Kartu (Otomatis Convert ke WebP)</div>
+              <div class="dropzone-sub">Pilih file gambar JPG, PNG, dll &bull; Sistem langsung mengompresi ke <strong>.webp</strong></div>
+            </div>
+            <button type="button" class="btn-ghost btn-sm" id="btnBrowseMasterImg">Pilih File</button>
+          </div>
+          <div id="masterWebpStatus" class="webp-status-box" style="display: none;"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" id="cancelMasterBtn">Batal</button>
+          <button type="submit" class="btn-primary" id="saveMasterBtn">
+            <span>Daftarkan Kartu ke Database</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/cards-data.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/cards-page.js"></script>
+</body>
+</html>

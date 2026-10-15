@@ -286,203 +286,133 @@ window.goPage = function (p) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// ──────────── CARD FORM & CATALOG PICKER ─────────────────────────────────────
+// ──────────── CARD FORM & VISUAL CATALOG PICKER ──────────────────────────────
+let selectedPickerCard = null;
+
 function initCardForm() {
-    const promoSetSel = document.getElementById('cardPromoSet');
-    const catalogSel = document.getElementById('cardCatalogSelect');
-    const previewBox = document.getElementById('cardPreviewBox');
-    const btnToggleManual = document.getElementById('btnToggleManual');
-    let isCatalogMode = true;
+    const searchInput = document.getElementById('modalPickerSearch');
+    const setFilter = document.getElementById('modalPickerSet');
+    const nationFilter = document.getElementById('modalPickerNation');
+    const gradeFilter = document.getElementById('modalPickerGrade');
+    const galleryContainer = document.getElementById('pickerCardsGallery');
+    const banner = document.getElementById('selectedCardBanner');
 
-    // Inisialisasi daftar Set Promo di modal
-    function refreshPromoSetDropdown() {
-        if (!promoSetSel || !window.CardDB) return;
+    function populateModalPickerSets() {
+        if (!setFilter || !window.CardDB) return;
         const sets = CardDB.getSets();
-        promoSetSel.innerHTML = '<option value="">-- Pilih Set Promo --</option>' + 
+        setFilter.innerHTML = '<option value="">Semua Set Promo</option>' + 
             sets.map(s => `<option value="${s}">${s}</option>`).join('');
-        catalogSel.innerHTML = '<option value="">-- Pilih Set Terlebih Dahulu --</option>';
-        catalogSel.disabled = true;
     }
 
-    // Event ketika Set Promo dipilih
-    if (promoSetSel) {
-        promoSetSel.addEventListener('change', () => {
-            const selectedSet = promoSetSel.value;
-            if (!selectedSet || !window.CardDB) {
-                catalogSel.innerHTML = '<option value="">-- Pilih Set Terlebih Dahulu --</option>';
-                catalogSel.disabled = true;
-                if (previewBox) previewBox.style.display = 'none';
-                return;
-            }
+    function renderModalGallery() {
+        if (!galleryContainer || !window.CardDB) return;
+        const q = (searchInput?.value || '').toLowerCase().trim();
+        const setVal = setFilter?.value || '';
+        const nationVal = nationFilter?.value || '';
+        const gradeVal = gradeFilter?.value || '';
 
-            const cards = CardDB.getBySet(selectedSet);
-            catalogSel.innerHTML = '<option value="">-- Pilih Kartu (' + cards.length + ' kartu) --</option>' +
-                cards.map(c => `<option value="${c.id}">[G${c.grade}] ${c.name} (${c.nation} - ${c.language})</option>`).join('');
-            catalogSel.disabled = false;
+        const allCards = CardDB.getAll();
+        const filtered = allCards.filter(c => {
+            const matchQ = !q || c.name.toLowerCase().includes(q) || (c.id && c.id.toLowerCase().includes(q));
+            const matchSet = !setVal || c.set === setVal;
+            const matchNation = !nationVal || c.nation === nationVal;
+            const matchGrade = !gradeVal || c.grade?.toString() === gradeVal;
+            return matchQ && matchSet && matchNation && matchGrade;
         });
-    }
 
-    // Event ketika Kartu dipilih dari Katalog
-    if (catalogSel) {
-        catalogSel.addEventListener('change', () => {
-            const cardId = catalogSel.value;
-            if (!cardId || !window.CardDB) {
-                if (previewBox) previewBox.style.display = 'none';
-                return;
-            }
-
-            const card = CardDB.getById(cardId);
-            if (!card) return;
-
-            // Isi otomatis field-field form
-            document.getElementById('cardName').value = card.name;
-            document.getElementById('cardSet').value = card.set;
-            document.getElementById('cardGrade').value = card.grade;
-            document.getElementById('cardType').value = card.language;
-            document.getElementById('cardNation').value = card.nation;
-            document.getElementById('cardImage').value = card.image;
-
-            // Perbarui preview box
-            updateCardPreview(card);
-        });
-    }
-
-    function updateCardPreview(card) {
-        if (!previewBox) return;
-        document.getElementById('previewCardName').textContent = card.name || '-';
-        document.getElementById('previewCardGrade').textContent = 'Grade ' + (card.grade !== undefined ? card.grade : '-');
-        document.getElementById('previewCardNation').textContent = card.nation || '-';
-        
-        const langEl = document.getElementById('previewCardLang');
-        const lang = (card.language || card.type || 'JP').toUpperCase();
-        langEl.textContent = lang;
-        langEl.className = 'badge-lang ' + lang.toLowerCase();
-
-        document.getElementById('previewCardSet').textContent = card.set || '-';
-        document.getElementById('previewCardImgPath').textContent = 'assets/images/cards/' + (card.image || 'placeholder_card.svg');
-        
-        const previewImg = document.getElementById('cardPreviewImg');
-        const imgUrl = window.CardDB ? CardDB.getImageUrl(card.image) : 'assets/images/cards/placeholder_card.svg';
-        previewImg.src = imgUrl;
-
-        previewBox.style.display = 'flex';
-    }
-
-    // Tombol Toggle Manual / Katalog
-    if (btnToggleManual) {
-        btnToggleManual.addEventListener('click', () => {
-            isCatalogMode = !isCatalogMode;
-            btnToggleManual.textContent = isCatalogMode ? 'Mode Manual' : 'Kembali ke Katalog';
-            const catalogSec = document.getElementById('cardCatalogSection');
-            if (catalogSec) {
-                catalogSec.style.opacity = isCatalogMode ? '1' : '0.7';
-            }
-        });
-    }
-
-    // ─── WebP Upload & Converter Handler ───
-    const fileInput = document.getElementById('cardFileInput');
-    const dropzone = document.getElementById('uploadDropzone');
-    const btnBrowse = document.getElementById('btnBrowseImage');
-    const webpStatus = document.getElementById('webpConversionStatus');
-
-    if (btnBrowse && fileInput) {
-        btnBrowse.addEventListener('click', (e) => {
-            e.stopPropagation();
-            fileInput.click();
-        });
-    }
-    if (dropzone && fileInput) {
-        dropzone.addEventListener('click', (e) => {
-            if (e.target !== btnBrowse) fileInput.click();
-        });
-        dropzone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropzone.classList.add('dragover');
-        });
-        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('dragover');
-            if (e.dataTransfer.files && e.dataTransfer.files.length) {
-                handleCardImageUpload(e.dataTransfer.files[0]);
-            }
-        });
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files.length) {
-                handleCardImageUpload(e.target.files[0]);
-            }
-        });
-    }
-
-    async function handleCardImageUpload(file) {
-        if (!file || !file.type.startsWith('image/')) {
-            UI.showToast('Harap pilih file gambar (JPG, PNG, dll)', 'error');
+        if (!filtered.length) {
+            galleryContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 24px;">Tidak ada kartu ditemukan.</div>';
             return;
         }
 
-        try {
-            UI.showToast('Mengonversi gambar ke WebP...', 'info');
-            const res = await UI.convertImageToWebP(file, { maxWidth: 900, maxHeight: 1260, quality: 0.84 });
+        galleryContainer.innerHTML = filtered.map(c => {
+            const isSel = selectedPickerCard && (selectedPickerCard.id === c.id || selectedPickerCard.name === c.name);
+            const lang = (c.language || c.type || 'JP').toUpperCase();
+            const imgUrl = CardDB.getImageUrl(c.image);
+            const gradeBadge = (c.grade !== undefined && c.grade !== null && c.grade !== '') ? `<span class="card-grade-badge grade-${c.grade}" style="font-size:0.65rem;padding:1px 5px;">G${c.grade}</span>` : '';
+            const langBadge = `<span class="card-lang-badge lang-${lang.toLowerCase()}" style="font-size:0.62rem;padding:1px 4px;">${lang}</span>`;
 
-            // Simpan nama file WebP ke input tersembunyi
-            const cardImgEl = document.getElementById('cardImage');
-            if (cardImgEl) cardImgEl.value = res.name;
-
-            // Tampilkan preview gambar hasil convert WebP
-            const previewImg = document.getElementById('cardPreviewImg');
-            if (previewImg) previewImg.src = res.dataUrl;
-
-            const pathEl = document.getElementById('previewCardImgPath');
-            if (pathEl) pathEl.textContent = 'assets/images/cards/' + res.name + ' (WebP terkompresi)';
-
-            if (previewBox) previewBox.style.display = 'flex';
-
-            // Tampilkan status kompresi & tombol download WebP
-            if (webpStatus) {
-                const origKb = (res.originalSize / 1024).toFixed(1);
-                const newKb = (res.newSize / 1024).toFixed(1);
-                webpStatus.innerHTML = `
-                    <span>⚡ <strong>Convert ke WebP Sukses:</strong> ${res.name} (${newKb} KB, hemat ${res.savedPercent}%)</span>
-                    <button type="button" class="webp-btn-download" id="btnDownloadWebP">⬇️ Download WebP</button>
-                `;
-                webpStatus.style.display = 'flex';
-
-                const dlBtn = document.getElementById('btnDownloadWebP');
-                if (dlBtn) {
-                    dlBtn.addEventListener('click', (ev) => {
-                        ev.stopPropagation();
-                        UI.downloadBlob(res.blob, res.name);
-                        UI.showToast(`File ${res.name} diunduh. Pindahkan ke assets/images/cards/ jika perlu.`, 'success');
-                    });
-                }
-            }
-
-            // Simpan gambar WebP dataUrl ke cache lokal sementara agar gambar langsung tampil di grid/detail
-            try {
-                const cacheMap = JSON.parse(localStorage.getItem('ag_card_webp_cache') || '{}');
-                cacheMap[res.name] = res.dataUrl;
-                localStorage.setItem('ag_card_webp_cache', JSON.stringify(cacheMap));
-            } catch(e){}
-
-            UI.showToast(`Berhasil dikonversi ke WebP (${(res.newSize / 1024).toFixed(1)} KB)!`, 'success');
-        } catch (err) {
-            console.error('WebP conversion error:', err);
-            UI.showToast('Gagal mengonversi gambar: ' + err.message, 'error');
-        }
+            return `
+                <div class="picker-thumb-card ${isSel ? 'selected' : ''}" data-card-id="${c.id}" onclick="selectCardInModal('${c.id}')">
+                    <div class="picker-thumb-img-wrap">
+                        <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
+                        ${gradeBadge}
+                        ${langBadge}
+                    </div>
+                    <div class="picker-thumb-info">
+                        <div class="picker-thumb-name" title="${c.name}">${c.name}</div>
+                        <div class="picker-thumb-set">${c.nation}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
-    // Tombol Buka Modal Tambah Kartu
+    window.selectCardInModal = function(cardId) {
+        const card = CardDB.getById(cardId);
+        if (!card) return;
+        selectedPickerCard = card;
+
+        // Set hidden form values
+        document.getElementById('cardName').value = card.name;
+        document.getElementById('cardSet').value = card.set || '';
+        document.getElementById('cardGrade').value = card.grade !== undefined ? card.grade : '3';
+        document.getElementById('cardType').value = (card.language || card.type || 'JP').toUpperCase();
+        document.getElementById('cardNation').value = card.nation || '';
+        document.getElementById('cardImage').value = card.image || '';
+
+        // Tampilkan Banner Kartu Terpilih
+        if (banner) {
+            document.getElementById('selectedCardTitle').textContent = card.name;
+            document.getElementById('selectedCardGrade').textContent = 'Grade ' + (card.grade !== undefined ? card.grade : '-');
+            document.getElementById('selectedCardNation').textContent = card.nation;
+            
+            const lang = (card.language || card.type || 'JP').toUpperCase();
+            const langEl = document.getElementById('selectedCardLang');
+            langEl.textContent = lang;
+            langEl.className = 'badge-lang ' + lang.toLowerCase();
+
+            document.getElementById('selectedCardSet').textContent = card.set || 'Promo';
+            document.getElementById('selectedCardThumbImg').src = CardDB.getImageUrl(card.image);
+            banner.style.display = 'flex';
+        }
+
+        // Highlight kartu yang dipilih di galeri
+        document.querySelectorAll('.picker-thumb-card').forEach(el => {
+            el.classList.toggle('selected', el.dataset.cardId === cardId);
+        });
+
+        // Fokus ke input nama pemilik
+        const ownerInput = document.getElementById('cardOwner');
+        if (ownerInput && !ownerInput.value) {
+            ownerInput.focus();
+        }
+    };
+
+    [searchInput, setFilter, nationFilter, gradeFilter].forEach(el => {
+        if (el) {
+            el.addEventListener('input', renderModalGallery);
+            el.addEventListener('change', renderModalGallery);
+        }
+    });
+
+    // Buka Modal Tambah Kartu
     document.getElementById('btnAddCard').addEventListener('click', () => {
         document.getElementById('cardForm').reset();
         document.getElementById('cardId').value = '';
-        document.getElementById('cardImage').value = '';
+        selectedPickerCard = null;
+
+        if (banner) banner.style.display = 'none';
+        if (searchInput) searchInput.value = '';
+        if (setFilter) setFilter.value = '';
+        if (nationFilter) nationFilter.value = '';
+        if (gradeFilter) gradeFilter.value = '';
+
         document.getElementById('cardDateReceived').value = new Date().toISOString().split('T')[0];
-        document.getElementById('modalCardTitle').textContent = 'Tambah Kartu Baru';
-        if (previewBox) previewBox.style.display = 'none';
-        if (webpStatus) webpStatus.style.display = 'none';
-        if (fileInput) fileInput.value = '';
-        refreshPromoSetDropdown();
+        document.getElementById('modalCardTitle').textContent = 'Pilih Kartu dari Database';
+        
+        populateModalPickerSets();
+        renderModalGallery();
         UI.openModal('modalCard');
     });
 
@@ -491,47 +421,43 @@ function initCardForm() {
     // Submit Form
     document.getElementById('cardForm').addEventListener('submit', async e => {
         e.preventDefault();
-        const btn = e.target.querySelector('[type=submit]');
+
+        const cardName = document.getElementById('cardName').value.trim();
+        if (!cardName) {
+            UI.showToast('Silakan klik salah satu gambar kartu di galeri terlebih dahulu!', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('saveCardBtn');
         btn.disabled = true;
         btn.textContent = 'Menyimpan...';
+
         try {
             const cardId = document.getElementById('cardId').value;
-            const cardTypeEl = document.getElementById('cardType');
-            const cardTypeVal = cardTypeEl ? cardTypeEl.value : 'JP';
-            const cardName = document.getElementById('cardName').value.trim();
-            const cardSet = document.getElementById('cardSet').value.trim();
-            const cardGrade = document.getElementById('cardGrade').value;
-            const cardNation = document.getElementById('cardNation').value;
-            let cardImage = document.getElementById('cardImage').value;
-
-            // Jika belum ada nama gambar, coba cari dari CardDB atau generate default nama
-            if (!cardImage && window.CardDB) {
-                const match = CardDB.findByName(cardName);
-                if (match && match.image) cardImage = match.image;
-            }
+            const owner = document.getElementById('cardOwner').value.trim();
+            const date = document.getElementById('cardDateReceived').value;
 
             await API.request('saveCard', {
                 id: cardId || undefined,
                 name: cardName,
-                set: cardSet,
-                grade: cardGrade,
-                type: cardTypeVal,
-                nation: cardNation,
-                image: cardImage || undefined,
-                owner: document.getElementById('cardOwner').value.trim(),
-                date: document.getElementById('cardDateReceived').value
+                set: document.getElementById('cardSet').value,
+                grade: document.getElementById('cardGrade').value,
+                type: document.getElementById('cardType').value,
+                nation: document.getElementById('cardNation').value,
+                image: document.getElementById('cardImage').value,
+                owner: owner,
+                date: date
             });
 
-            UI.showToast('Kartu berhasil disimpan');
+            UI.showToast(`Kartu "${cardName}" berhasil disimpan ke Inventory untuk ${owner}!`, 'success');
             UI.closeModal('modalCard');
             loadInventory();
         } catch (err) {
             console.error(err);
             UI.showToast('Terjadi kesalahan saat menyimpan', 'error');
-        }
-        finally {
+        } finally {
             btn.disabled = false;
-            btn.textContent = 'Simpan Kartu';
+            btn.textContent = 'Simpan Kartu ke Inventory';
         }
     });
 }
@@ -541,36 +467,48 @@ window.editCard = function (id) {
     if (!c) return;
 
     document.getElementById('cardId').value = c.id;
-    document.getElementById('cardName').value = c.name;
-    document.getElementById('cardSet').value = c.set || '';
-    document.getElementById('cardGrade').value = c.grade !== undefined ? c.grade : '3';
-    
-    const cardTypeEl = document.getElementById('cardType');
-    if (cardTypeEl) cardTypeEl.value = (c.type || c.language || 'JP').toString().toUpperCase() === 'EN' ? 'EN' : 'JP';
-    
-    document.getElementById('cardNation').value = c.nation;
     document.getElementById('cardOwner').value = c.owner;
     document.getElementById('cardDateReceived').value = c.date;
-    document.getElementById('cardImage').value = c.image || '';
 
-    // Tampilkan preview box jika ada info kartu
-    const previewBox = document.getElementById('cardPreviewBox');
-    if (previewBox) {
-        document.getElementById('previewCardName').textContent = c.name;
-        document.getElementById('previewCardGrade').textContent = 'Grade ' + (c.grade !== undefined ? c.grade : '-');
-        document.getElementById('previewCardNation').textContent = c.nation;
-        const langEl = document.getElementById('previewCardLang');
-        const lang = (c.type || 'JP').toUpperCase();
-        langEl.textContent = lang;
-        langEl.className = 'badge-lang ' + lang.toLowerCase();
-        document.getElementById('previewCardSet').textContent = c.set || '-';
-        document.getElementById('previewCardImgPath').textContent = 'assets/images/cards/' + (c.image || 'placeholder_card.svg');
-        const previewImg = document.getElementById('cardPreviewImg');
-        previewImg.src = window.CardDB ? CardDB.getImageUrl(c.image) : 'assets/images/cards/placeholder_card.svg';
-        previewBox.style.display = 'flex';
+    // Cari kartu master yang cocok
+    let master = window.CardDB ? CardDB.findByName(c.name) : null;
+    if (!master) {
+        master = {
+            id: 'temp-' + c.id,
+            name: c.name,
+            set: c.set || 'Promo',
+            grade: c.grade !== undefined ? c.grade : '3',
+            language: c.type || 'JP',
+            nation: c.nation,
+            image: c.image
+        };
     }
 
-    document.getElementById('modalCardTitle').textContent = 'Edit Kartu';
+    selectedPickerCard = master;
+    document.getElementById('cardName').value = master.name;
+    document.getElementById('cardSet').value = master.set || '';
+    document.getElementById('cardGrade').value = master.grade !== undefined ? master.grade : '3';
+    document.getElementById('cardType').value = (master.language || master.type || 'JP').toUpperCase();
+    document.getElementById('cardNation').value = master.nation || '';
+    document.getElementById('cardImage').value = master.image || '';
+
+    const banner = document.getElementById('selectedCardBanner');
+    if (banner) {
+        document.getElementById('selectedCardTitle').textContent = master.name;
+        document.getElementById('selectedCardGrade').textContent = 'Grade ' + (master.grade !== undefined ? master.grade : '-');
+        document.getElementById('selectedCardNation').textContent = master.nation;
+        
+        const lang = (master.language || master.type || 'JP').toUpperCase();
+        const langEl = document.getElementById('selectedCardLang');
+        langEl.textContent = lang;
+        langEl.className = 'badge-lang ' + lang.toLowerCase();
+
+        document.getElementById('selectedCardSet').textContent = master.set || 'Promo';
+        document.getElementById('selectedCardThumbImg').src = CardDB.getImageUrl(master.image);
+        banner.style.display = 'flex';
+    }
+
+    document.getElementById('modalCardTitle').textContent = 'Edit Data Titipan Kartu';
     UI.openModal('modalCard');
 };
 
