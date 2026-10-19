@@ -7,5 +7,8 @@ const CONFIG = {
     SHEET_DATA_ID: '1CcD1CAkXkus0iHLg4Q07RutGx85nsaB6-hBGPU-qGKI',
 
     // Mode: true = pakai LocalStorage (localhost), false = pakai GAS
-    USE_LOCAL: false
+    USE_LOCAL: false,
+
+    // Google Gemini API Key untuk Card Scanner (Vision AI)
+    GEMINI_API_KEY: localStorage.getItem('gemini_api_key') || 'AIzaSyDZqsVVMvA_122NEWRXWwr3JSwvi1Khe7A'
 };

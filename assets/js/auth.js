@@ -28,9 +28,9 @@ const Auth = {
     },
     checkAuth: function() {
         const user = this.getUser();
-        const onLogin = ['index.html', '/'].some(p => window.location.pathname.endsWith(p));
+        const onLogin = ['index.html', '/', 'scanner-debug.html'].some(p => window.location.pathname.endsWith(p));
         if (!user && !onLogin) window.location.href = 'index.html';
-        if (user && onLogin) window.location.href = 'dashboard.html';
+        if (user && onLogin && !window.location.pathname.endsWith('scanner-debug.html')) window.location.href = 'dashboard.html';
     }
 };
 document.addEventListener('DOMContentLoaded', () => Auth.checkAuth());

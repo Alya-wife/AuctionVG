@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Scanner Kartu Vanguard – NitipPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <style>
+    .scanner-container {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 24px;
+      max-width: 1050px;
+      margin: 0 auto;
+    }
+    @media (max-width: 860px) {
+      .scanner-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .scanner-card {
+      background: var(--bg-card, #1e293b);
+      border: 1px solid var(--border-color, #334155);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .upload-area {
+      border: 2px dashed #4F8EF7;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+      background: rgba(79, 142, 247, 0.05);
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: background 0.2s;
+    }
+    .upload-area:hover {
+      background: rgba(79, 142, 247, 0.12);
+    }
+
+    .img-box {
+      width: 100%;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #0b1120;
+      border: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 420px;
+      margin-bottom: 14px;
+    }
+    .img-box img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-group-scan {
+      margin-bottom: 14px;
+    }
+    .form-group-scan label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 5px;
+    }
+    .form-group-scan input,
+    .form-group-scan select {
+      width: 100%;
+      padding: 9px 12px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #f8fafc;
+      font-size: 0.88rem;
+      font-family: inherit;
+    }
+    .form-group-scan input:focus,
+    .form-group-scan select:focus {
+      border-color: #38bdf8;
+      outline: none;
+    }
+
+    .scan-status-msg {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: none;
+    }
+    .scan-status-msg.loading {
+      display: block;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .scan-status-msg.success {
+      display: block;
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .scan-status-msg.error {
+      display: block;
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <button class="hamburger" id="hamburgerBtn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="page-title">
+          <h2>Scanner Kartu Vanguard</h2>
+        </div>
+      </header>
+
+      <div class="content-body" style="padding-top: 20px;">
+        <div class="scanner-container">
+
+          <!-- KOLOM KIRI: Upload & Preview -->
+          <div class="scanner-card">
+            <input type="file" id="fileInput" accept="image/*" style="display: none;" />
+            
+            <div class="upload-area" id="dropArea">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4F8EF7" stroke-width="2" style="margin-bottom: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div style="font-weight: 600; font-size: 0.88rem; color: #f8fafc;">Klik untuk Masukkan Gambar</div>
+              <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 2px;">Bisa klik, drag-and-drop, atau Ctrl+V</div>
+            </div>
+
+            <div class="img-box">
+              <img id="cardPreview" src="assets/images/sample_card_dpr1705.png" alt="Preview Kartu" crossorigin="anonymous" />
+            </div>
+
+            <button type="button" class="btn-primary" id="btnScan" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700; font-size: 0.95rem;">
+              <span id="btnScanText">Scan Kartu</span>
+            </button>
+
+            <div id="statusMsg" class="scan-status-msg"></div>
+          </div>
+
+          <!-- KOLOM KANAN: Form Hasil Scan (Editable) -->
+          <div class="scanner-card">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 16px; color: #f8fafc;">Data Kartu</h3>
+
+            <form id="cardResultForm">
+              <!-- HANYA 1 FIELD NAMA KARTU (ENGLISH) -->
+              <div class="form-group-scan">
+                <label for="nameEn">Nama Kartu</label>
+                <input type="text" id="nameEn" placeholder="Nama kartu bahasa Inggris" required />
+              </div>
+
+              <div class="form-grid-2">
+                <div class="form-group-scan">
+                  <label for="cardCode">Kode Kartu</label>
+                  <input type="text" id="cardCode" placeholder="D-PR/1705" required />
+                </div>
+                <div class="form-group-scan">
+                  <label for="language">Bahasa</label>
+                  <select id="language">
+                    <option value="JP">JP (Jepang)</option>
+                    <option value="EN">EN (Inggris)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="form-group-scan">
+                  <label for="grade">Grade</label>
+                  <select id="grade">
+                    <option value="0">Grade 0</option>
+                    <option value="1">Grade 1</option>
+                    <option value="2">Grade 2</option>
+                    <option value="3">Grade 3</option>
+                    <option value="4">Grade 4</option>
+                  </select>
+                </div>
+                <div class="form-group-scan">
+                  <label for="nation">Nation</label>
+                  <select id="nation">
+                    <option value="Dark States">Dark States</option>
+                    <option value="Dragon Empire">Dragon Empire</option>
+                    <option value="Lyrical Monasterio">Lyrical Monasterio</option>
+                    <option value="Stoicheia">Stoicheia</option>
+                    <option value="Brandt Gate">Brandt Gate</option>
+                    <option value="Keter Sanctuary">Keter Sanctuary</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="form-group-scan">
+                  <label for="power">Power</label>
+                  <input type="text" id="power" placeholder="8000 (kosongkan jika Order)" />
+                </div>
+                <div class="form-group-scan">
+                  <label for="shield">Shield</label>
+                  <input type="text" id="shield" placeholder="5000 (kosongkan jika Order)" />
+                </div>
+              </div>
+
+              <div class="form-group-scan">
+                <label for="cardSet">Set Promo</label>
+                <input type="text" id="cardSet" list="setPromoList" placeholder="cth. D-PR/1700-1800" />
+                <datalist id="setPromoList"></datalist>
+              </div>
+
+              <div style="margin-top: 24px; display: flex; gap: 10px;">
+                <button type="button" class="btn-primary" id="btnSave" style="flex: 1; justify-content: center; padding: 11px;">
+                  Simpan Kartu ke Database
+                </button>
+                <button type="button" class="btn-ghost" id="btnClear" style="padding: 11px 16px;">
+                  Reset
+                </button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/cards-data.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/scanner-debug.js"></script>
+</body>
+</html>

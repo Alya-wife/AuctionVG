@@ -177,18 +177,41 @@ function renderCards() {
 
 function renderGrid(container, page) {
     container.className = 'inventory-grid';
-    container.innerHTML = page.map(card => {
+
+    // Kelompokkan kartu identik (nama, pemilik, dan status sama) agar tidak dobel
+    const grouped = [];
+    page.forEach(card => {
+        const key = `${card.name}___${card.owner}___${card.status}`;
+        const existing = grouped.find(g => g.groupKey === key);
+        if (existing) {
+            existing.count++;
+            existing.cardIds.push(card.id);
+        } else {
+            grouped.push({
+                ...card,
+                count: 1,
+                groupKey: key,
+                cardIds: [card.id]
+            });
+        }
+    });
+
+    container.innerHTML = grouped.map(card => {
         const sc = UI.statusClass(card.status);
+        const qtyBadge = card.count > 1 ? `<span style="margin-left:8px;background:rgba(56,189,248,0.2);color:#38bdf8;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:800;border:1px solid rgba(56,189,248,0.4);">${card.count}x</span>` : '';
+
         return `
         <div class="card-item">
             <div class="card-img-wrap" onclick="viewDetail('${card.id}')">
                 ${UI.renderTypeBox(card, 'md')}
-                <span class="card-nation-badge">${card.nation}</span>
                 <span class="card-status-badge status-badge status-${sc}">${card.status}</span>
             </div>
             <div class="card-info">
                 ${card.set ? `<div class="card-set-tag" title="${card.set}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>${card.set}</div>` : ''}
-                <div class="card-title" onclick="viewDetail('${card.id}')">${card.name}</div>
+                <div class="card-title" onclick="viewDetail('${card.id}')" style="display:flex;align-items:center;">
+                    <span>${card.name}</span>
+                    ${qtyBadge}
+                </div>
                 <div class="card-meta">
                     <span><strong>Pemilik:</strong> ${card.owner}</span>
                     <span><strong>Diterima:</strong> ${UI.formatDate(card.date)}</span>
@@ -227,7 +250,6 @@ function renderList(container, page) {
             <tbody>
             ${page.map(c => {
         const sc = UI.statusClass(c.status);
-        const gradeBadge = (c.grade !== undefined && c.grade !== null && c.grade !== '') ? `<span class="badge-grade" style="font-size:0.65rem;padding:1px 5px;margin-right:4px;">G${c.grade}</span>` : '';
         const langBadge = `<span class="badge-lang ${(c.type || 'JP').toLowerCase()}" style="font-size:0.65rem;padding:1px 4px;margin-left:4px;">${c.type || 'JP'}</span>`;
         return `<tr>
                     <td>
@@ -236,11 +258,9 @@ function renderList(container, page) {
                     <td class="text-muted">${c.id}</td>
                     <td>
                         <div style="font-weight:600;cursor:pointer;display:flex;align-items:center;" onclick="viewDetail('${c.id}')">
-                            ${gradeBadge}
                             <span>${c.name}</span>
                             ${langBadge}
                         </div>
-                        <div class="text-sm text-muted">${c.nation}</div>
                     </td>
                     <td>
                         <span style="font-size:0.82rem;color:#38bdf8;">${c.set || '-'}</span>
@@ -286,6 +306,22 @@ window.goPage = function (p) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
+window.deleteCard = async function(id) {
+    const card = allCards.find(c => String(c.id) === String(id));
+    const cardName = card ? card.name : id;
+    if (!confirm(`Hapus kartu "${cardName}" dari inventory?`)) return;
+
+    try {
+        UI.showToast('Menghapus kartu...', 'info');
+        await API.request('deleteCard', { id: id });
+        UI.showToast(`Kartu "${cardName}" berhasil dihapus dari inventory.`, 'success');
+        allCards = allCards.filter(c => String(c.id) !== String(id));
+        applyFilters();
+    } catch (err) {
+        UI.showToast('Gagal menghapus kartu: ' + err.message, 'error');
+    }
+};
+
 // ════════════ CARD FORM & VISUAL CATALOG PICKER (2-COLUMN MULTI-CARD) ════════════
 let selectedTitipCards = [];
 
@@ -294,22 +330,22 @@ function renderSelectedCardsList() {
     const countBadge = document.getElementById('selectedCardsCount');
     const saveBtnText = document.getElementById('saveCardBtnText');
 
-    const count = selectedTitipCards.length;
+    const totalCount = selectedTitipCards.reduce((acc, c) => acc + (c.count || 1), 0);
     if (countBadge) {
-        countBadge.textContent = `${count} Kartu`;
+        countBadge.textContent = `${totalCount} Kartu`;
     }
     if (saveBtnText) {
-        saveBtnText.textContent = count > 0 ? `Simpan ${count} Kartu ke Inventory` : 'Simpan Kartu ke Inventory';
+        saveBtnText.textContent = totalCount > 0 ? `Simpan ${totalCount} Kartu ke Inventory` : 'Simpan Kartu ke Inventory';
     }
 
     if (!container) return;
 
-    if (count === 0) {
+    if (totalCount === 0) {
         container.innerHTML = `
             <div class="selected-cards-empty">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
                 <p>Belum ada kartu dipilih</p>
-                <small>Klik gambar kartu di sebelah kanan untuk menambahkan (bisa lebih dari 1 kartu)</small>
+                <small>Klik gambar kartu di sebelah kanan untuk menambahkan (klik lagi untuk menambah jumlah)</small>
             </div>
         `;
         return;
@@ -317,14 +353,21 @@ function renderSelectedCardsList() {
 
     container.innerHTML = selectedTitipCards.map((c, idx) => {
         const imgUrl = window.CardDB ? CardDB.getImageUrl(c.image) : (c.image || 'assets/images/cards/placeholder_card.svg');
+        const qtyBadge = (c.count && c.count > 1) 
+            ? `<span class="badge-card-count" style="margin-left:6px;font-size:0.75rem;padding:2px 8px;background:rgba(56,189,248,0.2);color:#38bdf8;border-radius:12px;font-weight:800;">${c.count}x</span>` 
+            : '';
+
         return `
             <div class="selected-card-chip">
                 <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
                 <div class="selected-card-chip-info">
-                    <div class="selected-card-chip-name" title="${c.name}">${c.name}</div>
-                    <div class="selected-card-chip-sub">${c.set || 'Promo'} &bull; ${c.nation || ''}</div>
+                    <div class="selected-card-chip-name" title="${c.name}" style="display:flex;align-items:center;">
+                        <span>${c.name}</span>
+                        ${qtyBadge}
+                    </div>
+                    <div class="selected-card-chip-sub">${c.set || 'Promo'}</div>
                 </div>
-                <button type="button" class="btn-remove-selected-card" onclick="removeSelectedTitipCard(${idx})" title="Hapus kartu ini dari daftar titip">
+                <button type="button" class="btn-remove-selected-card" onclick="removeSelectedTitipCard(${idx})" title="Kurangi atau hapus kartu ini">
                     &times;
                 </button>
             </div>
@@ -337,16 +380,22 @@ window.togglePickerCard = function(cardId) {
     const card = CardDB.getById(cardId);
     if (!card) return;
 
-    // Tambahkan kartu ke daftar titipan
-    selectedTitipCards.push({
-        id: card.id,
-        name: card.name,
-        set: card.set || 'Promo',
-        grade: card.grade !== undefined ? card.grade : '3',
-        language: card.language || card.type || 'JP',
-        nation: card.nation || '',
-        image: card.image || ''
-    });
+    // Cek jika kartu sudah ada di daftar, cukup tambahkan jumlah count (2x, 3x, dst)
+    const existing = selectedTitipCards.find(c => c.id === card.id || c.name === card.name);
+    if (existing) {
+        existing.count = (existing.count || 1) + 1;
+    } else {
+        selectedTitipCards.push({
+            id: card.id,
+            name: card.name,
+            set: card.set || 'Promo',
+            grade: card.grade !== undefined ? card.grade : '3',
+            language: card.language || card.type || 'JP',
+            nation: card.nation || '',
+            image: card.image || '',
+            count: 1
+        });
+    }
 
     renderSelectedCardsList();
 
@@ -364,7 +413,11 @@ window.togglePickerCard = function(cardId) {
 
 window.removeSelectedTitipCard = function(index) {
     if (index >= 0 && index < selectedTitipCards.length) {
-        selectedTitipCards.splice(index, 1);
+        if (selectedTitipCards[index].count > 1) {
+            selectedTitipCards[index].count--;
+        } else {
+            selectedTitipCards.splice(index, 1);
+        }
         renderSelectedCardsList();
         if (window._renderModalGalleryFn) {
             window._renderModalGalleryFn();
@@ -408,7 +461,8 @@ function initCardForm() {
         }
 
         galleryContainer.innerHTML = filtered.map(c => {
-            const countInSelected = selectedTitipCards.filter(sc => sc.id === c.id || sc.name === c.name).length;
+            const selItem = selectedTitipCards.find(sc => sc.id === c.id || sc.name === c.name);
+            const countInSelected = selItem ? (selItem.count || 1) : 0;
             const isSel = countInSelected > 0;
             const imgUrl = CardDB.getImageUrl(c.image);
             const countBadge = isSel ? `<span class="picker-selected-badge">${countInSelected}x</span>` : '';
@@ -478,9 +532,10 @@ function initCardForm() {
             const date = document.getElementById('cardDateReceived').value;
             const editingId = document.getElementById('cardId').value;
 
+            const totalCount = selectedTitipCards.reduce((acc, c) => acc + (c.count || 1), 0);
             const btn = document.getElementById('saveCardBtn');
             btn.disabled = true;
-            btn.textContent = editingId ? 'Menyimpan perubahan...' : `Menyimpan ${selectedTitipCards.length} kartu...`;
+            btn.textContent = editingId ? 'Menyimpan perubahan...' : `Menyimpan ${totalCount} kartu...`;
 
             try {
                 if (editingId) {
@@ -499,20 +554,23 @@ function initCardForm() {
                     });
                     UI.showToast(`Data kartu "${card.name}" berhasil diperbarui!`, 'success');
                 } else {
-                    // Simpan satu atau banyak kartu titipan sekaligus
+                    // Simpan satu atau banyak kartu titipan sekaligus (termasuk kelipatan 2x, 3x)
                     for (const card of selectedTitipCards) {
-                        await API.request('saveCard', {
-                            name: card.name,
-                            set: card.set || '',
-                            grade: card.grade !== undefined ? card.grade : '3',
-                            type: (card.language || card.type || 'JP').toUpperCase(),
-                            nation: card.nation || '',
-                            image: card.image || '',
-                            owner: owner,
-                            date: date
-                        });
+                        const qty = card.count || 1;
+                        for (let q = 0; q < qty; q++) {
+                            await API.request('saveCard', {
+                                name: card.name,
+                                set: card.set || '',
+                                grade: card.grade !== undefined ? card.grade : '3',
+                                type: (card.language || card.type || 'JP').toUpperCase(),
+                                nation: card.nation || '',
+                                image: card.image || '',
+                                owner: owner,
+                                date: date
+                            });
+                        }
                     }
-                    UI.showToast(`${selectedTitipCards.length} kartu berhasil disimpan ke Inventory untuk ${owner}!`, 'success');
+                    UI.showToast(`${totalCount} kartu berhasil disimpan ke Inventory untuk ${owner}!`, 'success');
                 }
 
                 UI.closeModal('modalCard');

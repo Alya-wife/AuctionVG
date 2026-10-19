@@ -120,7 +120,7 @@ function renderTransferSummary(cards) {
     const owners = Object.entries(ownerMap).sort((a, b) => b[1].total - a[1].total);
 
     panel.innerHTML = `
-        <div class="transfer-summary-title">💳 Ringkasan Transfer ke Pemilik</div>
+        <div class="transfer-summary-title">Ringkasan Transfer ke Pemilik</div>
         ${owners.map(([name, data]) => `
         <div class="transfer-owner-card">
             <div class="transfer-owner-name">${name}</div>
@@ -304,7 +304,7 @@ function initSingleForm() {
                     commission:  commission
                 }
             });
-            UI.showToast('Transaksi selesai! ✓');
+            UI.showToast('Transaksi selesai!');
             UI.closeModal('modalPayment');
             load();
         } catch {
@@ -430,7 +430,7 @@ async function handleBatchSubmit(e) {
             }
         }
 
-        UI.showToast(`${ids.length} kartu berhasil dibayarkan ✓`);
+        UI.showToast(`${ids.length} kartu berhasil dibayarkan`);
         UI.closeModal('modalBatchPayment');
         load();
     } catch (err) {

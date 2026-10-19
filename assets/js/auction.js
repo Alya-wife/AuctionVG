@@ -51,7 +51,7 @@ function renderAuctions(tab) {
                 <span class="status-badge ${status === 'Active' ? 'status-auction' : 'status-completed'}">${a.status}</span>
             </div>
             <div class="text-sm">${a.cardIds?.length || 0} kartu dilelang</div>
-            ${a.fbUrl ? `<a href="${a.fbUrl}" target="_blank" class="btn-link text-sm">🔗 Lihat Post Facebook</a>` : ''}
+            ${a.fbUrl ? `<a href="${a.fbUrl}" target="_blank" class="btn-link text-sm">Lihat Post Facebook</a>` : ''}
             ${status === 'Active' ? `<button class="btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="openFinishModal('${a.id}')">Selesaikan Lelang</button>` : 
             `<div class="text-sm text-muted">Terjual: ${a.results?.filter(r=>r.sold).length||0}/${a.cardIds?.length||0}</div>`}
         </div>`).join('')}</div>`;

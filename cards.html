@@ -12,104 +12,71 @@
   <style>
     .catalog-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
       margin-top: 20px;
     }
     .catalog-card-item {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transition: all 0.25s ease;
-      cursor: pointer;
-      position: relative;
-    }
-    .catalog-card-item:hover {
-      transform: translateY(-5px);
-      border-color: #38bdf8;
-      box-shadow: 0 12px 25px rgba(56, 189, 248, 0.15);
-    }
-    .catalog-card-img-wrap {
-      width: 100%;
-      height: 230px;
       position: relative;
       background: #090d16;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
       overflow: hidden;
+      aspect-ratio: 5 / 7;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
-    .catalog-card-img-wrap img {
+    .catalog-card-item:hover {
+      transform: translateY(-4px) scale(1.02);
+      border-color: #38bdf8;
+      box-shadow: 0 10px 24px rgba(56, 189, 248, 0.25);
+    }
+    .catalog-card-item img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center top;
-      transition: transform 0.3s ease;
+      display: block;
     }
-    .catalog-card-item:hover .catalog-card-img-wrap img {
-      transform: scale(1.07);
-    }
-    .catalog-card-body {
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex: 1;
-    }
-    .catalog-card-title {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #fff;
-      font-family: var(--font-display);
-      line-height: 1.3;
-    }
-    .catalog-card-meta {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .btn-quick-titip {
-      margin-top: auto;
-      padding: 9px 12px;
-      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(79, 142, 247, 0.2));
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      color: #38bdf8;
-      font-weight: 600;
-      font-size: 0.82rem;
-      border-radius: var(--radius-sm);
+    .catalog-card-hover-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(2px);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      transition: all 0.2s;
+      gap: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
     }
-    .btn-quick-titip:hover {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: #fff;
+    .catalog-card-item:hover .catalog-card-hover-overlay {
+      opacity: 1;
+      pointer-events: auto;
     }
-    .hero-stat-banner {
-      background: linear-gradient(135deg, rgba(79, 142, 247, 0.1), rgba(123, 92, 247, 0.08));
-      border: 1px solid rgba(79, 142, 247, 0.2);
-      border-radius: var(--radius-lg);
-      padding: 16px 20px;
+    .catalog-hover-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .hsb-text h3 {
-      font-size: 1.15rem;
-      margin-bottom: 4px;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.15);
       color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+      cursor: pointer;
+      transition: all 0.2s;
     }
-    .hsb-text p {
-      font-size: 0.84rem;
-      color: var(--text-muted);
+    .catalog-hover-btn.edit:hover {
+      background: #4F8EF7;
+      border-color: #4F8EF7;
+      transform: scale(1.1);
+    }
+    .catalog-hover-btn.delete:hover {
+      background: #ef4444;
+      border-color: #ef4444;
+      transform: scale(1.1);
     }
   </style>
 </head>
@@ -135,17 +102,6 @@
       </header>
 
       <div class="content-body">
-        <!-- Banner Info -->
-        <div class="hero-stat-banner">
-          <div class="hsb-text">
-            <h3>Katalog Kartu Siap Titip</h3>
-            <p>Klik gambar kartu apa pun untuk langsung memasukkannya ke daftar titipan Inventory.</p>
-          </div>
-          <div>
-            <span class="record-count" id="catalogCardCount" style="font-size:0.95rem;">– kartu terdaftar</span>
-          </div>
-        </div>
-
         <!-- Filter Bar -->
         <div class="filter-bar">
           <div class="search-box">
@@ -180,7 +136,7 @@
           <button class="btn-ghost" id="btnResetFilter">Reset</button>
         </div>
 
-        <!-- Cards Grid -->
+        <!-- Cards Grid (Gambar Saja) -->
         <div id="catalogGrid" class="catalog-grid">
           <div class="loading-state" style="grid-column: 1/-1;">
             <div class="spinner"></div>
@@ -191,55 +147,6 @@
     </main>
   </div>
 
-  <!-- Modal 1: Titip Kartu ke Inventory -->
-  <div class="modal-overlay" id="modalTitip">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3>Titipkan Kartu ke Inventory</h3>
-        <button class="modal-close" id="modalTitipClose"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-      </div>
-      <form id="titipForm" class="modal-form">
-        <input type="hidden" id="titipCardMasterId" />
-        
-        <!-- Preview Kartu yang Dipilih -->
-        <div class="card-preview-card" style="margin-bottom: 16px;">
-          <div class="card-preview-thumb">
-            <img id="titipCardImg" src="assets/images/cards/placeholder_card.svg" alt="Kartu" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
-          </div>
-          <div class="card-preview-info">
-            <div class="card-preview-name" id="titipCardName">-</div>
-            <div class="card-preview-badges">
-              <span class="badge-grade" id="titipCardGrade">Grade -</span>
-              <span class="badge-nation" id="titipCardNation">Nation -</span>
-              <span class="badge-lang jp" id="titipCardLang">JP</span>
-              <span style="font-size:0.75rem; color:#38bdf8;" id="titipCardSet">-</span>
-            </div>
-          </div>
-        </div>
-
-        <p class="modal-subtitle" style="margin-bottom: 14px;">Masukkan identitas titipan untuk kartu ini:</p>
-
-        <div class="form-group">
-          <label for="titipOwner">Nama Pemilik Kartu *</label>
-          <input type="text" id="titipOwner" required placeholder="Nama pemilik (cth. Budi)" list="ownerDatalist" />
-          <datalist id="ownerDatalist"></datalist>
-        </div>
-
-        <div class="form-group">
-          <label for="titipDate">Tanggal Diterima *</label>
-          <input type="date" id="titipDate" required />
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn-ghost" id="cancelTitipBtn">Batal</button>
-          <button type="submit" class="btn-primary" id="saveTitipBtn">
-            <span>Simpan ke Inventory</span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- Modal 2: Tambah Master Kartu Baru ke Database -->
   <div class="modal-overlay" id="modalMaster">
     <div class="modal-box large">
@@ -248,6 +155,7 @@
         <button class="modal-close" id="modalMasterClose"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <form id="masterForm" class="modal-form">
+        <input type="hidden" id="masterEditId" />
         <input type="hidden" id="masterImageFileName" />
 
         <div class="form-row">
@@ -312,7 +220,7 @@
         <div class="modal-footer">
           <button type="button" class="btn-ghost" id="cancelMasterBtn">Batal</button>
           <button type="submit" class="btn-primary" id="saveMasterBtn">
-            <span>Daftarkan Kartu ke Database</span>
+            <span id="saveMasterBtnText">Daftarkan Kartu ke Database</span>
           </button>
         </div>
       </form>

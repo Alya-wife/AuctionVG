@@ -87,34 +87,166 @@ function renderPublicOwners() {
     `).join('');
 }
 
+let currentPublicOwnerCards = [];
+let currentPublicFilterTab = 'all';
+
+const PUBLIC_STATUS_TABS = [
+    { id: 'all', label: 'Semua', filter: () => true },
+    { id: 'available', label: 'Available', filter: c => ['Available', 'Auction'].includes(c.status) },
+    { id: 'sold', label: 'Terjual', filter: c => c.status === 'Sold' },
+    { id: 'payment', label: 'Menunggu Dibayar', filter: c => c.status === 'Waiting Payment' },
+    { id: 'shipment', label: 'Menunggu Dikirim', filter: c => ['Waiting Shipment', 'Shipped'].includes(c.status) },
+    { id: 'payout', label: 'Menunggu Uang ke Pemilik', filter: c => !c.payoutDate && ['Completed', 'Waiting Payment', 'Sold', 'Waiting Shipment'].includes(c.status) },
+    { id: 'completed', label: 'Selesai', filter: c => c.status === 'Completed' }
+];
+
 // Open public owner detail modal
 window.openPublicOwnerDetail = function(ownerName) {
-    const cards = inventoryData.filter(c => c.owner === ownerName);
-    document.getElementById('publicOwnerDetailName').textContent = ownerName;
+    currentPublicOwnerCards = inventoryData.filter(c => c.owner === ownerName);
+    currentPublicFilterTab = 'all';
 
-    let rows = cards.map(c => {
+    document.getElementById('publicOwnerDetailName').textContent = ownerName;
+    const totalEl = document.getElementById('publicOwnerDetailTotal');
+    if (totalEl) totalEl.textContent = `${currentPublicOwnerCards.length} kartu total`;
+
+    renderPublicOwnerTabs();
+    renderPublicOwnerCardsGrid();
+    openModal('modalPublicOwnerDetail');
+};
+
+function renderPublicOwnerTabs() {
+    const tabsContainer = document.getElementById('publicOwnerStatusTabs');
+    if (!tabsContainer) return;
+
+    tabsContainer.innerHTML = PUBLIC_STATUS_TABS.map(tab => {
+        const count = currentPublicOwnerCards.filter(tab.filter).length;
+        const isActive = tab.id === currentPublicFilterTab;
+        return `
+            <button class="owner-status-tab-btn ${isActive ? 'active' : ''}" onclick="setPublicOwnerFilterTab('${tab.id}')">
+                <span>${tab.label}</span>
+                <span class="tab-count">${count}</span>
+            </button>
+        `;
+    }).join('');
+}
+
+window.setPublicOwnerFilterTab = function(tabId) {
+    currentPublicFilterTab = tabId;
+    renderPublicOwnerTabs();
+    renderPublicOwnerCardsGrid();
+};
+
+function renderPublicOwnerCardsGrid() {
+    const grid = document.getElementById('publicOwnerCardsGrid');
+    if (!grid) return;
+
+    const currentTabObj = PUBLIC_STATUS_TABS.find(t => t.id === currentPublicFilterTab) || PUBLIC_STATUS_TABS[0];
+    const filtered = currentPublicOwnerCards.filter(currentTabObj.filter);
+
+    if (!filtered.length) {
+        grid.innerHTML = '<p class="empty-msg" style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">Tidak ada kartu untuk kategori ini.</p>';
+        return;
+    }
+
+    // Group identical cards: same name and status
+    const grouped = [];
+    filtered.forEach(c => {
+        const key = `${c.name}___${c.status}___${c.soldDate || ''}___${c.shipDate || ''}___${c.payoutDate || ''}`;
+        const existing = grouped.find(g => g.groupKey === key);
+        if (existing) {
+            existing.count++;
+        } else {
+            grouped.push({
+                ...c,
+                count: 1,
+                groupKey: key
+            });
+        }
+    });
+
+    grid.innerHTML = grouped.map(c => {
+        const imgUrl = (window.CardDB && CardDB.getImageUrl) ? CardDB.getImageUrl(c.image) : (c.image || 'assets/images/cards/placeholder_card.svg');
         const sc = UI.statusClass(c.status);
-        // Extra info per status (hide sensitive info like buyer name and price for public)
-        let extra = '';
-        if (c.soldDate) extra += `<div class="detail-meta">Terjual: <strong>${UI.formatDate(c.soldDate)}</strong></div>`;
-        if (c.shipDate) extra += `<div class="detail-meta">Tgl Kirim: <strong>${UI.formatDate(c.shipDate)}</strong></div>`;
-        if (c.payoutDate) extra += `<div class="detail-meta">Tgl Bayar: <strong>${UI.formatDate(c.payoutDate)}</strong></div>`;
 
         return `
-            <div class="detail-card-row">
-                ${UI.renderTypeBox(c, 'sm')}
-                <div class="detail-card-info">
-                    <div class="detail-card-name">${c.name}</div>
-                    <div class="detail-meta">${c.nation} · Diterima ${UI.formatDate(c.date)}</div>
-                    ${extra}
-                </div>
-                <span class="status-badge status-${sc}">${c.status}</span>
+            <div class="owner-card-visual-item" onclick="openPublicCardDetail('${c.id}')" title="Klik untuk lihat detail">
+                <img src="${imgUrl}" alt="" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
+                ${c.count > 1 ? `<div class="owner-card-visual-qty">${c.count}x</div>` : ''}
+                <div class="owner-card-visual-status status-badge status-${sc}">${c.status}</div>
             </div>
         `;
     }).join('');
+}
 
-    document.getElementById('publicOwnerDetailContent').innerHTML = rows || '<p class="empty-msg">Tidak ada kartu.</p>';
-    openModal('modalPublicOwnerDetail');
+window.openPublicCardDetail = function(cardId) {
+    const card = currentPublicOwnerCards.find(c => String(c.id) === String(cardId)) || inventoryData.find(c => String(c.id) === String(cardId));
+    if (!card) return;
+
+    const sc = UI.statusClass(card.status);
+    const imgUrl = (window.CardDB && CardDB.getImageUrl) ? CardDB.getImageUrl(card.image) : (card.image || 'assets/images/cards/placeholder_card.svg');
+
+    let metaRows = `
+        <div class="owner-card-detail-row">
+            <span class="label">Nation</span>
+            <span class="value">${card.nation || '–'}</span>
+        </div>
+        <div class="owner-card-detail-row">
+            <span class="label">Diterima</span>
+            <span class="value">${UI.formatDate(card.date) || '–'}</span>
+        </div>
+    `;
+
+    if (card.soldDate) {
+        metaRows += `
+            <div class="owner-card-detail-row">
+                <span class="label">Terjual</span>
+                <span class="value">${UI.formatDate(card.soldDate)}</span>
+            </div>
+        `;
+    }
+    if (card.shipDate) {
+        metaRows += `
+            <div class="owner-card-detail-row">
+                <span class="label">Tgl Kirim</span>
+                <span class="value">${UI.formatDate(card.shipDate)}</span>
+            </div>
+        `;
+    }
+    if (card.payoutDate) {
+        metaRows += `
+            <div class="owner-card-detail-row">
+                <span class="label">Tgl Bayar</span>
+                <span class="value" style="color: #a78bfa; font-weight:700;">${UI.formatDate(card.payoutDate)}</span>
+            </div>
+        `;
+    } else if (['Completed', 'Waiting Payment', 'Sold'].includes(card.status)) {
+        metaRows += `
+            <div class="owner-card-detail-row">
+                <span class="label">Status Uang</span>
+                <span class="value" style="color: #f59e0b; font-weight:700;">Menunggu uang dibayarkan ke pemilik</span>
+            </div>
+        `;
+    }
+
+    document.getElementById('publicCardDetailTitle').textContent = card.name || 'Detail Kartu';
+    document.getElementById('publicCardDetailBody').innerHTML = `
+        <div class="owner-card-detail-layout">
+            <div class="owner-card-detail-thumb">
+                <img src="${imgUrl}" alt="${card.name || 'Kartu'}" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
+            </div>
+            <div class="owner-card-detail-info">
+                <div class="owner-card-detail-header">
+                    <h4>${card.name}</h4>
+                    <span class="status-badge status-${sc}">${card.status}</span>
+                </div>
+                <div class="owner-card-detail-meta-list">
+                    ${metaRows}
+                </div>
+            </div>
+        </div>
+    `;
+
+    openModal('modalPublicCardDetail');
 };
 
 // Init login modal

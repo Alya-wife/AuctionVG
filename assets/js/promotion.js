@@ -101,7 +101,7 @@ function initPromoForm() {
 
             if (promoWebpStatus) {
                 const newKb = (res.newSize / 1024).toFixed(1);
-                promoWebpStatus.innerHTML = `<span>⚡ <strong>WebP Ready:</strong> ${(res.originalSize/1024).toFixed(1)} KB → ${newKb} KB (Hemat ${res.savedPercent}%)</span>`;
+                promoWebpStatus.innerHTML = `<span><strong>WebP Ready:</strong> ${(res.originalSize/1024).toFixed(1)} KB → ${newKb} KB (Hemat ${res.savedPercent}%)</span>`;
                 promoWebpStatus.style.display = 'flex';
             }
             UI.showToast('Banner berhasil dikonversi ke WebP!', 'success');

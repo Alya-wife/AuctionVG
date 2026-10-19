@@ -12,7 +12,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "D-PR 2024 Promo Series",
     "nation": "Dragon Empire",
     "language": "JP",
-    "image": "D-PR-001.jpg"
+    "image": "D-PR-001.webp"
   },
   {
     "id": "D-PR-002",
@@ -21,7 +21,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "D-PR 2024 Promo Series",
     "nation": "Keter Sanctuary",
     "language": "JP",
-    "image": "D-PR-002.jpg"
+    "image": "D-PR-002.webp"
   },
   {
     "id": "D-PR-003",
@@ -30,7 +30,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "D-PR 2024 Promo Series",
     "nation": "Dark States",
     "language": "EN",
-    "image": "D-PR-003.jpg"
+    "image": "D-PR-003.webp"
   },
   {
     "id": "D-PR-004",
@@ -39,7 +39,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "D-PR 2024 Promo Series",
     "nation": "Stoicheia",
     "language": "JP",
-    "image": "D-PR-004.jpg"
+    "image": "D-PR-004.webp"
   },
   {
     "id": "D-PR-005",
@@ -48,7 +48,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "D-PR 2024 Promo Series",
     "nation": "Brandt Gate",
     "language": "EN",
-    "image": "D-PR-005.jpg"
+    "image": "D-PR-005.webp"
   },
   {
     "id": "D-PR-006",
@@ -57,7 +57,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "D-PR 2024 Promo Series",
     "nation": "Lyrical Monasterio",
     "language": "JP",
-    "image": "D-PR-006.jpg"
+    "image": "D-PR-006.webp"
   },
   {
     "id": "D-PR-007",
@@ -66,7 +66,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "D-PR 2024 Promo Series",
     "nation": "Dragon Empire",
     "language": "JP",
-    "image": "D-PR-007.jpg"
+    "image": "D-PR-007.webp"
   },
   {
     "id": "D-PR-008",
@@ -75,7 +75,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "D-PR 2024 Promo Series",
     "nation": "Keter Sanctuary",
     "language": "JP",
-    "image": "D-PR-008.jpg"
+    "image": "D-PR-008.webp"
   },
   {
     "id": "V-PR-001",
@@ -84,7 +84,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "V-PR Promo Pack Vol. 1",
     "nation": "Dragon Empire",
     "language": "JP",
-    "image": "V-PR-001.jpg"
+    "image": "V-PR-001.webp"
   },
   {
     "id": "V-PR-002",
@@ -93,7 +93,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "V-PR Promo Pack Vol. 1",
     "nation": "Keter Sanctuary",
     "language": "EN",
-    "image": "V-PR-002.jpg"
+    "image": "V-PR-002.webp"
   },
   {
     "id": "V-PR-003",
@@ -102,7 +102,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "V-PR Promo Pack Vol. 1",
     "nation": "Dark States",
     "language": "JP",
-    "image": "V-PR-003.jpg"
+    "image": "V-PR-003.webp"
   },
   {
     "id": "V-PR-004",
@@ -111,7 +111,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "V-PR Promo Pack Vol. 1",
     "nation": "Dragon Empire",
     "language": "EN",
-    "image": "V-PR-004.jpg"
+    "image": "V-PR-004.webp"
   },
   {
     "id": "V-PR-005",
@@ -120,7 +120,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "V-PR Promo Pack Vol. 1",
     "nation": "Keter Sanctuary",
     "language": "EN",
-    "image": "V-PR-005.jpg"
+    "image": "V-PR-005.webp"
   },
   {
     "id": "V-PR-006",
@@ -129,7 +129,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "V-PR Promo Pack Vol. 1",
     "nation": "Stoicheia",
     "language": "JP",
-    "image": "V-PR-006.jpg"
+    "image": "V-PR-006.webp"
   },
   {
     "id": "SHOP-PR-001",
@@ -138,7 +138,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "Shop Tournament PR 2024",
     "nation": "Dark States",
     "language": "JP",
-    "image": "SHOP-PR-001.jpg"
+    "image": "SHOP-PR-001.webp"
   },
   {
     "id": "SHOP-PR-002",
@@ -147,7 +147,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "Shop Tournament PR 2024",
     "nation": "Brandt Gate",
     "language": "EN",
-    "image": "SHOP-PR-002.jpg"
+    "image": "SHOP-PR-002.webp"
   },
   {
     "id": "SHOP-PR-003",
@@ -156,7 +156,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "Shop Tournament PR 2024",
     "nation": "Lyrical Monasterio",
     "language": "JP",
-    "image": "SHOP-PR-003.jpg"
+    "image": "SHOP-PR-003.webp"
   },
   {
     "id": "SHOP-PR-004",
@@ -165,7 +165,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "Shop Tournament PR 2024",
     "nation": "Dragon Empire",
     "language": "JP",
-    "image": "SHOP-PR-004.jpg"
+    "image": "SHOP-PR-004.webp"
   },
   {
     "id": "VGD-PR-001",
@@ -174,7 +174,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "Vanguard Day Promo Special",
     "nation": "Keter Sanctuary",
     "language": "JP",
-    "image": "VGD-PR-001.jpg"
+    "image": "VGD-PR-001.webp"
   },
   {
     "id": "VGD-PR-002",
@@ -183,7 +183,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "Vanguard Day Promo Special",
     "nation": "Dark States",
     "language": "JP",
-    "image": "VGD-PR-002.jpg"
+    "image": "VGD-PR-002.webp"
   },
   {
     "id": "VGD-PR-003",
@@ -192,7 +192,7 @@ const DEFAULT_CARD_DATABASE = [
     "set": "Vanguard Day Promo Special",
     "nation": "Stoicheia",
     "language": "EN",
-    "image": "VGD-PR-003.jpg"
+    "image": "VGD-PR-003.webp"
   }
 ];
 
@@ -205,6 +205,16 @@ const CardDB = {
         const stored = localStorage.getItem('nitip_card_database');
         if (stored) {
           this._cards = JSON.parse(stored);
+          let modified = false;
+          this._cards.forEach(c => {
+            if (c.image && (c.image.endsWith('.jpg') || c.image.endsWith('.jpeg') || c.image.endsWith('.png'))) {
+              c.image = c.image.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+              modified = true;
+            }
+          });
+          if (modified) {
+            localStorage.setItem('nitip_card_database', JSON.stringify(this._cards));
+          }
         } else {
           this._cards = [...DEFAULT_CARD_DATABASE];
           localStorage.setItem('nitip_card_database', JSON.stringify(this._cards));
@@ -212,8 +222,38 @@ const CardDB = {
       } catch (e) {
         this._cards = [...DEFAULT_CARD_DATABASE];
       }
+      this.migrateCacheToWebp();
     }
     return this._cards;
+  },
+
+  async migrateCacheToWebp() {
+    try {
+      const cacheStr = localStorage.getItem('ag_card_webp_cache');
+      if (!cacheStr) return;
+      const cache = JSON.parse(cacheStr);
+      let changed = false;
+      for (const key of Object.keys(cache)) {
+        let newKey = key;
+        if (key.match(/\.(jpg|jpeg|png)$/i)) {
+          newKey = key.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+          cache[newKey] = cache[key];
+          delete cache[key];
+          changed = true;
+        }
+        if (typeof cache[newKey] === 'string' && cache[newKey].startsWith('data:image/') && !cache[newKey].startsWith('data:image/webp')) {
+          if (window.UI && typeof window.UI.convertDataUrlToWebP === 'function') {
+            try {
+              cache[newKey] = await window.UI.convertDataUrlToWebP(cache[newKey]);
+              changed = true;
+            } catch (err) {}
+          }
+        }
+      }
+      if (changed) {
+        localStorage.setItem('ag_card_webp_cache', JSON.stringify(cache));
+      }
+    } catch (e) {}
   },
 
   getAll() {
@@ -260,8 +300,10 @@ const CardDB = {
     // Check local webp cache
     try {
       const cacheMap = JSON.parse(localStorage.getItem('ag_card_webp_cache') || '{}');
+      const webpKey = imageFileName.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+      if (cacheMap[webpKey]) return cacheMap[webpKey];
       if (cacheMap[imageFileName]) return cacheMap[imageFileName];
-    } catch(e) {}
+    } catch (e) {}
     // If it's already a full URL or data URI
     if (imageFileName.startsWith('http://') || imageFileName.startsWith('https://') || imageFileName.startsWith('data:')) {
       return imageFileName;
@@ -270,7 +312,8 @@ const CardDB = {
     if (imageFileName.includes('/')) {
       return imageFileName;
     }
-    return `assets/images/cards/${imageFileName}`;
+    const cleanName = imageFileName.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+    return `assets/images/cards/${cleanName}`;
   },
 
   updateCard(id, updatedData) {

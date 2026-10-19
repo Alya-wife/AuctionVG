@@ -77,9 +77,12 @@
 
   <!-- Modal: Owner Detail (Public) -->
   <div class="modal-overlay" id="modalPublicOwnerDetail">
-    <div class="modal-box large">
+    <div class="modal-box large" style="max-width: 960px;">
       <div class="modal-header">
-        <h3 id="publicOwnerDetailName">Detail Pemilik</h3>
+        <div>
+          <h3 id="publicOwnerDetailName" style="margin-bottom: 2px;">Detail Pemilik</h3>
+          <span id="publicOwnerDetailTotal" style="font-size: 0.82rem; color: var(--text-muted);"></span>
+        </div>
         <button class="modal-close" id="modalPublicOwnerDetailClose">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -87,7 +90,23 @@
           </svg>
         </button>
       </div>
-      <div id="publicOwnerDetailContent" class="modal-form"></div>
+
+      <!-- Status Division Tabs -->
+      <div class="owner-status-tabs" id="publicOwnerStatusTabs"></div>
+
+      <!-- Visual Card Gallery Grid (Images Only) -->
+      <div id="publicOwnerCardsGrid" class="owner-cards-gallery-grid"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Public Card Detail Popup -->
+  <div class="modal-overlay" id="modalPublicCardDetail" style="z-index: 1050;">
+    <div class="modal-box" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 id="publicCardDetailTitle">Detail Kartu</h3>
+        <button class="modal-close" id="modalPublicCardDetailClose"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div id="publicCardDetailBody" class="modal-form" style="padding: 20px;"></div>
     </div>
   </div>
 

@@ -5,8 +5,8 @@ const UI = {
         { href: 'cards.html', label: 'Database Kartu', icon: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>' },
         { href: 'auction.html', label: 'Lelang', icon: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>' },
         { href: 'shipment.html', label: 'Pengiriman', icon: '<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>' },
-        { href: 'payment.html', label: 'Pembayaran', icon: '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>' },
-        { href: 'owners.html', label: 'Pemilik', icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' }
+        { href: 'owners.html', label: 'Pemilik', icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' },
+        { href: 'scanner-debug.html', label: 'AI Scanner (Debug)', icon: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>' }
     ],
 
     init() {
@@ -163,9 +163,7 @@ const UI = {
             }
         }
         const imgUrl = (window.CardDB && imageName) ? CardDB.getImageUrl(imageName) : 'assets/images/cards/placeholder_card.svg';
-        const gradeHtml = (grade !== undefined && grade !== null && grade !== '') 
-            ? `<span class="card-grade-badge grade-${grade}">G${grade}</span>` 
-            : '';
+        const gradeHtml = '';
         const langHtml = `<span class="card-lang-badge lang-${t.toLowerCase()}">${t}</span>`;
 
         if (size === 'detail') {
@@ -287,6 +285,30 @@ const UI = {
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
+        });
+    },
+
+    convertDataUrlToWebP(dataUrl, quality = 0.82) {
+        return new Promise((resolve) => {
+            if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) {
+                return resolve(dataUrl);
+            }
+            if (dataUrl.startsWith('data:image/webp')) {
+                return resolve(dataUrl);
+            }
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/webp', quality));
+            };
+            img.onerror = () => resolve(dataUrl);
+            img.src = dataUrl;
         });
     },
 

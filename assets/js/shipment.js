@@ -250,7 +250,7 @@ function initSingleForm() {
                     trackingNumber: document.getElementById('shipTracking').value
                 }
             });
-            UI.showToast('Pengiriman dikonfirmasi ✓');
+            UI.showToast('Pengiriman dikonfirmasi');
             UI.closeModal('modalShipment');
             load();
         } catch {
@@ -337,7 +337,7 @@ async function handleBatchSubmit(e) {
             }
         }
 
-        UI.showToast(`${ids.length} kartu berhasil dikonfirmasi pengiriman ✓`);
+        UI.showToast(`${ids.length} kartu berhasil dikonfirmasi pengiriman`);
         UI.closeModal('modalBatchShipment');
         load();
     } catch (err) {

@@ -10,7 +10,6 @@ let existingOwners = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     initCatalogFilters();
-    initTitipModal();
     initMasterModal();
     loadCatalog();
 });
@@ -111,109 +110,21 @@ function renderCatalogGrid() {
         const imgUrl = CardDB.getImageUrl(c.image);
 
         return `
-            <div class="catalog-card-item">
-                <div class="catalog-card-img-wrap" onclick="openTitipModal('${c.id}')" title="Klik gambar untuk titipkan kartu ini">
-                    <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
-                </div>
-                <div class="catalog-card-body">
-                    <div style="font-size:0.75rem; color:#38bdf8; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${c.set || 'Promo'}">
-                        ${c.set || 'Promo'}
-                    </div>
-                    <div class="catalog-card-title" title="${c.name}">${c.name}</div>
-                    <div class="catalog-card-actions">
-                        <button type="button" class="btn-quick-titip" onclick="openTitipModal('${c.id}')" title="Titip ke Inventory">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                            Titipkan
-                        </button>
-                        <button type="button" class="btn-card-action edit" onclick="openEditMasterModal('${c.id}')" title="Edit Data Kartu">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        </button>
-                        <button type="button" class="btn-card-action delete" onclick="deleteMasterCard('${c.id}')" title="Hapus dari Database">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                        </button>
-                    </div>
+            <div class="catalog-card-item" title="${c.name} (${c.id})">
+                <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
+                <div class="catalog-card-hover-overlay">
+                    <button type="button" class="catalog-hover-btn edit" onclick="openEditMasterModal('${c.id}')" title="Edit Kartu">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button type="button" class="catalog-hover-btn delete" onclick="deleteMasterCard('${c.id}')" title="Hapus Kartu">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </button>
                 </div>
             </div>`;
     }).join('');
 }
 
-// ──────────── MODAL 1: TITIP KARTU KE INVENTORY ──────────────────────────────
-let selectedMasterCardForTitip = null;
-
-function initTitipModal() {
-    const modalClose = document.getElementById('modalTitipClose');
-    const cancelBtn = document.getElementById('cancelTitipBtn');
-    const titipForm = document.getElementById('titipForm');
-
-    if (modalClose) modalClose.addEventListener('click', () => UI.closeModal('modalTitip'));
-    if (cancelBtn) cancelBtn.addEventListener('click', () => UI.closeModal('modalTitip'));
-
-    if (titipForm) {
-        titipForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!selectedMasterCardForTitip) return;
-
-            const submitBtn = document.getElementById('saveTitipBtn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Menyimpan...';
-
-            try {
-                const owner = document.getElementById('titipOwner').value.trim();
-                const date = document.getElementById('titipDate').value;
-                const lang = (selectedMasterCardForTitip.language || selectedMasterCardForTitip.type || 'JP').toUpperCase();
-
-                await API.request('saveCard', {
-                    name: selectedMasterCardForTitip.name,
-                    set: selectedMasterCardForTitip.set || '',
-                    grade: selectedMasterCardForTitip.grade !== undefined ? selectedMasterCardForTitip.grade : '3',
-                    type: lang,
-                    nation: selectedMasterCardForTitip.nation,
-                    image: selectedMasterCardForTitip.image || undefined,
-                    owner: owner,
-                    date: date
-                });
-
-                UI.showToast(`Kartu "${selectedMasterCardForTitip.name}" berhasil dimasukkan ke Inventory untuk ${owner}!`, 'success');
-                UI.closeModal('modalTitip');
-                titipForm.reset();
-            } catch (err) {
-                console.error(err);
-                UI.showToast('Gagal menyimpan kartu ke inventory', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Simpan ke Inventory';
-            }
-        });
-    }
-}
-
-window.openTitipModal = function(cardId) {
-    const card = CardDB.getById(cardId);
-    if (!card) return;
-
-    selectedMasterCardForTitip = card;
-    document.getElementById('titipCardMasterId').value = card.id;
-    document.getElementById('titipCardName').textContent = card.name;
-    document.getElementById('titipCardSet').textContent = card.set || 'Promo';
-    document.getElementById('titipCardGrade').textContent = 'Grade ' + (card.grade !== undefined ? card.grade : '-');
-    document.getElementById('titipCardNation').textContent = card.nation;
-
-    const lang = (card.language || card.type || 'JP').toUpperCase();
-    const langEl = document.getElementById('titipCardLang');
-    langEl.textContent = lang;
-    langEl.className = 'badge-lang ' + lang.toLowerCase();
-
-    const imgEl = document.getElementById('titipCardImg');
-    imgEl.src = CardDB.getImageUrl(card.image);
-
-    // Set default tanggal hari ini
-    document.getElementById('titipDate').value = new Date().toISOString().split('T')[0];
-    document.getElementById('titipOwner').value = '';
-
-    UI.openModal('modalTitip');
-};
-
-// ──────────── MODAL 2: TAMBAH MASTER KARTU BARU (DENGAN WEBP) ────────────────
+// ──────────── MODAL: TAMBAH / EDIT MASTER KARTU ────────────────
 function initMasterModal() {
     const btnOpen = document.getElementById('btnOpenNewMaster');
     const modalClose = document.getElementById('modalMasterClose');
@@ -228,7 +139,13 @@ function initMasterModal() {
     if (btnOpen) {
         btnOpen.addEventListener('click', () => {
             masterForm.reset();
+            const editIdEl = document.getElementById('masterEditId');
+            if (editIdEl) editIdEl.value = '';
             document.getElementById('masterImageFileName').value = '';
+            const titleEl = document.getElementById('modalMasterTitle');
+            if (titleEl) titleEl.textContent = 'Daftarkan Kartu Master Baru';
+            const btnText = document.getElementById('saveMasterBtnText');
+            if (btnText) btnText.textContent = 'Daftarkan Kartu ke Database';
             if (webpStatus) webpStatus.style.display = 'none';
             UI.openModal('modalMaster');
         });
@@ -289,8 +206,8 @@ function initMasterModal() {
             if (webpStatus) {
                 const newKb = (res.newSize / 1024).toFixed(1);
                 webpStatus.innerHTML = `
-                    <span>⚡ <strong>WebP Ready:</strong> ${res.name} (${newKb} KB, hemat ${res.savedPercent}%)</span>
-                    <button type="button" class="webp-btn-download" id="btnDownloadMasterWebP">⬇️ Download WebP</button>
+                    <span><strong>WebP Ready:</strong> ${res.name} (${newKb} KB, hemat ${res.savedPercent}%)</span>
+                    <button type="button" class="webp-btn-download" id="btnDownloadMasterWebP">Download WebP</button>
                 `;
                 webpStatus.style.display = 'flex';
 
@@ -310,10 +227,13 @@ function initMasterModal() {
         }
     }
 
-    // Submit Master Card
+    // Submit Master Card (Tambah baru / Simpan perubahan)
     if (masterForm) {
         masterForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            const editIdEl = document.getElementById('masterEditId');
+            const editingId = editIdEl ? editIdEl.value : '';
+
             const name = document.getElementById('masterName').value.trim();
             const set = document.getElementById('masterSet').value.trim();
             const grade = document.getElementById('masterGrade').value;
@@ -321,26 +241,88 @@ function initMasterModal() {
             const nation = document.getElementById('masterNation').value;
             const image = document.getElementById('masterImageFileName').value.trim() || (name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '.webp');
 
-            const id = 'CARD-' + Date.now().toString().slice(-6);
+            if (editingId) {
+                CardDB.updateCard(editingId, {
+                    name,
+                    set,
+                    grade,
+                    language,
+                    nation,
+                    image
+                });
+                UI.showToast(`Kartu master "${name}" berhasil diperbarui!`, 'success');
+            } else {
+                const id = 'CARD-' + Date.now().toString().slice(-6);
+                const newCard = {
+                    id,
+                    name,
+                    set,
+                    grade,
+                    language,
+                    nation,
+                    image
+                };
+                CardDB.addCard(newCard);
+                UI.showToast(`Kartu master "${name}" berhasil didaftarkan ke database!`, 'success');
+            }
 
-            const newCard = {
-                id,
-                name,
-                set,
-                grade,
-                language,
-                nation,
-                image
-            };
-
-            CardDB.addCard(newCard);
             allMasterCards = CardDB.getAll();
             populateSetFilterDropdown();
             applyCatalogFilters();
 
-            UI.showToast(`Kartu master "${name}" berhasil didaftarkan ke database!`, 'success');
             UI.closeModal('modalMaster');
             masterForm.reset();
+            if (editIdEl) editIdEl.value = '';
         });
     }
 }
+
+// ──────────── GLOBAL ACTIONS: EDIT & DELETE MASTER CARD ────────────
+window.openEditMasterModal = function(cardId) {
+    const card = CardDB.getById(cardId);
+    if (!card) return;
+
+    const editIdEl = document.getElementById('masterEditId');
+    if (editIdEl) editIdEl.value = card.id;
+
+    document.getElementById('masterName').value = card.name || '';
+    document.getElementById('masterSet').value = card.set || '';
+    document.getElementById('masterGrade').value = card.grade !== undefined ? card.grade : '3';
+    document.getElementById('masterLang').value = (card.language || card.type || 'JP').toUpperCase();
+    document.getElementById('masterNation').value = card.nation || 'Dragon Empire';
+    document.getElementById('masterImageFileName').value = card.image || '';
+
+    const titleEl = document.getElementById('modalMasterTitle');
+    if (titleEl) titleEl.textContent = `Edit Kartu: ${card.name}`;
+
+    const btnText = document.getElementById('saveMasterBtnText');
+    if (btnText) btnText.textContent = 'Simpan Perubahan';
+
+    const webpStatus = document.getElementById('masterWebpStatus');
+    if (webpStatus) {
+        if (card.image) {
+            webpStatus.innerHTML = `<span><strong>Gambar Saat Ini:</strong> ${card.image}</span>`;
+            webpStatus.style.display = 'flex';
+        } else {
+            webpStatus.style.display = 'none';
+        }
+    }
+
+    UI.openModal('modalMaster');
+};
+
+window.deleteMasterCard = function(cardId) {
+    const card = CardDB.getById(cardId);
+    if (!card) return;
+
+    if (!confirm(`Hapus kartu "${card.name}" (${card.id}) dari database kartu?`)) {
+        return;
+    }
+
+    CardDB.deleteCard(cardId);
+    allMasterCards = CardDB.getAll();
+    populateSetFilterDropdown();
+    applyCatalogFilters();
+
+    UI.showToast(`Kartu "${card.name}" berhasil dihapus dari database.`, 'success');
+};
