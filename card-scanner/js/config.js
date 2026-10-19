@@ -3,7 +3,8 @@
  */
 const CONFIG = {
     // Google Gemini API Key untuk Card Scanner (Vision AI)
-    GEMINI_API_KEY: localStorage.getItem('gemini_api_key') || 'AIzaSyDZqsVVMvA_122NEWRXWwr3JSwvi1Khe7A',
+    // Disimpan di LocalStorage browser agar aman dan tidak ter-commit ke GitHub
+    GEMINI_API_KEY: localStorage.getItem('gemini_api_key') || '',
 
     // Default Vision Model
     GEMINI_MODEL: 'gemini-2.5-flash',

@@ -4,7 +4,9 @@
 (function() {
   'use strict';
 
-  const API_KEY = localStorage.getItem('gemini_api_key') || (typeof CONFIG !== 'undefined' ? CONFIG.GEMINI_API_KEY : '') || 'AIzaSyDZqsVVMvA_122NEWRXWwr3JSwvi1Khe7A';
+  function getApiKey() {
+    return localStorage.getItem('gemini_api_key') || (typeof CONFIG !== 'undefined' ? CONFIG.GEMINI_API_KEY : '') || '';
+  }
 
   // Konfigurasi Range Set Promo
   // Range umum berdasarkan digit nomor kartu (cth: D-PR/1662 -> D-PR/1600-1700, D-PR/1705 -> D-PR/1700-1800)
@@ -187,6 +189,27 @@
     btnScan.addEventListener('click', scanCard);
     btnClear.addEventListener('click', clearForm);
     btnSave.addEventListener('click', saveCardToDatabase);
+
+    const btnApiKey = document.getElementById('btnApiKey');
+    if (btnApiKey) {
+      btnApiKey.addEventListener('click', () => {
+        const current = getApiKey();
+        const input = prompt(
+          'Masukkan Google Gemini API Key Anda:\n(Dapatkan API Key baru secara gratis di https://aistudio.google.com/app/apikey)',
+          current
+        );
+        if (input !== null) {
+          if (input.trim()) {
+            localStorage.setItem('gemini_api_key', input.trim());
+            if (typeof CONFIG !== 'undefined') CONFIG.GEMINI_API_KEY = input.trim();
+            alert('API Key berhasil disimpan di browser!');
+          } else {
+            localStorage.removeItem('gemini_api_key');
+            alert('API Key dihapus dari browser.');
+          }
+        }
+      });
+    }
   }
 
   function clearForm() {
@@ -201,6 +224,21 @@
 
   // Eksekusi Scan Kartu
   async function scanCard() {
+    let activeKey = getApiKey();
+    if (!activeKey) {
+      const input = prompt(
+        'Google Gemini API Key belum disetel.\n\nSilakan masukkan Gemini API Key Anda (dapatkan gratis di https://aistudio.google.com/app/apikey):'
+      );
+      if (input && input.trim()) {
+        localStorage.setItem('gemini_api_key', input.trim());
+        if (typeof CONFIG !== 'undefined') CONFIG.GEMINI_API_KEY = input.trim();
+        activeKey = input.trim();
+      } else {
+        setStatus('Scan dibatalkan: API Key diperlukan.', 'error');
+        return;
+      }
+    }
+
     if (!currentBase64) {
       loadDefaultImageBase64();
       if (!currentBase64) {
@@ -271,15 +309,15 @@ Return ONLY valid JSON:
         generationConfig: { temperature: 0.1, maxOutputTokens: 1024 }
       };
 
-      // Panggil Gemini Vision API
-      let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${API_KEY}`, {
+      // Panggil Gemini Vision API (coba gemini-2.5-flash, gemini-1.5-flash, gemini-flash-latest)
+      let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
       if (!res.ok) {
-        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${API_KEY}`, {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${activeKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -288,7 +326,18 @@ Return ONLY valid JSON:
 
       const resJson = await res.json();
       if (!res.ok) {
-        throw new Error(resJson.error?.message || 'Gagal memanggil Gemini API');
+        const errMsg = resJson.error?.message || 'Gagal memanggil Gemini API';
+        if (errMsg.toLowerCase().includes('leak') || errMsg.toLowerCase().includes('api_key_invalid')) {
+          const newKey = prompt(
+            'API Key ini dinonaktifkan oleh Google karena terdeteksi bocor di GitHub.\n\nSilakan buat API Key baru secara gratis di:\nhttps://aistudio.google.com/app/apikey\n\nMasukkan API Key baru Anda di sini:'
+          );
+          if (newKey && newKey.trim()) {
+            localStorage.setItem('gemini_api_key', newKey.trim());
+            if (typeof CONFIG !== 'undefined') CONFIG.GEMINI_API_KEY = newKey.trim();
+            alert('API Key baru berhasil disimpan! Silakan klik tombol "Scan Kartu" kembali.');
+          }
+        }
+        throw new Error(errMsg);
       }
 
       let textOutput = resJson.candidates?.[0]?.content?.parts?.[0]?.text || '';

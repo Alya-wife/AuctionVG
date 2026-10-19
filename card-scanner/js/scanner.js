@@ -253,10 +253,19 @@
 
   // ALGORITMA SCAN VISION AI & WIKI
   async function handleScan() {
-    const key = getApiKey();
+    let key = getApiKey();
     if (!key) {
-      alert('Google Gemini API Key belum disetel!');
-      return;
+      const input = prompt(
+        'Google Gemini API Key belum disetel.\n\nSilakan masukkan Gemini API Key Anda (dapatkan gratis di https://aistudio.google.com/app/apikey):'
+      );
+      if (input && input.trim()) {
+        localStorage.setItem('gemini_api_key', input.trim());
+        if (window.CONFIG) window.CONFIG.GEMINI_API_KEY = input.trim();
+        key = input.trim();
+      } else {
+        setStatus('Scan dibatalkan: API Key diperlukan.', 'error');
+        return;
+      }
     }
 
     if (!currentBase64) {
@@ -406,7 +415,18 @@ Return strictly JSON without markdown backticks:
 
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.error?.message || `HTTP ${response.status}`);
+      const errMsg = errJson.error?.message || `HTTP ${response.status}`;
+      if (errMsg.toLowerCase().includes('leak') || errMsg.toLowerCase().includes('api_key_invalid')) {
+        const newKey = prompt(
+          'API Key ini dinonaktifkan oleh Google karena terdeteksi bocor di GitHub.\n\nSilakan buat API Key baru gratis di:\nhttps://aistudio.google.com/app/apikey\n\nMasukkan API Key baru Anda di sini:'
+        );
+        if (newKey && newKey.trim()) {
+          localStorage.setItem('gemini_api_key', newKey.trim());
+          if (window.CONFIG) window.CONFIG.GEMINI_API_KEY = newKey.trim();
+          alert('API Key baru berhasil disimpan! Silakan klik tombol "Scan Kartu" kembali.');
+        }
+      }
+      throw new Error(errMsg);
     }
 
     const data = await response.json();
