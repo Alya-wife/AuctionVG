@@ -391,50 +391,81 @@ Return strictly JSON without markdown backticks:
 }
     `.trim();
 
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: promptText },
-            {
-              inline_data: {
-                mime_type: mimeType,
-                data: base64Data
-              }
-            }
-          ]
-        }],
-        generationConfig: {
-          temperature: 0.1,
-          response_mime_type: "application/json"
-        }
-      })
-    });
+    const modelsToTry = [
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-8b',
+      'gemini-2.0-flash',
+      'gemini-1.5-pro',
+      'gemini-flash-latest'
+    ];
 
-    if (!response.ok) {
-      const errJson = await response.json().catch(() => ({}));
-      const errMsg = errJson.error?.message || `HTTP ${response.status}`;
-      if (errMsg.toLowerCase().includes('leak') || errMsg.toLowerCase().includes('api_key_invalid')) {
-        const newKey = prompt(
-          'API Key ini dinonaktifkan oleh Google karena terdeteksi bocor di GitHub.\n\nSilakan buat API Key baru gratis di:\nhttps://aistudio.google.com/app/apikey\n\nMasukkan API Key baru Anda di sini:'
-        );
-        if (newKey && newKey.trim()) {
-          localStorage.setItem('gemini_api_key', newKey.trim());
-          if (window.CONFIG) window.CONFIG.GEMINI_API_KEY = newKey.trim();
-          alert('API Key baru berhasil disimpan! Silakan klik tombol "Scan Kartu" kembali.');
+    let lastError = null;
+
+    for (const m of modelsToTry) {
+      try {
+        console.log(`[Card Scanner] Menghubungi model: ${m}...`);
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: promptText },
+                {
+                  inline_data: {
+                    mime_type: mimeType,
+                    data: base64Data
+                  }
+                }
+              ]
+            }],
+            generationConfig: {
+              temperature: 0.1,
+              response_mime_type: "application/json"
+            }
+          })
+        });
+
+        const errJson = await response.json().catch(() => ({}));
+
+        if (response.ok && errJson.candidates?.[0]?.content?.parts?.[0]?.text) {
+          const rawText = errJson.candidates[0].content.parts[0].text;
+          const cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+          return JSON.parse(cleanJson);
         }
+
+        const errMsg = errJson.error?.message || `HTTP ${response.status}`;
+
+        if (errMsg.toLowerCase().includes('leak') || errMsg.toLowerCase().includes('api_key_invalid')) {
+          const newKey = prompt(
+            'API Key ini dinonaktifkan oleh Google karena terdeteksi bocor di GitHub.\n\nSilakan buat API Key baru gratis di:\nhttps://aistudio.google.com/app/apikey\n\nMasukkan API Key baru Anda di sini:'
+          );
+          if (newKey && newKey.trim()) {
+            localStorage.setItem('gemini_api_key', newKey.trim());
+            if (window.CONFIG) window.CONFIG.GEMINI_API_KEY = newKey.trim();
+            alert('API Key baru berhasil disimpan! Silakan klik tombol "Scan Kartu" kembali.');
+          }
+          throw new Error(errMsg);
+        }
+
+        if (errMsg.toLowerCase().includes('high demand') || response.status === 503 || response.status === 429 || response.status === 404) {
+          console.warn(`[Card Scanner] Model ${m} sedang sibuk (${errMsg}), mencoba model berikutnya...`);
+          setStatus(`Model ${m} sedang antre, mencoba model cadangan...`, 'loading');
+          lastError = new Error(errMsg);
+          continue;
+        }
+
+        lastError = new Error(errMsg);
+      } catch (err) {
+        if (err.message && (err.message.toLowerCase().includes('leak') || err.message.toLowerCase().includes('api_key_invalid'))) {
+          throw err;
+        }
+        lastError = err;
       }
-      throw new Error(errMsg);
     }
 
-    const data = await response.json();
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) throw new Error('AI tidak mengembalikan respon teks.');
-
-    const cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanJson);
+    throw lastError || new Error('Semua model AI sedang sibuk. Silakan coba klik Scan kembali.');
   }
 
   // Fandom Wiki API Lookup

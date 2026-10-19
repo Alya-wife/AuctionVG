@@ -309,35 +309,69 @@ Return ONLY valid JSON:
         generationConfig: { temperature: 0.1, maxOutputTokens: 1024 }
       };
 
-      // Panggil Gemini Vision API (coba gemini-2.5-flash, gemini-1.5-flash, gemini-flash-latest)
-      let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      // Panggil Gemini Vision API dengan multi-model fallback otomatis
+      // Jika suatu model mengalami 'high demand', otomatis beralih ke model cadangan dalam hitungan detik
+      const modelsToTry = [
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-8b',
+        'gemini-2.0-flash',
+        'gemini-1.5-pro',
+        'gemini-flash-latest'
+      ];
 
-      if (!res.ok) {
-        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${activeKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+      let resJson = null;
+      let lastErr = null;
+
+      for (const m of modelsToTry) {
+        try {
+          console.log(`[Gemini Vision] Menghubungi model: ${m}...`);
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${activeKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await res.json().catch(() => ({}));
+
+          if (res.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            resJson = data;
+            break;
+          }
+
+          const errMsg = data.error?.message || `HTTP ${res.status}`;
+
+          // Jika API Key bocor / invalid, langsung minta key baru
+          if (errMsg.toLowerCase().includes('leak') || errMsg.toLowerCase().includes('api_key_invalid')) {
+            const newKey = prompt(
+              'API Key ini dinonaktifkan oleh Google karena terdeteksi bocor di GitHub.\n\nSilakan buat API Key baru secara gratis di:\nhttps://aistudio.google.com/app/apikey\n\nMasukkan API Key baru Anda di sini:'
+            );
+            if (newKey && newKey.trim()) {
+              localStorage.setItem('gemini_api_key', newKey.trim());
+              if (typeof CONFIG !== 'undefined') CONFIG.GEMINI_API_KEY = newKey.trim();
+              alert('API Key baru berhasil disimpan! Silakan klik tombol "Scan Kartu" kembali.');
+            }
+            throw new Error(errMsg);
+          }
+
+          // Jika model sedang high demand / overloaded / 503 / 429, lanjut ke model berikutnya
+          if (errMsg.toLowerCase().includes('high demand') || res.status === 503 || res.status === 429 || res.status === 404) {
+            console.warn(`[Gemini Vision] Model ${m} sedang sibuk (${errMsg}), beralih ke model berikutnya...`);
+            setStatus(`Model ${m} sedang antre, otomatis beralih ke model cadangan...`, 'loading');
+            lastErr = new Error(errMsg);
+            continue;
+          }
+
+          lastErr = new Error(errMsg);
+        } catch (e) {
+          if (e.message && (e.message.toLowerCase().includes('leak') || e.message.toLowerCase().includes('api_key_invalid'))) {
+            throw e;
+          }
+          lastErr = e;
+        }
       }
 
-      const resJson = await res.json();
-      if (!res.ok) {
-        const errMsg = resJson.error?.message || 'Gagal memanggil Gemini API';
-        if (errMsg.toLowerCase().includes('leak') || errMsg.toLowerCase().includes('api_key_invalid')) {
-          const newKey = prompt(
-            'API Key ini dinonaktifkan oleh Google karena terdeteksi bocor di GitHub.\n\nSilakan buat API Key baru secara gratis di:\nhttps://aistudio.google.com/app/apikey\n\nMasukkan API Key baru Anda di sini:'
-          );
-          if (newKey && newKey.trim()) {
-            localStorage.setItem('gemini_api_key', newKey.trim());
-            if (typeof CONFIG !== 'undefined') CONFIG.GEMINI_API_KEY = newKey.trim();
-            alert('API Key baru berhasil disimpan! Silakan klik tombol "Scan Kartu" kembali.');
-          }
-        }
-        throw new Error(errMsg);
+      if (!resJson) {
+        throw lastErr || new Error('Semua model AI sedang sibuk. Silakan coba klik Scan lagi.');
       }
 
       let textOutput = resJson.candidates?.[0]?.content?.parts?.[0]?.text || '';
