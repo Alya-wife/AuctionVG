@@ -2129,3 +2129,84 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   text-align: right;
 }
+
+/* ── Kelola Admin / Users ── */
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.user-avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.user-cell-info {
+  display: flex;
+  flex-direction: column;
+}
+.user-cell-name {
+  font-weight: 700;
+  color: #fff;
+  font-size: 0.9rem;
+}
+.user-cell-username {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.badge-role {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.badge-role-admin {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+.badge-role-pacar {
+  background: rgba(244, 114, 182, 0.15);
+  color: #f472b6;
+  border: 1px solid rgba(244, 114, 182, 0.3);
+}
+.badge-role-moderator {
+  background: rgba(167, 139, 250, 0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(167, 139, 250, 0.3);
+}
+.badge-role-staff {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+.pwd-toggle-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.pwd-toggle-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pwd-toggle-btn:hover {
+  color: #fff;
+}

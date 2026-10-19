@@ -107,6 +107,12 @@ const API = {
         if (!localStorage.getItem('ag_auctions')) {
             localStorage.setItem('ag_auctions', JSON.stringify([]));
         }
+        if (!localStorage.getItem('ag_users')) {
+            const defaultUsers = [
+                { id: 1, username: 'admin', password: 'admin123', name: 'Pacar Alya', role: 'Pacar Alya' }
+            ];
+            localStorage.setItem('ag_users', JSON.stringify(defaultUsers));
+        }
     },
 
     // ─── LocalStorage Handler ─────────────────────────────────────────────────
@@ -116,15 +122,61 @@ const API = {
 
         const inv = () => JSON.parse(localStorage.getItem('ag_inventory') || '[]');
         const aucs = () => JSON.parse(localStorage.getItem('ag_auctions') || '[]');
+        const users = () => JSON.parse(localStorage.getItem('ag_users') || '[]');
         const save = (key, val) => localStorage.setItem(key, JSON.stringify(val));
 
         switch (action) {
             // Auth
             case 'login': {
                 const { username, password } = payload;
+                const userList = users();
+                const matched = userList.find(u => 
+                    u.username.toLowerCase() === (username || '').toLowerCase() && 
+                    u.password === password
+                );
+                if (matched) {
+                    return { id: matched.id, username: matched.username, name: matched.name, role: matched.role };
+                }
                 if (username === 'admin' && password === 'admin123')
                     return { id: 1, username: 'admin', name: 'Pacar Alya', role: 'Pacar Alya' };
                 throw new Error('Username atau password salah.');
+            }
+
+            // User Management
+            case 'getUsers': {
+                return users();
+            }
+            case 'saveUser': {
+                let list = users();
+                const targetU = (payload.username || '').trim().toLowerCase();
+                if (!targetU) throw new Error('Username wajib diisi');
+                const idx = list.findIndex(u => u.username.toLowerCase() === targetU);
+                if (idx !== -1) {
+                    list[idx] = { ...list[idx], ...payload, username: list[idx].username };
+                    save('ag_users', list);
+                    return list[idx];
+                } else {
+                    const newUser = {
+                        id: Date.now(),
+                        username: payload.username.trim(),
+                        password: payload.password || '123456',
+                        name: payload.name || payload.username,
+                        role: payload.role || 'Admin'
+                    };
+                    list.push(newUser);
+                    save('ag_users', list);
+                    return newUser;
+                }
+            }
+            case 'deleteUser': {
+                let list = users();
+                const targetU = (payload.username || '').trim().toLowerCase();
+                if (targetU === 'admin') {
+                    throw new Error('Admin utama tidak dapat dihapus');
+                }
+                list = list.filter(u => u.username.toLowerCase() !== targetU);
+                save('ag_users', list);
+                return true;
             }
 
             // Inventory

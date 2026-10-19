@@ -11,6 +11,12 @@ function doPost(e) {
 
     if (action === 'login') {
       result = doLogin(data.username, data.password);
+    } else if (action === 'getUsers') {
+      result = getUsers();
+    } else if (action === 'saveUser') {
+      result = saveUser(data);
+    } else if (action === 'deleteUser') {
+      result = deleteUser(data.username);
     } else if (action === 'getInventory') {
       result = getInventory();
     } else if (action === 'saveCard') {
@@ -131,6 +137,78 @@ function doLogin(username, password) {
     }
   }
   throw new Error("Username atau password salah");
+}
+
+function getUsers() {
+  const ss = SpreadsheetApp.openById(SHEET_LOGIN_ID);
+  let sheet = ss.getSheetByName("Users");
+  if (!sheet) {
+    sheet = ss.insertSheet("Users");
+    sheet.appendRow(["Username", "Password", "Name", "Role"]);
+    sheet.appendRow(["admin", "admin123", "Pacar Alya", "Pacar Alya"]);
+  }
+  const data = sheet.getDataRange().getValues();
+  const users = [];
+  for (let i = 1; i < data.length; i++) {
+    if (!data[i][0]) continue;
+    users.push({
+      id: i,
+      username: String(data[i][0]),
+      password: String(data[i][1] || ''),
+      name: String(data[i][2] || data[i][0]),
+      role: String(data[i][3] || 'Admin')
+    });
+  }
+  return users;
+}
+
+function saveUser(data) {
+  if (!data || !data.username) throw new Error("Username wajib diisi");
+  const ss = SpreadsheetApp.openById(SHEET_LOGIN_ID);
+  let sheet = ss.getSheetByName("Users");
+  if (!sheet) {
+    sheet = ss.insertSheet("Users");
+    sheet.appendRow(["Username", "Password", "Name", "Role"]);
+    sheet.appendRow(["admin", "admin123", "Pacar Alya", "Pacar Alya"]);
+  }
+  const values = sheet.getDataRange().getValues();
+  let foundRow = -1;
+  const targetUser = String(data.username).trim().toLowerCase();
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][0]).trim().toLowerCase() === targetUser) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+
+  if (foundRow !== -1) {
+    // Update
+    if (data.password) sheet.getRange(foundRow, 2).setValue(data.password);
+    if (data.name) sheet.getRange(foundRow, 3).setValue(data.name);
+    if (data.role) sheet.getRange(foundRow, 4).setValue(data.role);
+    return { success: true, action: 'updated', username: data.username };
+  } else {
+    // Insert
+    sheet.appendRow([data.username.trim(), data.password || '123456', data.name || data.username, data.role || 'Admin']);
+    return { success: true, action: 'created', username: data.username };
+  }
+}
+
+function deleteUser(username) {
+  if (!username) throw new Error("Username wajib diisi");
+  if (username.toLowerCase() === 'admin') throw new Error("User admin utama tidak dapat dihapus");
+  const ss = SpreadsheetApp.openById(SHEET_LOGIN_ID);
+  let sheet = ss.getSheetByName("Users");
+  if (!sheet) return false;
+  const values = sheet.getDataRange().getValues();
+  const targetUser = String(username).trim().toLowerCase();
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][0]).trim().toLowerCase() === targetUser) {
+      sheet.deleteRow(i + 1);
+      return true;
+    }
+  }
+  throw new Error("User tidak ditemukan");
 }
 
 function getInventory() {

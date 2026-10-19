@@ -6,6 +6,7 @@ const UI = {
         { href: 'auction.html', label: 'Lelang', icon: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>' },
         { href: 'shipment.html', label: 'Pengiriman', icon: '<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>' },
         { href: 'owners.html', label: 'Pemilik', icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' },
+        { href: 'users.html', label: 'Kelola Admin', icon: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>' },
         { href: 'scanner-debug.html', label: 'AI Scanner (Debug)', icon: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>' }
     ],
 
