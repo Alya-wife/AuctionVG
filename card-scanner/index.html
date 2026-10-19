@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Cardfight!! Vanguard Vision AI Card Scanner</title>
+  <meta name="description" content="Scanner kartu Cardfight!! Vanguard otomatis dengan Google Gemini Vision AI dan Fandom Wiki" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="scanner-header">
+    <div class="brand-wrap">
+      <div class="brand-icon">VG</div>
+      <div class="brand-text">
+        <h1>Vanguard Card Scanner</h1>
+        <p>Vision AI OCR &amp; Fandom Wiki Auto-Lookup</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-ghost" id="btnApiKey" title="Atur Google Gemini API Key">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-1.5 1.5L12 11l-4-4-5 5 1.41 1.41L10 8.83l4 4 5.5-5.5L21 2z"/></svg>
+        API Key
+      </button>
+      <button type="button" class="btn-ghost" id="btnExport" title="Export database kartu ke format JSON">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export JSON
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-wrapper">
+    <div class="scanner-container">
+
+      <!-- Kolom Kiri: Input Gambar & Preview -->
+      <section class="scanner-card">
+        <div class="card-title-row">
+          <h2>Input Gambar Kartu</h2>
+        </div>
+
+        <input type="file" id="fileInput" accept="image/*" style="display: none;" />
+        
+        <div class="upload-area" id="dropArea">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" style="margin-bottom: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div style="font-weight: 700; font-size: 0.9rem; color: #f8fafc;">Pilih Gambar Kartu</div>
+          <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 3px;">Klik, drag-and-drop, atau tekan Ctrl+V</div>
+        </div>
+
+        <!-- Sample images bar -->
+        <div class="sample-bar">
+          <span>Sampel Uji:</span>
+          <button type="button" class="sample-pill" data-sample-img="images/sample_card_dpr1705.png">D-PR/1705 (Unit)</button>
+          <button type="button" class="sample-pill" data-sample-img="images/sample_order_dpr1662.png">D-PR/1662 (Order)</button>
+        </div>
+
+        <div class="img-box">
+          <img id="cardPreview" src="images/sample_card_dpr1705.png" alt="Preview Kartu" crossorigin="anonymous" />
+        </div>
+
+        <button type="button" class="btn-primary" id="btnScan" style="width: 100%; justify-content: center; padding: 12px; font-size: 0.95rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span id="btnScanText">Scan Kartu</span>
+        </button>
+
+        <div id="statusMsg" class="scan-status-msg"></div>
+      </section>
+
+      <!-- Kolom Kanan: Hasil Analisis Form -->
+      <section class="scanner-card">
+        <div class="card-title-row">
+          <h2>Data Kartu Terdeteksi</h2>
+          <span style="font-size: 0.76rem; color: var(--text-muted);">Dapat diedit sebelum disimpan</span>
+        </div>
+
+        <form id="cardResultForm">
+          <div class="form-group-scan">
+            <label for="nameEn">Nama Kartu (English)</label>
+            <input type="text" id="nameEn" placeholder="Nama resmi kartu dalam bahasa Inggris" required />
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group-scan">
+              <label for="cardCode">Kode Kartu</label>
+              <input type="text" id="cardCode" placeholder="cth. D-PR/1705" required />
+            </div>
+            <div class="form-group-scan">
+              <label for="language">Bahasa Kartu</label>
+              <select id="language">
+                <option value="JP">JP (Jepang)</option>
+                <option value="EN">EN (Inggris)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group-scan">
+              <label for="grade">Grade (Pojok Kiri Atas)</label>
+              <select id="grade">
+                <option value="0">Grade 0</option>
+                <option value="1">Grade 1</option>
+                <option value="2">Grade 2</option>
+                <option value="3">Grade 3</option>
+                <option value="4">Grade 4</option>
+              </select>
+            </div>
+            <div class="form-group-scan">
+              <label for="nation">Nation (Warna / Simbol)</label>
+              <select id="nation">
+                <option value="Dark States">Dark States (Biru Tua/Ungu)</option>
+                <option value="Dragon Empire">Dragon Empire (Merah)</option>
+                <option value="Lyrical Monasterio">Lyrical Monasterio (Pink)</option>
+                <option value="Stoicheia">Stoicheia (Hijau)</option>
+                <option value="Brandt Gate">Brandt Gate (Abu/Putih)</option>
+                <option value="Keter Sanctuary">Keter Sanctuary (Kuning/Emas)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group-scan">
+              <label for="power">Power</label>
+              <input type="text" id="power" placeholder="8000 (kosong jika Order)" />
+            </div>
+            <div class="form-group-scan">
+              <label for="shield">Shield</label>
+              <input type="text" id="shield" placeholder="5000 (kosong jika Order)" />
+            </div>
+          </div>
+
+          <div class="form-group-scan">
+            <label for="cardSet">Set Promo (Otomatis)</label>
+            <input type="text" id="cardSet" list="setPromoList" placeholder="cth. D-PR/1700-1800" />
+            <datalist id="setPromoList"></datalist>
+          </div>
+
+          <div style="margin-top: 24px; display: flex; gap: 10px;">
+            <button type="button" class="btn-primary" id="btnSave" style="flex: 1; justify-content: center; padding: 12px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Simpan ke Database
+            </button>
+            <button type="button" class="btn-ghost" id="btnClear" style="padding: 12px 18px;">
+              Reset Form
+            </button>
+          </div>
+        </form>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    Vanguard Vision AI Card Scanner Standalone Package &bull; Menggunakan Google Gemini Vision AI &amp; Cardfight!! Vanguard Fandom Wiki
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/cards-data.js"></script>
+  <script src="js/scanner.js"></script>
+</body>
+</html>
