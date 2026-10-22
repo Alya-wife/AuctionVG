@@ -7,7 +7,7 @@ Kini tidak ada lagi loading lambat, cold-start 30 detik, ataupun batas limit kuo
 
 ## 📁 File Penting yang Sudah Disiapkan
 
-1. **`database.sql`**  
+1. **`database/database.sql`**  
    Dump SQL lengkap berisi struktur 4 tabel (`inventory`, `auctions`, `auction_items`, `users`) beserta **seluruh 134 kartu inventaris riil, 7 riwayat lelang, dan data akun**. Siap di-import ke phpMyAdmin.
 2. **`config/database.php`** (dan `config.php`)  
    File konfigurasi database MySQL (host, nama database, user, password).
@@ -15,11 +15,15 @@ Kini tidak ada lagi loading lambat, cold-start 30 detik, ataupun batas limit kuo
    Folder controller modular: `AuthController.php`, `InventoryController.php`, `AuctionController.php`, `StatsController.php`.
 4. **`views/`**  
    Folder tampilan antarmuka web yang rapi dan terorganisir.
-5. **`api.php`**  
+5. **`database/`**  
+   Folder skrip database dan migration.
+6. **`docs/`**  
+   Folder dokumentasi sistem dan panduan hosting.
+7. **`api.php`**  
    Backend REST API dispatcher cepat & aman menggunakan PHP PDO dan controllers.
-6. **`.htaccess`**  
+8. **`.htaccess`**  
    Proteksi file SQL/script dari akses publik serta kompresi GZIP untuk mempercepat loading di ProFreeHost.
-7. **`assets/js/config.js` & `assets/js/api.js`**  
+9. **`assets/js/config.js` & `assets/js/api.js`**  
    Sudah disesuaikan untuk langsung memanggil `api.php` secara otomatis.
 
 ---
@@ -51,7 +55,7 @@ Kini tidak ada lagi loading lambat, cold-start 30 detik, ataupun batas limit kuo
 2. Cari dan klik menu **"phpMyAdmin"**.
 3. Di phpMyAdmin, klik nama database Anda di panel sebelah kiri (misal: `unaux_34567890_nitippro`).
 4. Klik tab menu **"Import"** di bagian atas.
-5. Klik **"Choose File"** / **"Pilih Berkas"**, lalu pilih file **`database.sql`** yang ada di folder project ini.
+5. Klik **"Choose File"** / **"Pilih Berkas"**, lalu pilih file **`database/database.sql`** yang ada di folder project ini.
 6. Scroll ke bawah dan klik tombol **"Go"** / **"Kirim"**.
 7. Tunggu beberapa detik hingga muncul pesan sukses berwarna hijau:  
    *`Import has been successfully finished, 4 tables created...`*

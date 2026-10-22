@@ -3,15 +3,18 @@
  * Migration Script: Google Sheets Data -> MySQL Database & database.sql
  */
 
-$inv = json_decode(file_get_contents(__DIR__ . '/inventory_data.json'), true) ?: [];
-$auc = json_decode(file_get_contents(__DIR__ . '/auctions_data.json'), true) ?: [];
+$invFile = file_exists(__DIR__ . '/data/inventory_data.json') ? __DIR__ . '/data/inventory_data.json' : __DIR__ . '/inventory_data.json';
+$aucFile = file_exists(__DIR__ . '/data/auctions_data.json') ? __DIR__ . '/data/auctions_data.json' : __DIR__ . '/auctions_data.json';
+$inv = json_decode(file_get_contents($invFile), true) ?: [];
+$auc = json_decode(file_get_contents($aucFile), true) ?: [];
 
 echo "Processing " . count($inv) . " cards and " . count($auc) . " auctions...\n";
 
 // Load catalog from cards-data.js to enrich set/grade if available
 $cardDb = [];
-if (file_exists(__DIR__ . '/assets/js/cards-data.js')) {
-    $content = file_get_contents(__DIR__ . '/assets/js/cards-data.js');
+$jsFile = file_exists(__DIR__ . '/../assets/js/cards-data.js') ? __DIR__ . '/../assets/js/cards-data.js' : __DIR__ . '/assets/js/cards-data.js';
+if (file_exists($jsFile)) {
+    $content = file_get_contents($jsFile);
     if (preg_match('/DEFAULT_CARD_DATABASE\s*=\s*(\[.*?\]);/s', $content, $m)) {
         $catalog = json_decode($m[1], true);
         if (is_array($catalog)) {
