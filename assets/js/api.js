@@ -1,13 +1,7 @@
 /**
  * API Layer - NitipPro Card Inventory
- * Mode saat ini: LocalStorage (localhost)
- * Untuk switch ke Google Apps Script: ubah CONFIG.USE_LOCAL = false
- * dan isi CONFIG.GAS_URL dengan URL deployment Apps Script Anda.
- *
- * GAS akan membaca/tulis ke Google Sheets:
- *   - Login  : Sheet "Users"  di spreadsheet SHEET_LOGIN_ID
- *   - Data   : Sheet "Inventory", "Auctions", "AuctionItems", "Shipment", "Payments", "Owners", "History", "Logs"
- *              di spreadsheet SHEET_DATA_ID
+ * Backend: MySQL REST API (api.php)
+ * Mode: Localhost & Hosting (ProFreeHost / cPanel)
  */
 
 const API = {
@@ -22,29 +16,20 @@ const API = {
 
         const cacheKey = 'ag_cache_' + action;
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 detik max wait (GAS cold start)
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         try {
             const body = JSON.stringify({ action, ...payload });
-            const res = await fetch(CONFIG.GAS_URL, {
+            const apiUrl = CONFIG.API_URL || 'api.php';
+            const res = await fetch(apiUrl, {
                 method: 'POST',
                 body,
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                headers: { 'Content-Type': 'application/json;charset=utf-8' },
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
 
-            const text = await res.text();
-            let json;
-            try {
-                json = JSON.parse(text);
-            } catch (e) {
-                console.error('GAS Raw Response:', text);
-                if (text.includes('Script function not found: doGet')) {
-                    throw new Error('Google Apps Script belum memiliki fungsi doGet(e). Silakan perbarui kode backend.gs di Google Apps Script dan Deploy ulang (New Deployment).');
-                }
-                throw new Error('Gagal memproses respon server: Respon bukan JSON yang valid.');
-            }
+            const json = await res.json();
             if (json.status === 'error') throw new Error(json.message);
 
             // Simpan cache jika berhasil untuk request pembacaan data
@@ -55,9 +40,9 @@ const API = {
 
         } catch (err) {
             clearTimeout(timeoutId);
-            console.warn(`[API] Fetch '${action}' error atau timeout:`, err.message);
+            console.warn(`[API] Fetch '${action}' error:`, err.message);
 
-            // Fallback ke data cache lokal jika koneksi GAS lambat/gagal
+            // Fallback ke data cache lokal jika offline
             if (['getInventory', 'getAuctions', 'getStats'].includes(action)) {
                 const cached = localStorage.getItem(cacheKey);
                 if (cached) {

@@ -1,0 +1,235 @@
+<?php
+/**
+ * InventoryController - Menangani CRUD kartu dan pembaruan status kartu
+ */
+
+require_once __DIR__ . '/BaseController.php';
+
+class InventoryController extends BaseController {
+
+    public function getInventory() {
+        $stmt = $this->pdo->query("SELECT 
+            id, 
+            IFNULL(name, '') AS `name`, 
+            IFNULL(grade, '') AS `grade`, 
+            IFNULL(set_name, '') AS `set`, 
+            IFNULL(type, 'JP') AS `type`, 
+            IFNULL(nation, '') AS `nation`, 
+            IFNULL(owner, '') AS `owner`, 
+            IFNULL(date, '') AS `date`, 
+            IFNULL(status, 'Available') AS `status`, 
+            IFNULL(buyer, '') AS `buyer`, 
+            IFNULL(price, 0) AS `price`, 
+            IFNULL(sold_date, '') AS `soldDate`, 
+            IFNULL(ship_date, '') AS `shipDate`, 
+            IFNULL(tracking_number, '') AS `trackingNumber`, 
+            IFNULL(commission, 0) AS `commission`, 
+            IFNULL(commission, 0) AS `Komisi`, 
+            IFNULL(payout_date, '') AS `payoutDate`, 
+            IFNULL(payout_proof_url, '') AS `payoutProofUrl`, 
+            IFNULL(image, '') AS `image`
+        FROM inventory 
+        ORDER BY created_at DESC, id DESC");
+        $rows = $stmt->fetchAll();
+
+        // Cast numeric fields properly
+        foreach ($rows as &$r) {
+            $r['price'] = $r['price'] !== null && $r['price'] !== '' ? (float)$r['price'] : 0;
+            $r['commission'] = $r['commission'] !== null && $r['commission'] !== '' ? (float)$r['commission'] : 0;
+            $r['Komisi'] = $r['commission'];
+        }
+        $this->jsonSuccess($rows);
+    }
+
+    public function saveCard($payload) {
+        $id     = trim($payload['id'] ?? '');
+        $name   = trim($payload['name'] ?? '');
+        $grade  = trim((string)($payload['grade'] ?? '3'));
+        $set    = trim($payload['set'] ?? ($payload['set_name'] ?? ''));
+        $type   = strtoupper(trim($payload['type'] ?? 'JP'));
+        $nation = trim($payload['nation'] ?? '');
+        $owner  = trim($payload['owner'] ?? '');
+        $date   = !empty($payload['date']) ? $payload['date'] : date('Y-m-d');
+        $image  = trim($payload['image'] ?? '');
+        $status = trim($payload['status'] ?? 'Available');
+
+        if (!$name) {
+            $this->jsonError('Nama kartu wajib diisi');
+        }
+
+        if ($id) {
+            // Update
+            $stmt = $this->pdo->prepare("UPDATE inventory SET 
+                name = ?, 
+                grade = ?, 
+                set_name = ?, 
+                type = ?, 
+                nation = ?, 
+                owner = ?, 
+                date = ?, 
+                image = ?
+                WHERE id = ?");
+            $stmt->execute([$name, $grade, $set, $type, $nation, $owner, $date, $image, $id]);
+
+            $this->jsonSuccess([
+                'id'     => $id,
+                'name'   => $name,
+                'grade'  => $grade,
+                'set'    => $set,
+                'type'   => $type,
+                'nation' => $nation,
+                'owner'  => $owner,
+                'date'   => $date,
+                'status' => $status,
+                'image'  => $image
+            ]);
+        } else {
+            // Generate unique ID
+            $newId = 'C' . substr(str_pad(mt_rand(10000, 99999), 5, '0', STR_PAD_LEFT), -5);
+            $chk = $this->pdo->prepare("SELECT id FROM inventory WHERE id = ?");
+            $chk->execute([$newId]);
+            if ($chk->fetch()) {
+                $newId = 'C' . substr((string)round(microtime(true) * 1000), -5);
+            }
+
+            $stmt = $this->pdo->prepare("INSERT INTO inventory 
+                (id, name, grade, set_name, type, nation, owner, date, status, image) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Available', ?)");
+            $stmt->execute([$newId, $name, $grade, $set, $type, $nation, $owner, $date, $image]);
+
+            $this->jsonSuccess([
+                'id'     => $newId,
+                'name'   => $name,
+                'grade'  => $grade,
+                'set'    => $set,
+                'type'   => $type,
+                'nation' => $nation,
+                'owner'  => $owner,
+                'date'   => $date,
+                'status' => 'Available',
+                'image'  => $image
+            ]);
+        }
+    }
+
+    public function deleteCard($payload) {
+        $id = trim($payload['id'] ?? '');
+        if (!$id) {
+            $this->jsonError('ID kartu wajib diisi');
+        }
+        $stmt = $this->pdo->prepare("DELETE FROM inventory WHERE id = ?");
+        $stmt->execute([$id]);
+        $this->jsonSuccess(true);
+    }
+
+    public function updateCardStatus($payload) {
+        $id     = trim($payload['id'] ?? '');
+        $status = trim($payload['status'] ?? '');
+        $extra  = $payload['extra'] ?? [];
+
+        if (!$id) {
+            $this->jsonError('ID kartu wajib diisi');
+        }
+
+        $fields = [];
+        $values = [];
+
+        if ($status !== '') {
+            $fields[] = "`status` = ?";
+            $values[] = $status;
+        }
+
+        if (isset($extra['buyer'])) {
+            $fields[] = "`buyer` = ?";
+            $values[] = trim($extra['buyer']);
+        }
+        if (isset($extra['price'])) {
+            $fields[] = "`price` = ?";
+            $values[] = (float)$extra['price'];
+        }
+        if (isset($extra['soldDate'])) {
+            $fields[] = "`sold_date` = ?";
+            $values[] = !empty($extra['soldDate']) ? $extra['soldDate'] : null;
+        }
+        if (isset($extra['shipDate'])) {
+            $fields[] = "`ship_date` = ?";
+            $values[] = !empty($extra['shipDate']) ? $extra['shipDate'] : null;
+        }
+        if (isset($extra['trackingNumber'])) {
+            $fields[] = "`tracking_number` = ?";
+            $values[] = trim($extra['trackingNumber']);
+        }
+        if (isset($extra['payoutDate'])) {
+            $fields[] = "`payout_date` = ?";
+            $values[] = !empty($extra['payoutDate']) ? $extra['payoutDate'] : null;
+        }
+        if (isset($extra['payoutProofUrl'])) {
+            $fields[] = "`payout_proof_url` = ?";
+            $values[] = trim($extra['payoutProofUrl']);
+        }
+        if (isset($extra['commission'])) {
+            $fields[] = "`commission` = ?";
+            $values[] = (float)$extra['commission'];
+        }
+
+        if (empty($fields)) {
+            $this->jsonSuccess(true);
+        }
+
+        $values[] = $id;
+        $sql = "UPDATE inventory SET " . implode(', ', $fields) . " WHERE id = ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($values);
+
+        $this->jsonSuccess(true);
+    }
+
+    public function batchUpdateCardStatus($payload) {
+        $ids    = $payload['ids'] ?? [];
+        $status = trim($payload['status'] ?? '');
+        $extra  = $payload['extra'] ?? [];
+
+        if (empty($ids) || !is_array($ids)) {
+            $this->jsonSuccess(['updated' => 0]);
+        }
+
+        $fields = [];
+        $values = [];
+
+        if ($status !== '') {
+            $fields[] = "`status` = ?";
+            $values[] = $status;
+        }
+        if (isset($extra['shipDate'])) {
+            $fields[] = "`ship_date` = ?";
+            $values[] = !empty($extra['shipDate']) ? $extra['shipDate'] : null;
+        }
+        if (isset($extra['trackingNumber'])) {
+            $fields[] = "`tracking_number` = ?";
+            $values[] = trim($extra['trackingNumber']);
+        }
+        if (isset($extra['payoutDate'])) {
+            $fields[] = "`payout_date` = ?";
+            $values[] = !empty($extra['payoutDate']) ? $extra['payoutDate'] : null;
+        }
+        if (isset($extra['payoutProofUrl'])) {
+            $fields[] = "`payout_proof_url` = ?";
+            $values[] = trim($extra['payoutProofUrl']);
+        }
+        if (isset($extra['commission'])) {
+            $fields[] = "`commission` = ?";
+            $values[] = (float)$extra['commission'];
+        }
+
+        if (empty($fields)) {
+            $this->jsonSuccess(['updated' => 0]);
+        }
+
+        $inPlaceholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "UPDATE inventory SET " . implode(', ', $fields) . " WHERE id IN ($inPlaceholders)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array_merge($values, array_values($ids)));
+
+        $this->jsonSuccess(['updated' => $stmt->rowCount()]);
+    }
+}

@@ -2,3 +2,6 @@
 .DS_Store
 Thumbs.db
 *.log
+*_dump.json
+*_data.json
+scratch/
