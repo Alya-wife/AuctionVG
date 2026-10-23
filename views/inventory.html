@@ -8,7 +8,7 @@
   <meta name="description" content="Kelola inventory kartu Vanguard konsinyasi" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/style.css?v=20261023_sb" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261023_fixcardratio" />
   <style>
     /* ── Status Filter Pills ── */
     .status-filter-group {
@@ -70,6 +70,71 @@
       border-color: #6b7a90;
       background: rgba(107,122,144,.12);
       color: #9aacbe;
+    }
+
+    /* === FIX: Aspect Ratio Kartu Koleksi Utuh (Tidak Terpotong) === */
+    .card-picker-gallery {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)) !important;
+      gap: 12px !important;
+      max-height: 480px !important;
+      overflow-y: auto !important;
+      padding: 12px !important;
+      border-radius: var(--radius-md) !important;
+      background: rgba(15, 23, 42, 0.4) !important;
+      border: 1px solid var(--border-color) !important;
+    }
+    .picker-thumb-card {
+      background: #090d16 !important;
+      border: 2px solid transparent !important;
+      border-radius: 8px !important;
+      overflow: hidden !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+      position: relative !important;
+      aspect-ratio: 59 / 86 !important;
+      height: auto !important;
+      display: block !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4) !important;
+    }
+    .picker-thumb-card:hover {
+      transform: translateY(-4px) scale(1.02) !important;
+      border-color: #38bdf8 !important;
+      box-shadow: 0 8px 20px rgba(56, 189, 248, 0.35) !important;
+    }
+    .picker-thumb-card.selected {
+      border-color: #38bdf8 !important;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.6) !important;
+    }
+    .picker-thumb-img-wrap {
+      width: 100% !important;
+      height: 100% !important;
+      aspect-ratio: 59 / 86 !important;
+      position: relative !important;
+      background: #090d16 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    .picker-thumb-img-wrap img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain !important;
+      display: block !important;
+      border-radius: 6px !important;
+    }
+    .picker-selected-badge {
+      position: absolute !important;
+      top: 6px !important;
+      right: 6px !important;
+      background: #38bdf8 !important;
+      color: #0f172a !important;
+      font-size: 0.72rem !important;
+      font-weight: 800 !important;
+      padding: 2px 7px !important;
+      border-radius: 4px !important;
+      z-index: 5 !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6) !important;
     }
   </style>
 </head>
