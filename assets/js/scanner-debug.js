@@ -857,17 +857,18 @@ Return ONLY valid JSON:
       createdAt: new Date().toISOString()
     };
 
-    // 1. Simpan ke Database Master Kartu (cards_master)
-    const existing = CardDB.getById(cId);
-    if (existing) {
-      await CardDB.updateCard(cId, cardItem);
-    } else {
-      await CardDB.addCard(cardItem);
-    }
+    try {
+      setStatus(`Menyimpan "${cardItem.name}" ke database server...`, 'loading');
 
-    // 2. Simpan juga ke Database Inventory Bersama (inventory) agar langsung muncul di halaman Inventory & Dashboard
-    if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
-      try {
+      // 1. Simpan ke Database Master Kartu (cards_master) langsung ke MySQL
+      if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
+        await API.request('saveMasterCard', cardItem);
+      } else if (typeof CardDB !== 'undefined') {
+        await CardDB.addCard(cardItem);
+      }
+
+      // 2. Simpan juga ke Database Inventory Bersama (inventory)
+      if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
         await API.request('saveCard', {
           name: cName,
           grade: String(grade.value),
@@ -880,13 +881,15 @@ Return ONLY valid JSON:
           status: 'Available',
           created_by: currentUserName
         });
-      } catch (invErr) {
-        console.warn('Simpan ke inventory MySQL:', invErr);
       }
-    }
 
-    setStatus(`Kartu "${cardItem.name}" (${cId}) BERHASIL DISIMPAN ke Database Bersama!`, 'success');
-    alert(`Kartu "${cardItem.name}" (${cId}) BERHASIL DISIMPAN ke Database Pusat! Sekarang teman Anda langsung bisa melihat kartu ini di Inventory dan Katalog.`);
+      setStatus(`Kartu "${cardItem.name}" (${cId}) BERHASIL DISIMPAN ke Database Bersama!`, 'success');
+      alert(`Kartu "${cardItem.name}" (${cId}) BERHASIL DISIMPAN ke Database Pusat!`);
+    } catch (err) {
+      console.error('Gagal simpan kartu ke MySQL server:', err);
+      setStatus(`Gagal simpan ke server: ${err.message}`, 'error');
+      alert(`GAGAL MENYIMPAN KE DATABASE: ${err.message}\n\nJika teman Anda mengalami ini, silakan tekan Ctrl + F5 agar script browser diperbarui ke versi server terbaru.`);
+    }
 
     populatePromoSetDatalist();
   }
