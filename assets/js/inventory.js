@@ -395,9 +395,26 @@ function renderSelectedCardsList() {
     }).join('');
 }
 
+let masterCardsCatalog = [];
+
+async function loadMasterCardsCatalog() {
+    try {
+        if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
+            const cards = await API.request('getMasterCards');
+            if (Array.isArray(cards)) {
+                masterCardsCatalog = cards;
+                if (window.CardDB) {
+                    CardDB._cards = cards;
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Gagal load master cards catalog:', e);
+    }
+}
+
 window.togglePickerCard = function(cardId) {
-    if (!window.CardDB) return;
-    const card = CardDB.getById(cardId);
+    const card = masterCardsCatalog.find(c => c.id === cardId) || (window.CardDB && CardDB.getById(cardId));
     if (!card) return;
 
     // Cek jika kartu sudah ada di daftar, cukup tambahkan jumlah count (2x, 3x, dst)
@@ -452,21 +469,28 @@ function initCardForm() {
     const gradeFilter = document.getElementById('modalPickerGrade');
     const galleryContainer = document.getElementById('pickerCardsGallery');
 
-    function populateModalPickerSets() {
-        if (!setFilter || !window.CardDB) return;
-        const sets = CardDB.getSets();
+    async function populateModalPickerSets() {
+        if (!setFilter) return;
+        if (!masterCardsCatalog.length) {
+            await loadMasterCardsCatalog();
+        }
+        const cards = masterCardsCatalog.length ? masterCardsCatalog : (window.CardDB ? CardDB.getAll() : []);
+        const sets = [...new Set(cards.map(c => c.set).filter(Boolean))].sort();
         setFilter.innerHTML = '<option value="">Semua Set Promo</option>' + 
             sets.map(s => `<option value="${s}">${s}</option>`).join('');
     }
 
-    function renderModalGallery() {
-        if (!galleryContainer || !window.CardDB) return;
+    async function renderModalGallery() {
+        if (!galleryContainer) return;
         const q = (searchInput?.value || '').toLowerCase().trim();
         const setVal = setFilter?.value || '';
         const nationVal = nationFilter?.value || '';
         const gradeVal = gradeFilter?.value || '';
 
-        const allCards = CardDB.getAll();
+        if (!masterCardsCatalog.length) {
+            await loadMasterCardsCatalog();
+        }
+        const allCards = masterCardsCatalog.length ? masterCardsCatalog : (window.CardDB ? CardDB.getAll() : []);
         const filtered = allCards.filter(c => {
             const matchQ = !q || c.name.toLowerCase().includes(q) || (c.id && c.id.toLowerCase().includes(q));
             const matchSet = !setVal || c.set === setVal;
@@ -511,7 +535,10 @@ function initCardForm() {
     // Buka Modal Tambah Kartu
     const btnAddCard = document.getElementById('btnAddCard');
     if (btnAddCard) {
-        btnAddCard.addEventListener('click', () => {
+        btnAddCard.addEventListener('click', async () => {
+            await loadMasterCardsCatalog();
+            populateModalPickerSets();
+            renderModalGallery();
             document.getElementById('cardForm').reset();
             document.getElementById('cardId').value = '';
             selectedTitipCards = [];
