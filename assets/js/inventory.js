@@ -373,7 +373,7 @@ function renderSelectedCardsList() {
 
         return `
             <div class="selected-card-chip">
-                <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
+                <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src=CardDB.getImageUrl('');" />
                 <div class="selected-card-chip-info">
                     <div class="selected-card-chip-name" title="${c.name}" style="display:flex;align-items:center;">
                         <span>${c.name}</span>
@@ -491,7 +491,7 @@ function initCardForm() {
             return `
                 <div class="picker-thumb-card ${isSel ? 'selected' : ''}" data-card-id="${c.id}" onclick="togglePickerCard('${c.id}')" title="${c.name} - ${c.set || 'Promo'} (Klik untuk menambah)">
                     <div class="picker-thumb-img-wrap">
-                        <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
+                        <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src=CardDB.getImageUrl('');" />
                         ${countBadge}
                     </div>
                 </div>

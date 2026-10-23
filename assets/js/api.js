@@ -31,6 +31,7 @@ const API = {
                 method: 'POST',
                 body,
                 headers: { 'Content-Type': 'application/json;charset=utf-8' },
+                credentials: 'include',
                 signal: controller.signal
             });
             clearTimeout(timeoutId);

@@ -296,7 +296,11 @@ const CardDB = {
   },
 
   getImageUrl(imageFileName) {
-    if (!imageFileName) return 'assets/images/cards/placeholder_card.svg';
+    const isView = (typeof window !== 'undefined' && window.location && window.location.pathname.includes('/views/'));
+    const basePath = isView ? '../' : '';
+    const placeholder = basePath + 'assets/images/cards/placeholder_card.svg';
+    if (!imageFileName) return placeholder;
+
     // Check local webp cache
     try {
       const cacheMap = JSON.parse(localStorage.getItem('ag_card_webp_cache') || '{}');
@@ -304,16 +308,17 @@ const CardDB = {
       if (cacheMap[webpKey]) return cacheMap[webpKey];
       if (cacheMap[imageFileName]) return cacheMap[imageFileName];
     } catch (e) {}
+
     // If it's already a full URL or data URI
     if (imageFileName.startsWith('http://') || imageFileName.startsWith('https://') || imageFileName.startsWith('data:')) {
       return imageFileName;
     }
     // If it already contains path
     if (imageFileName.includes('/')) {
-      return imageFileName;
+      return basePath + imageFileName.replace(/^(\.\.\/|\/)/, '');
     }
     const cleanName = imageFileName.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-    return `assets/images/cards/${cleanName}`;
+    return basePath + 'assets/images/cards/' + cleanName;
   },
 
   async updateCard(id, updatedData) {
