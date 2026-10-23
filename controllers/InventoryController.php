@@ -9,7 +9,7 @@ class InventoryController extends BaseController {
 
     
     /**
-     * Pastikan tabel cards_master ada dan terisi data awal
+     * Pastikan tabel cards_master ada di database MySQL
      */
     private function ensureCardsMasterTable() {
         $this->pdo->exec("CREATE TABLE IF NOT EXISTS `cards_master` (
@@ -28,36 +28,6 @@ class InventoryController extends BaseController {
             INDEX `idx_set` (`set_name`),
             INDEX `idx_nation` (`nation`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
-
-        // Jika masih kosong, seeding otomatis dari cards.json
-        try {
-            $chk = $this->pdo->query("SELECT COUNT(*) AS total FROM `cards_master`")->fetch();
-            if ($chk && (int)$chk['total'] === 0) {
-                $jsonFile = __DIR__ . '/../assets/data/cards.json';
-                if (file_exists($jsonFile)) {
-                    $cards = json_decode(file_get_contents($jsonFile), true);
-                    if (!empty($cards) && is_array($cards)) {
-                        $stmt = $this->pdo->prepare("INSERT INTO `cards_master` 
-                            (`id`, `name`, `grade`, `set_name`, `language`, `nation`, `image`, `created_by`) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, 'System')");
-                        foreach ($cards as $c) {
-                            $cId   = $c['id'] ?? '';
-                            $cName = $c['name'] ?? '';
-                            $cGrade = (string)($c['grade'] ?? '3');
-                            $cSet  = $c['set'] ?? ($c['set_name'] ?? '');
-                            $cLang = $c['language'] ?? 'JP';
-                            $cNat  = $c['nation'] ?? '';
-                            $cImg  = $c['image'] ?? '';
-                            if ($cId && $cName) {
-                                try {
-                                    $stmt->execute([$cId, $cName, $cGrade, $cSet, $cLang, $cNat, $cImg]);
-                                } catch (\Exception $e) {}
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (\Exception $e) {}
     }
 
     public function getMasterCards() {

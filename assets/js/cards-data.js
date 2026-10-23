@@ -1,259 +1,63 @@
 /**
  * Card Database Layer - NitipPro Vanguard Cards Catalog
- * Database kartu per promo set untuk inventaris tanpa database server
- * Gambar disimpan di: assets/images/cards/[nama_file]
+ * Terhubung langsung ke Database MySQL Server (cards_master)
+ * Tidak ada data dummy/palsu. Data murni 100% dari MySQL database.
  */
 
-const DEFAULT_CARD_DATABASE = [
-  {
-    "id": "D-PR-001",
-    "name": "Chakrabarthi True Dragon, Mahar Nirvana",
-    "grade": "3",
-    "set": "D-PR 2024 Promo Series",
-    "nation": "Dragon Empire",
-    "language": "JP",
-    "image": "D-PR-001.webp"
-  },
-  {
-    "id": "D-PR-002",
-    "name": "Apex Ruler, Bastion",
-    "grade": "3",
-    "set": "D-PR 2024 Promo Series",
-    "nation": "Keter Sanctuary",
-    "language": "JP",
-    "image": "D-PR-002.webp"
-  },
-  {
-    "id": "D-PR-003",
-    "name": "Diabolos, \"Violence\" Bruce",
-    "grade": "3",
-    "set": "D-PR 2024 Promo Series",
-    "nation": "Dark States",
-    "language": "EN",
-    "image": "D-PR-003.webp"
-  },
-  {
-    "id": "D-PR-004",
-    "name": "Sylvan Horned Beast King, Magnolia",
-    "grade": "3",
-    "set": "D-PR 2024 Promo Series",
-    "nation": "Stoicheia",
-    "language": "JP",
-    "image": "D-PR-004.webp"
-  },
-  {
-    "id": "D-PR-005",
-    "name": "Aurora Fierce Princess, Seraph Purelight",
-    "grade": "4",
-    "set": "D-PR 2024 Promo Series",
-    "nation": "Brandt Gate",
-    "language": "EN",
-    "image": "D-PR-005.webp"
-  },
-  {
-    "id": "D-PR-006",
-    "name": "Heartfelt Song, Loronerol",
-    "grade": "3",
-    "set": "D-PR 2024 Promo Series",
-    "nation": "Lyrical Monasterio",
-    "language": "JP",
-    "image": "D-PR-006.webp"
-  },
-  {
-    "id": "D-PR-007",
-    "name": "Trickstar",
-    "grade": "0",
-    "set": "D-PR 2024 Promo Series",
-    "nation": "Dragon Empire",
-    "language": "JP",
-    "image": "D-PR-007.webp"
-  },
-  {
-    "id": "D-PR-008",
-    "name": "Knight of Heavenly Bow, Base",
-    "grade": "1",
-    "set": "D-PR 2024 Promo Series",
-    "nation": "Keter Sanctuary",
-    "language": "JP",
-    "image": "D-PR-008.webp"
-  },
-  {
-    "id": "V-PR-001",
-    "name": "Dragonic Overlord",
-    "grade": "3",
-    "set": "V-PR Promo Pack Vol. 1",
-    "nation": "Dragon Empire",
-    "language": "JP",
-    "image": "V-PR-001.webp"
-  },
-  {
-    "id": "V-PR-002",
-    "name": "Blaster Blade",
-    "grade": "2",
-    "set": "V-PR Promo Pack Vol. 1",
-    "nation": "Keter Sanctuary",
-    "language": "EN",
-    "image": "V-PR-002.webp"
-  },
-  {
-    "id": "V-PR-003",
-    "name": "Phantom Blaster Dragon",
-    "grade": "3",
-    "set": "V-PR Promo Pack Vol. 1",
-    "nation": "Dark States",
-    "language": "JP",
-    "image": "V-PR-003.webp"
-  },
-  {
-    "id": "V-PR-004",
-    "name": "Vairina Liber",
-    "grade": "2",
-    "set": "V-PR Promo Pack Vol. 1",
-    "nation": "Dragon Empire",
-    "language": "EN",
-    "image": "V-PR-004.webp"
-  },
-  {
-    "id": "V-PR-005",
-    "name": "Alfred Early",
-    "grade": "2",
-    "set": "V-PR Promo Pack Vol. 1",
-    "nation": "Keter Sanctuary",
-    "language": "EN",
-    "image": "V-PR-005.webp"
-  },
-  {
-    "id": "V-PR-006",
-    "name": "Sylvan Horned Beast, Charis",
-    "grade": "1",
-    "set": "V-PR Promo Pack Vol. 1",
-    "nation": "Stoicheia",
-    "language": "JP",
-    "image": "V-PR-006.webp"
-  },
-  {
-    "id": "SHOP-PR-001",
-    "name": "Dragheart, Luquier",
-    "grade": "3",
-    "set": "Shop Tournament PR 2024",
-    "nation": "Dark States",
-    "language": "JP",
-    "image": "SHOP-PR-001.webp"
-  },
-  {
-    "id": "SHOP-PR-002",
-    "name": "Cardinal Deus, Orfist",
-    "grade": "3",
-    "set": "Shop Tournament PR 2024",
-    "nation": "Brandt Gate",
-    "language": "EN",
-    "image": "SHOP-PR-002.webp"
-  },
-  {
-    "id": "SHOP-PR-003",
-    "name": "Prism Bird",
-    "grade": "1",
-    "set": "Shop Tournament PR 2024",
-    "nation": "Lyrical Monasterio",
-    "language": "JP",
-    "image": "SHOP-PR-003.webp"
-  },
-  {
-    "id": "SHOP-PR-004",
-    "name": "Triglav",
-    "grade": "0",
-    "set": "Shop Tournament PR 2024",
-    "nation": "Dragon Empire",
-    "language": "JP",
-    "image": "SHOP-PR-004.webp"
-  },
-  {
-    "id": "VGD-PR-001",
-    "name": "Youthberk \"RevolForm: Gust\"",
-    "grade": "3",
-    "set": "Vanguard Day Promo Special",
-    "nation": "Keter Sanctuary",
-    "language": "JP",
-    "image": "VGD-PR-001.webp"
-  },
-  {
-    "id": "VGD-PR-002",
-    "name": "Drajeweled, \"Ignis\"",
-    "grade": "3",
-    "set": "Vanguard Day Promo Special",
-    "nation": "Dark States",
-    "language": "JP",
-    "image": "VGD-PR-002.webp"
-  },
-  {
-    "id": "VGD-PR-003",
-    "name": "Lianorn \"Vivace\"",
-    "grade": "3",
-    "set": "Vanguard Day Promo Special",
-    "nation": "Stoicheia",
-    "language": "EN",
-    "image": "VGD-PR-003.webp"
-  }
-];
-
 const CardDB = {
-  _cards: null,
+  _cards: [],
+  _syncing: false,
+  _initialized: false,
 
   init() {
-    if (!this._cards) {
+    if (!this._initialized) {
       try {
         const stored = localStorage.getItem('nitip_card_database');
         if (stored) {
           this._cards = JSON.parse(stored);
-          let modified = false;
-          this._cards.forEach(c => {
-            if (c.image && (c.image.endsWith('.jpg') || c.image.endsWith('.jpeg') || c.image.endsWith('.png'))) {
-              c.image = c.image.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-              modified = true;
-            }
-          });
-          if (modified) {
-            localStorage.setItem('nitip_card_database', JSON.stringify(this._cards));
-          }
         } else {
-          this._cards = [...DEFAULT_CARD_DATABASE];
-          localStorage.setItem('nitip_card_database', JSON.stringify(this._cards));
+          this._cards = [];
         }
       } catch (e) {
-        this._cards = [...DEFAULT_CARD_DATABASE];
+        this._cards = [];
       }
-      this.migrateCacheToWebp();
+      this._initialized = true;
     }
+
+    // Selalu sinkronisasi data kartu dari server MySQL
+    if (typeof API !== 'undefined' && API.request) {
+      this.syncFromServer();
+    } else {
+      setTimeout(() => this.syncFromServer(), 300);
+      if (typeof document !== 'undefined') {
+        document.addEventListener('DOMContentLoaded', () => this.syncFromServer(), { once: true });
+      }
+    }
+
     return this._cards;
   },
 
-  async migrateCacheToWebp() {
+  async syncFromServer() {
+    if (this._syncing) return;
+    this._syncing = true;
     try {
-      const cacheStr = localStorage.getItem('ag_card_webp_cache');
-      if (!cacheStr) return;
-      const cache = JSON.parse(cacheStr);
-      let changed = false;
-      for (const key of Object.keys(cache)) {
-        let newKey = key;
-        if (key.match(/\.(jpg|jpeg|png)$/i)) {
-          newKey = key.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-          cache[newKey] = cache[key];
-          delete cache[key];
-          changed = true;
-        }
-        if (typeof cache[newKey] === 'string' && cache[newKey].startsWith('data:image/') && !cache[newKey].startsWith('data:image/webp')) {
-          if (window.UI && typeof window.UI.convertDataUrlToWebP === 'function') {
-            try {
-              cache[newKey] = await window.UI.convertDataUrlToWebP(cache[newKey]);
-              changed = true;
-            } catch (err) {}
+      if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
+        const serverCards = await API.request('getMasterCards');
+        if (Array.isArray(serverCards)) {
+          this._cards = serverCards;
+          try {
+            localStorage.setItem('nitip_card_database', JSON.stringify(this._cards));
+          } catch (e) {}
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('cards_database_synced', { detail: this._cards }));
           }
         }
       }
-      if (changed) {
-        localStorage.setItem('ag_card_webp_cache', JSON.stringify(cache));
-      }
-    } catch (e) {}
+    } catch (err) {
+      console.warn('Sync cards from MySQL server fallback:', err);
+    } finally {
+      this._syncing = false;
+    }
   },
 
   getAll() {
@@ -339,7 +143,9 @@ const CardDB = {
         }
       }
 
-      window.dispatchEvent(new CustomEvent('cards_database_synced', { detail: this._cards }));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('cards_database_synced', { detail: this._cards }));
+      }
       return this._cards[idx];
     }
     return null;
@@ -361,7 +167,9 @@ const CardDB = {
       }
     }
 
-    window.dispatchEvent(new CustomEvent('cards_database_synced', { detail: this._cards }));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cards_database_synced', { detail: this._cards }));
+    }
     return true;
   },
 
@@ -386,7 +194,9 @@ const CardDB = {
       }
     }
 
-    window.dispatchEvent(new CustomEvent('cards_database_synced', { detail: this._cards }));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cards_database_synced', { detail: this._cards }));
+    }
     return card;
   }
 };
