@@ -857,17 +857,36 @@ Return ONLY valid JSON:
       createdAt: new Date().toISOString()
     };
 
-    // Update jika ID sudah ada, atau tambahkan kartu baru ke MySQL server
+    // 1. Simpan ke Database Master Kartu (cards_master)
     const existing = CardDB.getById(cId);
     if (existing) {
       await CardDB.updateCard(cId, cardItem);
-      setStatus(`Kartu "${cardItem.name}" (${cardItem.id}) berhasil diperbarui di database server!`, 'success');
-      alert(`Kartu "${cardItem.name}" (${cardItem.id}) berhasil diperbarui di Database Server!`);
     } else {
       await CardDB.addCard(cardItem);
-      setStatus(`Kartu baru "${cardItem.name}" (${cardItem.id}) berhasil ditambahkan ke database server!`, 'success');
-      alert(`Kartu baru "${cardItem.name}" (${cardItem.id}) berhasil ditambahkan ke Database Server!`);
     }
+
+    // 2. Simpan juga ke Database Inventory Bersama (inventory) agar langsung muncul di halaman Inventory & Dashboard
+    if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
+      try {
+        await API.request('saveCard', {
+          name: cName,
+          grade: String(grade.value),
+          nation: nation.value,
+          type: (typeof language !== 'undefined' && language) ? language.value : 'JP',
+          set: cardSet.value.trim() || detectPromoSet(cId) || 'Promo',
+          image: imageKey,
+          owner: currentUserName,
+          date: new Date().toISOString().split('T')[0],
+          status: 'Available',
+          created_by: currentUserName
+        });
+      } catch (invErr) {
+        console.warn('Simpan ke inventory MySQL:', invErr);
+      }
+    }
+
+    setStatus(`Kartu "${cardItem.name}" (${cId}) BERHASIL DISIMPAN ke Database Bersama!`, 'success');
+    alert(`Kartu "${cardItem.name}" (${cId}) BERHASIL DISIMPAN ke Database Pusat! Sekarang teman Anda langsung bisa melihat kartu ini di Inventory dan Katalog.`);
 
     populatePromoSetDatalist();
   }
