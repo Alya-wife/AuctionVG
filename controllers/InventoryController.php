@@ -131,6 +131,94 @@ class InventoryController extends BaseController {
         ]);
     }
 
+    
+    public function searchWiki($payload) {
+        $code   = trim($payload['code'] ?? '');
+        $jpName = trim($payload['jpName'] ?? '');
+
+        if (!$code && !$jpName) {
+            $this->jsonError('Kode atau nama kartu wajib diisi');
+        }
+
+        $opts = [
+            'http' => [
+                'method'  => 'GET',
+                'header'  => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\r\nAccept: application/json\r\n",
+                'timeout' => 8
+            ],
+            'ssl' => [
+                'verify_peer'      => false,
+                'verify_peer_name' => false
+            ]
+        ];
+        $context = stream_context_create($opts);
+
+        $searchHits = [];
+        if ($code) {
+            $searchUrl = "https://cardfight.fandom.com/api.php?action=query&list=search&srsearch=" . urlencode($code) . "&format=json";
+            $res = @file_get_contents($searchUrl, false, $context);
+            if ($res) {
+                $json = json_decode($res, true);
+                $searchHits = $json['query']['search'] ?? [];
+            }
+        }
+
+        $cardHit = null;
+        foreach ($searchHits as $h) {
+            $t = $h['title'] ?? '';
+            $tLower = strtolower($t);
+            if (strpos($tLower, 'list of') === false && strpos($t, 'Card Gallery:') !== 0 && strpos($t, 'File:') !== 0) {
+                $cardHit = $h;
+                break;
+            }
+        }
+
+        if (!$cardHit && $jpName) {
+            $searchUrlJp = "https://cardfight.fandom.com/api.php?action=query&list=search&srsearch=" . urlencode($jpName) . "&format=json";
+            $resJp = @file_get_contents($searchUrlJp, false, $context);
+            if ($resJp) {
+                $jsonJp = json_decode($resJp, true);
+                $hitsJp = $jsonJp['query']['search'] ?? [];
+                foreach ($hitsJp as $h) {
+                    $t = $h['title'] ?? '';
+                    $tLower = strtolower($t);
+                    if (strpos($tLower, 'list of') === false && strpos($t, 'Card Gallery:') !== 0 && strpos($t, 'File:') !== 0) {
+                        $cardHit = $h;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!$cardHit) {
+            $this->jsonError('Data kartu tidak ditemukan di Fandom Wiki');
+        }
+
+        $pageTitle = $cardHit['title'];
+        $parseUrl = "https://cardfight.fandom.com/api.php?action=parse&page=" . urlencode($pageTitle) . "&prop=wikitext&format=json";
+        $parseRes = @file_get_contents($parseUrl, false, $context);
+        $wikitext = '';
+        if ($parseRes) {
+            $parseJson = json_decode($parseRes, true);
+            $wikitext = $parseJson['parse']['wikitext']['*'] ?? '';
+        }
+
+        $matchVal = function($key) use ($wikitext) {
+            if (preg_match('/\|\s*' . preg_quote($key, '/') . '\s*=\s*(.*?)(?=\n\||\n\}\}|$)/i', $wikitext, $m)) {
+                return trim($m[1]);
+            }
+            return '';
+        };
+
+        $this->jsonSuccess([
+            'title'  => $pageTitle,
+            'grade'  => $matchVal('grade'),
+            'nation' => $matchVal('nation'),
+            'power'  => $matchVal('power'),
+            'shield' => $matchVal('shield')
+        ]);
+    }
+
     public function saveCard($payload) {
         $id        = trim($payload['id'] ?? '');
         $name      = trim($payload['name'] ?? '');

@@ -302,6 +302,12 @@
         if (wikiData.nation) {
           nation.value = normalizeNation(wikiData.nation);
         }
+        if (power && wikiData.power) {
+          power.value = wikiData.power;
+        }
+        if (shield && wikiData.shield) {
+          shield.value = wikiData.shield;
+        }
         setStatus(`Berhasil menemukan: "${wikiData.title}" (${cleanCode})`, 'success');
       } else {
         setStatus(`Kode "${cleanCode}" tersimpan, namun tidak ditemukan di Fandom Wiki. Silakan lengkapi sisa form manual.`, 'error');
@@ -703,37 +709,53 @@ Return ONLY valid JSON:
     }
   }
 
-  // Lookup Fandom Wiki (Cari via Kode lalu via Nama JP jika perlu)
+  // Lookup Fandom Wiki (Cari via Backend Proxy terlebih dahulu agar bebas AdBlock/CORS, lalu fallback)
   async function lookupFandom(code, jpName) {
-    let hits = [];
-
-    // Cari via Kode Kartu
-    if (code) {
-      const res = await fetch(`https://cardfight.fandom.com/api.php?action=query&list=search&srsearch=${encodeURIComponent(code)}&format=json&origin=*`);
-      if (res.ok) {
-        const json = await res.json();
-        hits = json?.query?.search || [];
+    // 1. Coba melalui backend API ProJastip (Bebas blokir CORS & aman dari adblocker)
+    if (typeof API !== 'undefined' && API.request) {
+      try {
+        const resp = await API.request('searchWiki', { code, jpName });
+        if (resp && resp.title) {
+          return resp;
+        }
+      } catch (backendErr) {
+        console.warn('Backend wiki search fallback to direct/proxy:', backendErr);
       }
     }
 
-    // Jika kode tidak ketemu artikel spesifik kartu, cari via nama JP
+    // Helper fetch dengan fallback ke public CORS proxy
+    const safeFetchJson = async (url) => {
+      try {
+        const r1 = await fetch(url + '&origin=*');
+        if (r1.ok) return await r1.json();
+      } catch (e1) {}
+
+      try {
+        const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+        const r2 = await fetch(proxyUrl);
+        if (r2.ok) return await r2.json();
+      } catch (e2) {}
+
+      return null;
+    };
+
+    let hits = [];
+    if (code) {
+      const json = await safeFetchJson(`https://cardfight.fandom.com/api.php?action=query&list=search&srsearch=${encodeURIComponent(code)}&format=json`);
+      hits = json?.query?.search || [];
+    }
+
     let cardHit = hits.find(h => !h.title.toLowerCase().startsWith('list of') && !h.title.startsWith('Card Gallery:') && !h.title.startsWith('File:'));
     if (!cardHit && jpName) {
-      const resJp = await fetch(`https://cardfight.fandom.com/api.php?action=query&list=search&srsearch=${encodeURIComponent(jpName)}&format=json&origin=*`);
-      if (resJp.ok) {
-        const jsonJp = await resJp.json();
-        const hitsJp = jsonJp?.query?.search || [];
-        cardHit = hitsJp.find(h => !h.title.toLowerCase().startsWith('list of') && !h.title.startsWith('Card Gallery:') && !h.title.startsWith('File:'));
-      }
+      const jsonJp = await safeFetchJson(`https://cardfight.fandom.com/api.php?action=query&list=search&srsearch=${encodeURIComponent(jpName)}&format=json`);
+      const hitsJp = jsonJp?.query?.search || [];
+      cardHit = hitsJp.find(h => !h.title.toLowerCase().startsWith('list of') && !h.title.startsWith('Card Gallery:') && !h.title.startsWith('File:'));
     }
 
     if (!cardHit) return null;
     const pageTitle = cardHit.title;
 
-    // Parse wikitext
-    const parseRes = await fetch(`https://cardfight.fandom.com/api.php?action=parse&page=${encodeURIComponent(pageTitle)}&prop=wikitext&format=json&origin=*`);
-    if (!parseRes.ok) return { title: pageTitle };
-    const parseJson = await parseRes.json();
+    const parseJson = await safeFetchJson(`https://cardfight.fandom.com/api.php?action=parse&page=${encodeURIComponent(pageTitle)}&prop=wikitext&format=json`);
     const wikitext = parseJson?.parse?.wikitext?.['*'] || '';
 
     const matchVal = (key) => {

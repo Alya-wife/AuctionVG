@@ -80,6 +80,9 @@ try {
         case 'getInventory':
             $inventoryController->getInventory();
             break;
+        case 'searchWiki':
+            $inventoryController->searchWiki($payload);
+            break;
         case 'uploadCardImage':
             $inventoryController->uploadCardImage($payload);
             break;
