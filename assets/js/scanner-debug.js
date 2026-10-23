@@ -860,31 +860,15 @@ Return ONLY valid JSON:
     try {
       setStatus(`Menyimpan "${cardItem.name}" ke database server...`, 'loading');
 
-      // 1. Simpan ke Database Master Kartu (cards_master) langsung ke MySQL
+      // Simpan HANYA ke Database Master Kartu (cards_master)
       if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
         await API.request('saveMasterCard', cardItem);
       } else if (typeof CardDB !== 'undefined') {
         await CardDB.addCard(cardItem);
       }
 
-      // 2. Simpan juga ke Database Inventory Bersama (inventory)
-      if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
-        await API.request('saveCard', {
-          name: cName,
-          grade: String(grade.value),
-          nation: nation.value,
-          type: (typeof language !== 'undefined' && language) ? language.value : 'JP',
-          set: cardSet.value.trim() || detectPromoSet(cId) || 'Promo',
-          image: imageKey,
-          owner: currentUserName,
-          date: new Date().toISOString().split('T')[0],
-          status: 'Available',
-          created_by: currentUserName
-        });
-      }
-
-      setStatus(`Kartu "${cardItem.name}" (${cId}) BERHASIL DISIMPAN ke Database Bersama!`, 'success');
-      alert(`Kartu "${cardItem.name}" (${cId}) BERHASIL DISIMPAN ke Database Pusat!`);
+      setStatus(`Kartu "${cardItem.name}" (${cId}) BERHASIL DISIMPAN ke Database Kartu!`, 'success');
+      alert(`Kartu "${cardItem.name}" (${cId}) BERHASIL DISIMPAN ke Database Kartu!`);
     } catch (err) {
       console.error('Gagal simpan kartu ke MySQL server:', err);
       setStatus(`Gagal simpan ke server: ${err.message}`, 'error');
