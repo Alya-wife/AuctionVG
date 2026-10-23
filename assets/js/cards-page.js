@@ -18,38 +18,22 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function loadCatalog() {
-    // 1. Migrasi otomatis kartu lokal jika ada kartu yang sebelumnya tersimpan di localStorage browser ini
+    // 1. Bersihkan sisa cache localStorage lama agar tidak membangkitkan kartu yang sudah dihapus
     try {
-        const local = JSON.parse(localStorage.getItem('nitip_card_database') || '[]');
-        const cacheMap = JSON.parse(localStorage.getItem('ag_card_webp_cache') || '{}');
-        for (const c of local) {
-            if (c && c.name && !c.id.startsWith('V-PR-') && !c.id.startsWith('SHOP-PR-')) {
-                const imgData = cacheMap[c.image] || cacheMap[c.image?.replace(/\.(jpg|png)$/i, '.webp')];
-                if (imgData && typeof API !== 'undefined') {
-                    await API.request('uploadCardImage', { cardId: c.id, image_base64: imgData }).catch(() => {});
-                }
-                if (typeof API !== 'undefined') {
-                    await API.request('saveMasterCard', c).catch(() => {});
-                }
-            }
-        }
+        localStorage.removeItem('nitip_card_database');
     } catch(e) {}
 
-    // 2. Ambil data kartu murni langsung dari MySQL Database Server
+    // 2. Ambil data kartu murni 100% langsung dari MySQL Database Server
     try {
         if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
             const serverCards = await API.request('getMasterCards');
-            if (Array.isArray(serverCards)) {
-                allMasterCards = serverCards;
-            } else {
-                allMasterCards = (window.CardDB && CardDB.getAll) ? CardDB.getAll() : [];
-            }
+            allMasterCards = Array.isArray(serverCards) ? serverCards : [];
         } else {
             allMasterCards = (window.CardDB && CardDB.getAll) ? CardDB.getAll() : [];
         }
     } catch (err) {
-        console.warn('Gagal load dari server, gunakan fallback lokal:', err);
-        allMasterCards = (window.CardDB && CardDB.getAll) ? CardDB.getAll() : [];
+        console.error('Gagal mengambil data kartu dari MySQL server:', err);
+        allMasterCards = [];
     }
 
     populateSetFilterDropdown();
@@ -58,9 +42,11 @@ async function loadCatalog() {
     // Load pemilik dari inventory untuk datalist
     try {
         const inv = await API.request('getInventory');
-        existingOwners = [...new Set(inv.map(c => c.owner).filter(Boolean))].sort();
-        const dl = document.getElementById('ownerDatalist');
-        if (dl) dl.innerHTML = existingOwners.map(o => `<option value="${o}">`).join('');
+        if (Array.isArray(inv)) {
+            existingOwners = [...new Set(inv.map(i => i.owner).filter(Boolean))].sort();
+            const dl = document.getElementById('ownerDatalist');
+            if (dl) dl.innerHTML = existingOwners.map(o => `<option value="${o}">`).join('');
+        }
     } catch(e) {}
 }
 
@@ -378,11 +364,17 @@ window.deleteMasterCard = async function(cardId) {
     }
 
     try {
+        allMasterCards = allMasterCards.filter(c => c.id !== cardId);
+        applyCatalogFilters();
+
+        try { localStorage.removeItem('nitip_card_database'); } catch(e) {}
+
         await API.request('deleteMasterCard', { id: cardId });
         UI.showToast(`Kartu "${cardName}" berhasil dihapus dari database.`, 'success');
         await loadCatalog();
     } catch (err) {
         UI.showToast('Gagal menghapus kartu: ' + err.message, 'error');
+        await loadCatalog();
     }
 };
 
