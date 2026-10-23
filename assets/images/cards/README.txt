@@ -1,15 +1,18 @@
-Folder Gambar Kartu Vanguard
-=============================
+Folder Penyimpanan Gambar Kartu Vanguard
+=========================================
 
-Simpan file gambar kartu Anda langsung di dalam folder ini:
-assets/images/cards/
+1. Otomatisasi Sistem:
+   Setiap kali kartu di-scan atau diunggah gambarnya melalui aplikasi (Scan Kartu / Master Kartu / Inventory), sistem akan secara OTOMATIS:
+   - Mengonversi gambar ke format .webp yang ringan dan tajam.
+   - Menyimpan file fisiknya langsung ke folder server ini: assets/images/cards/{kode_kartu}.webp.
 
-Format nama file disesuaikan dengan file `assets/data/cards.json` (atau data kartu yang Anda pilih).
-Contoh:
-- D-PR-001.jpg
-- V-PR-001.jpg
-- SHOP-PR-001.jpg
-- dragonic_overlord.png
+2. Penambahan / Backup Manual:
+   Jika Anda atau atasan ingin menaruh atau mengganti file gambar kartu secara manual langsung di server/hosting (lewat File Manager / cPanel / FTP):
+   - Taruh file langsung di folder ini: assets/images/cards/
+   - Beri nama file sesuai kode/ID kartu, contoh:
+     - D-PR-001.webp (atau .png / .jpg)
+     - D-PR_1705.webp
+     - V-PR-001.webp
 
-Format gambar yang didukung: .jpg, .jpeg, .png, .webp.
-Jika gambar kartu belum dimasukkan ke folder ini, sistem akan otomatis menampilkan visual placeholder kartu yang rapi.
+3. Placeholder:
+   Jika suatu kartu belum memiliki file gambar fisik di folder ini, sistem otomatis menampilkan "placeholder_card.svg" agar tampilan UI tetap rapi dan tidak broken.

@@ -203,6 +203,18 @@ function initMasterModal() {
                 localStorage.setItem('ag_card_webp_cache', JSON.stringify(cacheMap));
             } catch(e){}
 
+            // Upload & simpan file fisik WebP ke server hosting (assets/images/cards/)
+            if (typeof API !== 'undefined' && API.request && res.dataUrl) {
+                try {
+                    await API.request('uploadCardImage', {
+                        cardId: res.name,
+                        image_base64: res.dataUrl
+                    });
+                } catch (upErr) {
+                    console.warn('Upload fisik kartu ke server:', upErr);
+                }
+            }
+
             if (webpStatus) {
                 const newKb = (res.newSize / 1024).toFixed(1);
                 webpStatus.innerHTML = `
@@ -251,7 +263,8 @@ function initMasterModal() {
                     image
                 });
                 UI.showToast(`Kartu master "${name}" berhasil diperbarui!`, 'success');
-            } else {
+                const currentUser = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+                const createdBy = currentUser ? (currentUser.name || currentUser.username) : 'Admin';
                 const id = 'CARD-' + Date.now().toString().slice(-6);
                 const newCard = {
                     id,
@@ -260,7 +273,9 @@ function initMasterModal() {
                     grade,
                     language,
                     nation,
-                    image
+                    image,
+                    createdBy,
+                    createdAt: new Date().toISOString()
                 };
                 CardDB.addCard(newCard);
                 UI.showToast(`Kartu master "${name}" berhasil didaftarkan ke database!`, 'success');

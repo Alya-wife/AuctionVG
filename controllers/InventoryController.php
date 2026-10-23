@@ -27,7 +27,10 @@ class InventoryController extends BaseController {
             IFNULL(commission, 0) AS `Komisi`, 
             IFNULL(payout_date, '') AS `payoutDate`, 
             IFNULL(payout_proof_url, '') AS `payoutProofUrl`, 
-            IFNULL(image, '') AS `image`
+            IFNULL(image, '') AS `image`,
+            IFNULL(created_by, '') AS `createdBy`,
+            IFNULL(created_by, '') AS `created_by`,
+            IFNULL(created_at, '') AS `createdAt`
         FROM inventory 
         ORDER BY created_at DESC, id DESC");
         $rows = $stmt->fetchAll();
@@ -41,20 +44,114 @@ class InventoryController extends BaseController {
         $this->jsonSuccess($rows);
     }
 
+    
+    /**
+     * Konversi dan simpan file gambar fisik ke assets/images/cards/{cleanId}.webp
+     */
+    private function saveImageAsWebp($cardId, $imageData) {
+        if (empty($imageData) || empty($cardId)) {
+            return '';
+        }
+
+        // Sanitasi nama file kartu (hanya huruf, angka, minus, underscore)
+        $cleanId = preg_replace('/[^\w\-]/', '_', $cardId);
+        $cleanId = trim($cleanId, '_');
+        if (empty($cleanId)) {
+            $cleanId = 'card_' . time();
+        }
+        $fileName = $cleanId . '.webp';
+
+        $targetDir = realpath(__DIR__ . '/../assets/images/cards');
+        if (!$targetDir) {
+            $targetDir = __DIR__ . '/../assets/images/cards';
+            if (!is_dir($targetDir)) {
+                @mkdir($targetDir, 0777, true);
+            }
+        }
+        $targetPath = rtrim($targetDir, '/\\') . DIRECTORY_SEPARATOR . $fileName;
+
+        // Ambil data binary dari data URI atau base64
+        $binaryData = '';
+        if (strpos($imageData, 'data:') === 0) {
+            $parts = explode(',', $imageData, 2);
+            if (count($parts) === 2) {
+                $binaryData = base64_decode($parts[1]);
+            }
+        } else if (base64_decode($imageData, true) !== false && strlen($imageData) > 100) {
+            $binaryData = base64_decode($imageData);
+        }
+
+        if (empty($binaryData)) {
+            return $imageData;
+        }
+
+        // Cek apakah data biner sudah format WebP (header RIFF....WEBP)
+        $isWebP = (substr($binaryData, 0, 4) === 'RIFF' && substr($binaryData, 8, 4) === 'WEBP');
+
+        if ($isWebP) {
+            @file_put_contents($targetPath, $binaryData);
+            return $fileName;
+        }
+
+        // Jika gambar PNG / JPG / format lain, gunakan GD untuk convert ke WebP
+        if (function_exists('imagecreatefromstring') && function_exists('imagewebp')) {
+            $im = @imagecreatefromstring($binaryData);
+            if ($im !== false) {
+                imagealphablending($im, true);
+                imagesavealpha($im, true);
+                @imagewebp($im, $targetPath, 85);
+                @imagedestroy($im);
+                return $fileName;
+            }
+        }
+
+        @file_put_contents($targetPath, $binaryData);
+        return $fileName;
+    }
+
+    public function uploadCardImage($payload) {
+        $cardId    = trim($payload['cardId'] ?? ($payload['id'] ?? ''));
+        $imageData = $payload['image_base64'] ?? ($payload['image'] ?? ($payload['dataUrl'] ?? ''));
+
+        if (!$cardId) {
+            $this->jsonError('ID / Kode kartu wajib diisi');
+        }
+        if (!$imageData) {
+            $this->jsonError('Data gambar base64 wajib dikirim');
+        }
+
+        $fileName = $this->saveImageAsWebp($cardId, $imageData);
+        if (!$fileName) {
+            $this->jsonError('Gagal memproses gambar kartu');
+        }
+
+        $this->jsonSuccess([
+            'image' => $fileName,
+            'url'   => 'assets/images/cards/' . $fileName
+        ]);
+    }
+
     public function saveCard($payload) {
-        $id     = trim($payload['id'] ?? '');
-        $name   = trim($payload['name'] ?? '');
-        $grade  = trim((string)($payload['grade'] ?? '3'));
-        $set    = trim($payload['set'] ?? ($payload['set_name'] ?? ''));
-        $type   = strtoupper(trim($payload['type'] ?? 'JP'));
-        $nation = trim($payload['nation'] ?? '');
-        $owner  = trim($payload['owner'] ?? '');
-        $date   = !empty($payload['date']) ? $payload['date'] : date('Y-m-d');
-        $image  = trim($payload['image'] ?? '');
-        $status = trim($payload['status'] ?? 'Available');
+        $id        = trim($payload['id'] ?? '');
+        $name      = trim($payload['name'] ?? '');
+        $grade     = trim((string)($payload['grade'] ?? '3'));
+        $set       = trim($payload['set'] ?? ($payload['set_name'] ?? ''));
+        $type      = strtoupper(trim($payload['type'] ?? 'JP'));
+        $nation    = trim($payload['nation'] ?? '');
+        $owner     = trim($payload['owner'] ?? '');
+        $date      = !empty($payload['date']) ? $payload['date'] : date('Y-m-d');
+        $image     = trim($payload['image'] ?? '');
+        $status    = trim($payload['status'] ?? 'Available');
+        $createdBy = trim($payload['created_by'] ?? ($payload['createdBy'] ?? ($payload['added_by'] ?? '')));
 
         if (!$name) {
             $this->jsonError('Nama kartu wajib diisi');
+        }
+
+        // Simpan gambar fisik WebP jika input berupa base64 data URI
+        if (!empty($image) && (strpos($image, 'data:image/') === 0 || strlen($image) > 500)) {
+            $tempId = !empty($id) ? $id : (!empty($payload['card_code']) ? $payload['card_code'] : ('card_' . time()));
+            $image = $this->saveImageAsWebp($tempId, $image);
         }
 
         if ($id) {
@@ -72,16 +169,17 @@ class InventoryController extends BaseController {
             $stmt->execute([$name, $grade, $set, $type, $nation, $owner, $date, $image, $id]);
 
             $this->jsonSuccess([
-                'id'     => $id,
-                'name'   => $name,
-                'grade'  => $grade,
-                'set'    => $set,
-                'type'   => $type,
-                'nation' => $nation,
-                'owner'  => $owner,
-                'date'   => $date,
-                'status' => $status,
-                'image'  => $image
+                'id'         => $id,
+                'name'       => $name,
+                'grade'      => $grade,
+                'set'        => $set,
+                'type'       => $type,
+                'nation'     => $nation,
+                'owner'      => $owner,
+                'date'       => $date,
+                'status'     => $status,
+                'image'      => $image,
+                'created_by' => $createdBy
             ]);
         } else {
             // Generate unique ID
@@ -93,21 +191,27 @@ class InventoryController extends BaseController {
             }
 
             $stmt = $this->pdo->prepare("INSERT INTO inventory 
-                (id, name, grade, set_name, type, nation, owner, date, status, image) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Available', ?)");
-            $stmt->execute([$newId, $name, $grade, $set, $type, $nation, $owner, $date, $image]);
+                (id, name, grade, set_name, type, nation, owner, date, status, image, created_by) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Available', ?, ?)");
+            $stmt->execute([$newId, $name, $grade, $set, $type, $nation, $owner, $date, $image, $createdBy]);
+            try {
+                $user = !empty($createdBy) ? $createdBy : 'Admin';
+                $logStmt = $this->pdo->prepare("INSERT INTO activity_logs (activity, user_name, card_id) VALUES (?, ?, ?)");
+                $logStmt->execute(["Input Kartu: " . $name . " (" . $owner . ")", $user, $newId]);
+            } catch (\Exception $e) {}
 
             $this->jsonSuccess([
-                'id'     => $newId,
-                'name'   => $name,
-                'grade'  => $grade,
-                'set'    => $set,
-                'type'   => $type,
-                'nation' => $nation,
-                'owner'  => $owner,
-                'date'   => $date,
-                'status' => 'Available',
-                'image'  => $image
+                'id'         => $newId,
+                'name'       => $name,
+                'grade'      => $grade,
+                'set'        => $set,
+                'type'       => $type,
+                'nation'     => $nation,
+                'owner'      => $owner,
+                'date'       => $date,
+                'status'     => 'Available',
+                'image'      => $image,
+                'created_by' => $createdBy
             ]);
         }
     }
@@ -180,6 +284,10 @@ class InventoryController extends BaseController {
         $sql = "UPDATE inventory SET " . implode(', ', $fields) . " WHERE id = ?";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($values);
+        try {
+            $logStmt = $this->pdo->prepare("INSERT INTO activity_logs (activity, user_name, card_id) VALUES (?, ?, ?)");
+            $logStmt->execute(["Update Status: " . $id . " -> " . $status, 'Admin', $id]);
+        } catch (\Exception $e) {}
 
         $this->jsonSuccess(true);
     }

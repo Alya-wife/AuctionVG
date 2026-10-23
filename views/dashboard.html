@@ -1,13 +1,13 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="referrer" content="no-referrer"/>
-  <title>Dashboard – NitipPro Card Inventory</title>
+  <title>Dashboard - NitipPro Card Inventory</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="../assets/css/style.css"/>
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261023_sb"/>
 </head>
 <body>
 <div class="app-layout">
@@ -29,67 +29,177 @@
     </header>
 
     <div class="content-body">
-      <!-- Stats -->
-      <div class="stats-grid">
-        <div class="stat-card" style="--c1:#10B981;--c2:#34D399">
-          <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
-          <div class="stat-info"><span class="stat-label">Total Inventory</span><span class="stat-value" id="s-total">–</span></div>
+      <!-- Top Split: 6 Kotak (2, 2, 2) di Kiri & Box Tanggal di Sebelahnya -->
+      <div class="dash-top-split">
+        
+        <!-- 6 Kotak Jejer (2 Kolom x 3 Baris) -->
+        <div class="stats-grid-2x3">
+          <!-- Row 1 -->
+          <div class="stat-bubble" style="--c1:#10B981;--c2:#34D399">
+            <div class="stat-bubble-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <div class="stat-bubble-info">
+              <span class="stat-bubble-label">Available</span>
+              <span class="stat-bubble-value" id="s-available">-</span>
+            </div>
+          </div>
+
+          <div class="stat-bubble" style="--c1:#EF4444;--c2:#F87171">
+            <div class="stat-bubble-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div class="stat-bubble-info">
+              <span class="stat-bubble-label">Waiting Shipment</span>
+              <span class="stat-bubble-value" id="s-shipment">-</span>
+            </div>
+          </div>
+
+          <!-- Row 2 -->
+          <div class="stat-bubble" style="--c1:#8B5CF6;--c2:#A78BFA; cursor: pointer;" id="statCardPayment" onclick="window.location.href='payment.html'" title="Buka Pembayaran">
+            <div class="stat-bubble-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <div class="stat-bubble-info">
+              <span class="stat-bubble-label">Waiting Payment</span>
+              <span class="stat-bubble-value" id="s-payment">-</span>
+            </div>
+          </div>
+
+          <div class="stat-bubble" style="--c1:#F59E0B;--c2:#FBBF24">
+            <div class="stat-bubble-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="stat-bubble-info">
+              <span class="stat-bubble-label">Sold</span>
+              <span class="stat-bubble-value" id="s-sold">-</span>
+            </div>
+          </div>
+
+          <!-- Row 3 -->
+          <div class="stat-bubble" style="--c1:#EC4899;--c2:#F472B6">
+            <div class="stat-bubble-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="stat-bubble-info">
+              <span class="stat-bubble-label">Auction Active</span>
+              <span class="stat-bubble-value" id="s-auction">-</span>
+            </div>
+          </div>
+
+          <div class="stat-bubble" style="--c1:#64748B;--c2:#94A3B8">
+            <div class="stat-bubble-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="stat-bubble-info">
+              <span class="stat-bubble-label">Auction Done</span>
+              <span class="stat-bubble-value" id="s-auctiondone">-</span>
+            </div>
+          </div>
         </div>
-        <div class="stat-card" style="--c1:#4F8EF7;--c2:#7B5CF7">
-          <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
-          <div class="stat-info"><span class="stat-label">Tersedia</span><span class="stat-value" id="s-available">–</span></div>
+
+        <!-- Box Tanggal (Sebelah 6 Kotak) -->
+        <div class="calendar-box-card">
+          <div class="calendar-box-header">
+            <div class="date-nav-group">
+              <button class="date-nav-btn" id="btnPrevMonth" title="Bulan Sebelumnya">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <div class="date-month-title" id="dateMonthTitle">Oktober 2026</div>
+              <button class="date-nav-btn" id="btnNextMonth" title="Bulan Berikutnya">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              <button class="date-nav-btn" id="btnToday" title="Hari Ini" style="width: auto; padding: 0 6px; font-size: 0.7rem; font-weight: 600;">Hari Ini</button>
+            </div>
+            <div class="schedule-badge">
+              <span class="dot"></span>
+              Jadwal: Rabu & Sabtu
+            </div>
+          </div>
+
+          <!-- Weekday Headers -->
+          <div class="cal-weekday-grid">
+            <div class="cal-weekday">Sen</div>
+            <div class="cal-weekday">Sel</div>
+            <div class="cal-weekday" style="color:#10B981;">Rab</div>
+            <div class="cal-weekday">Kam</div>
+            <div class="cal-weekday">Jum</div>
+            <div class="cal-weekday" style="color:#10B981;">Sab</div>
+            <div class="cal-weekday">Min</div>
+          </div>
+
+          <!-- 7-Column Days Grid -->
+          <div class="cal-days-grid" id="calDaysGrid">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Selected Info & Action -->
+          <div class="cal-footer-info" id="dateSelectedPanel">
+            <div id="dateSelectedText" style="font-size: 0.84rem; font-weight: 600; color: var(--text-main);">
+              No data
+            </div>
+            <button class="date-action-btn" id="btnViewReceivedCards" style="display: none;">Lihat Kartu</button>
+          </div>
         </div>
-        <div class="stat-card" style="--c1:#F59E0B;--c2:#FBBF24">
-          <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-          <div class="stat-info"><span class="stat-label">Terjual</span><span class="stat-value" id="s-sold">–</span></div>
-        </div>
-        <div class="stat-card" style="--c1:#EF4444;--c2:#F87171">
-          <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
-          <div class="stat-info"><span class="stat-label">Menunggu Kirim</span><span class="stat-value" id="s-shipment">–</span></div>
-        </div>
-        <div class="stat-card" style="--c1:#8B5CF6;--c2:#A78BFA">
-          <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
-          <div class="stat-info"><span class="stat-label">Menunggu Bayar</span><span class="stat-value" id="s-payment">–</span></div>
-        </div>
-        <div class="stat-card" style="--c1:#06B6D4;--c2:#22D3EE">
-          <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-          <div class="stat-info"><span class="stat-label">Selesai</span><span class="stat-value" id="s-completed">–</span></div>
-        </div>
-        <div class="stat-card" style="--c1:#F472B6;--c2:#FB7185">
-          <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-          <div class="stat-info"><span class="stat-label">Lelang Aktif</span><span class="stat-value" id="s-auction">–</span></div>
-        </div>
-        <div class="stat-card" style="--c1:#64748B;--c2:#94A3B8">
-          <div class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-          <div class="stat-info"><span class="stat-label">Lelang Selesai</span><span class="stat-value" id="s-auctiondone">–</span></div>
-        </div>
+
       </div>
 
-      <!-- Recent -->
-      <div class="card-section">
-        <div class="section-header">
-          <h3>Aktivitas Terbaru</h3>
-          <a href="inventory.html" class="btn-link">Lihat Semua →</a>
+      <!-- Recent Activities (Simple 4 Columns) -->
+      <div class="recent-activity-section">
+        <div class="section-header" style="margin-bottom: 12px;">
+          <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">Recent Activities</h3>
+          <button class="btn-link" id="btnRefreshActivities" style="background:none;border:none;cursor:pointer;color:var(--primary);font-size:0.82rem;display:flex;align-items:center;gap:4px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
         </div>
-        <div id="recentActivity">
-          <div class="loading-state"><div class="spinner"></div></div>
+
+        <div class="table-responsive">
+          <table class="simple-act-table">
+            <thead>
+              <tr>
+                <th>Kartu / Item</th>
+                <th>Aktivitas</th>
+                <th>Pengguna</th>
+                <th style="text-align: right;">Tanggal & Jam</th>
+              </tr>
+            </thead>
+            <tbody id="recentActivityTable">
+              <tr>
+                <td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                  Memuat data...
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   </main>
 </div>
 
+<!-- Modal List Kartu Diterima -->
+<div class="modal-overlay" id="modalReceivedCards">
+  <div class="modal-box large" style="max-width: 840px;">
+    <div class="modal-header">
+      <div>
+        <h3 id="receivedCardsModalTitle" style="margin-bottom: 2px;">Daftar Kartu Masuk</h3>
+        <span id="receivedCardsModalSubtitle" style="font-size: 0.82rem; color: var(--text-muted);">Memuat kartu...</span>
+      </div>
+      <button class="modal-close" id="modalReceivedCardsClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="receivedCardsModalBody" style="max-height: 60vh; overflow-y: auto; padding: 16px 20px;"></div>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 <script src="../assets/js/config.js"></script>
 <script src="../assets/js/cards-data.js"></script>
-<script src="../assets/js/api.js"></script>
-<script src="../assets/js/auth.js"></script>
-<script src="../assets/js/ui.js"></script>
-<script src="../assets/js/dashboard.js"></script>
+<script src="../assets/js/api.js?v=20261023_rbac"></script>
+<script src="../assets/js/auth.js?v=20261023_rbac"></script>
+<script src="../assets/js/ui.js?v=20261023_rbac"></script>
+<script src="../assets/js/dashboard.js?v=20261023_v4"></script>
 </body>
 </html>
-
-
-
-
-

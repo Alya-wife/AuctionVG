@@ -1,6 +1,6 @@
-# Cardfight!! Vanguard Vision AI Card Scanner (Standalone)
+# Cardfight!! Vanguard Card Scanner (Standalone)
 
-Paket modul mandiri (standalone) pemindai kartu Cardfight!! Vanguard menggunakan **Google Gemini Vision AI** dan **Cardfight!! Vanguard Fandom Wiki**.
+Paket modul mandiri pemindai kartu Cardfight!! Vanguard menggunakan **Local OCR (Tesseract.js - Tanpa AI)**, **Quick Code Search**, serta **Cardfight!! Vanguard Fandom Wiki Auto-Lookup**. (Mendukung mode cadangan opsional Google Gemini Vision AI).
 
 Folder ini sepenuhnya independen dan dapat langsung Anda salin (`copy-paste`) ke proyek lain mana pun (HTML murni, Laravel, React, Vue, Next.js, Node.js, PHP, dll.).
 

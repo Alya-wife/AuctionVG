@@ -1,14 +1,14 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="referrer" content="no-referrer" />
-  <title>Kelola Admin – NitipPro Card Inventory</title>
+  <title>Kelola Admin & Pengguna - NitipPro Card Inventory</title>
   <meta name="description" content="Kelola akun admin dan hak akses NitipPro" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261023_sb" />
 </head>
 <body>
   <div class="app-layout">
@@ -22,12 +22,12 @@
         </button>
         <div class="page-title">
           <h2>Kelola Admin &amp; Pengguna</h2>
-          <span>Manajemen akun akses sistem NitipPro</span>
+          <span>Manajemen akun akses Google Sign-In sistem NitipPro</span>
         </div>
         <div class="top-bar-right">
           <button class="btn-primary" id="btnAddUser">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Tambah Admin
+            Tambah Pengguna
           </button>
         </div>
       </header>
@@ -40,17 +40,17 @@
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
             <div class="stat-info">
-              <span class="stat-label">Total Admin</span>
+              <span class="stat-label">Total Pengguna</span>
               <span class="stat-value" id="statTotalUsers">0</span>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background: rgba(244, 114, 182, 0.15); color: #f472b6;">
+            <div class="stat-icon" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             </div>
             <div class="stat-info">
-              <span class="stat-label">Admin Utama</span>
-              <span class="stat-value" style="font-size: 1.15rem; color: #f472b6;">Pacar Alya</span>
+              <span class="stat-label">Super Admin Utama</span>
+              <span class="stat-value" style="font-size: 1.05rem; color: #fbbf24;">Ravy Whienelda</span>
             </div>
           </div>
           <div class="stat-card">
@@ -58,8 +58,8 @@
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             </div>
             <div class="stat-info">
-              <span class="stat-label">Status Database</span>
-              <span class="stat-value" style="font-size: 1.15rem; color: #34d399;">Tersinkron</span>
+              <span class="stat-label">Otorisasi Login</span>
+              <span class="stat-value" style="font-size: 1.05rem; color: #34d399;">Google Sign-In</span>
             </div>
           </div>
         </div>
@@ -68,13 +68,11 @@
         <div class="filter-bar mb-3">
           <div class="search-box">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="userSearch" placeholder="Cari nama atau username..." />
+            <input type="text" id="userSearch" placeholder="Cari email atau nama pengguna..." />
           </div>
           <select id="userRoleFilter" class="filter-select">
             <option value="">Semua Role</option>
-            <option value="Admin">Admin</option>
-            <option value="Pacar Alya">Pacar Alya</option>
-            <option value="Moderator">Moderator</option>
+            <option value="Super Admin">Super Admin</option>
             <option value="Staff">Staff</option>
           </select>
         </div>
@@ -82,17 +80,17 @@
         <!-- Users Table Card -->
         <div class="table-card">
           <div class="table-card-header">
-            <div style="font-weight: 700; font-size: 1rem; color: #fff;">Daftar Akun Admin</div>
+            <div style="font-weight: 700; font-size: 1rem; color: #fff;">Daftar Akun yang Diberi Akses</div>
             <div id="userCountBadge" style="font-size: 0.82rem; color: var(--text-muted);">Memuat...</div>
           </div>
           <div class="table-responsive">
             <table class="data-table" id="usersTable">
               <thead>
                 <tr>
-                  <th style="width: 260px;">Pengguna</th>
-                  <th>Username</th>
-                  <th>Role</th>
-                  <th>Password</th>
+                  <th style="width: 250px;">Pengguna</th>
+                  <th>Email Akun Google</th>
+                  <th>Role / Hak Akses</th>
+                  <th>Status Login</th>
                   <th style="text-align: right; width: 140px;">Aksi</th>
                 </tr>
               </thead>
@@ -111,54 +109,36 @@
     </main>
   </div>
 
-  <!-- Modal: Tambah / Edit Admin -->
+  <!-- Modal: Tambah / Edit Pengguna (Hanya Email & Role) -->
   <div class="modal-overlay" id="modalUser">
-    <div class="modal-box" style="max-width: 480px;">
+    <div class="modal-box" style="max-width: 440px;">
       <div class="modal-header">
-        <h3 id="modalUserTitle">Tambah Admin Baru</h3>
+        <h3 id="modalUserTitle">Tambah Pengguna Baru</h3>
         <button class="modal-close" id="modalUserClose" type="button">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
-      <form id="userForm" class="modal-form">
-        <input type="hidden" id="userOriginalUsername" />
+            <form id="userForm" class="modal-form">
+        <input type="hidden" id="userIdInput" />
 
         <div class="form-group">
-          <label for="userNameInput">Nama Lengkap *</label>
-          <input type="text" id="userNameInput" placeholder="Contoh: Budi Santoso" required />
+          <label for="userEmailInput">Email Akun Google *</label>
+          <input type="email" id="userEmailInput" placeholder="user@gmail.com" required autocomplete="email" style="font-size: 0.95rem;" />
         </div>
 
         <div class="form-group">
-          <label for="userUsernameInput">Username *</label>
-          <input type="text" id="userUsernameInput" placeholder="Contoh: budi_admin" autocomplete="off" required />
-          <small class="form-hint" style="color: var(--text-muted); font-size: 0.76rem; margin-top: 4px;">Gunakan huruf kecil tanpa spasi.</small>
-        </div>
-
-        <div class="form-group">
-          <label for="userPasswordInput">Password *</label>
-          <div class="pwd-toggle-wrap">
-            <input type="password" id="userPasswordInput" placeholder="Masukkan password login" autocomplete="new-password" required style="padding-right: 38px;" />
-            <button type="button" class="pwd-toggle-btn" id="togglePasswordBtn" title="Lihat/Sembunyikan Password">
-              <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="userRoleSelect">Role Akses</label>
-          <select id="userRoleSelect" class="filter-select" style="width: 100%;">
-            <option value="Admin">Admin</option>
-            <option value="Pacar Alya">Pacar Alya</option>
-            <option value="Moderator">Moderator</option>
+          <label for="userRoleSelect">Role / Hak Akses *</label>
+          <select id="userRoleSelect" class="filter-select" style="width: 100%; font-size: 0.95rem;">
             <option value="Staff">Staff</option>
+            <option value="Super Admin">Super Admin</option>
           </select>
         </div>
 
         <div class="modal-actions" style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
           <button type="button" class="btn-ghost" id="cancelUserBtn">Batal</button>
           <button type="submit" class="btn-primary" id="saveUserBtn">
-            <span id="saveUserBtnText">Simpan Admin</span>
+            <span id="saveUserBtnText">Simpan Pengguna</span>
           </button>
         </div>
       </form>
@@ -167,11 +147,10 @@
 
   <div id="toast" class="toast"></div>
 
-  <script src="../assets/js/config.js"></script>
-  <script src="../assets/js/api.js"></script>
-  <script src="../assets/js/auth.js"></script>
-  <script src="../assets/js/ui.js"></script>
-  <script src="../assets/js/users.js"></script>
+  <script src="../assets/js/config.js?v=20261023d"></script>
+  <script src="../assets/js/api.js?v=20261023_rbac"></script>
+  <script src="../assets/js/auth.js?v=20261023_rbac"></script>
+  <script src="../assets/js/ui.js?v=20261023_rbac"></script>
+  <script src="../assets/js/users.js?v=20261023d"></script>
 </body>
 </html>
-

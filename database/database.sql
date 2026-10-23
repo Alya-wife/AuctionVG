@@ -16,6 +16,9 @@ CREATE TABLE `users` (
   `username` VARCHAR(100) NOT NULL UNIQUE,
   `password` VARCHAR(255) NOT NULL,
   `name` VARCHAR(150) NOT NULL,
+  `email` VARCHAR(191) NULL,
+  `google_id` VARCHAR(100) NULL,
+  `avatar` TEXT NULL,
   `role` VARCHAR(50) NOT NULL DEFAULT 'Admin',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -43,6 +46,7 @@ CREATE TABLE `inventory` (
   `payout_date` DATE NULL,
   `payout_proof_url` TEXT NULL,
   `image` VARCHAR(255) DEFAULT '',
+  `created_by` VARCHAR(150) NULL DEFAULT '',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_status` (`status`),
@@ -66,6 +70,30 @@ CREATE TABLE `auctions` (
 -- Table structure for table `auction_items`
 --
 DROP TABLE IF EXISTS `auction_items`;
+
+--
+-- Table structure for table `activity_logs`
+--
+DROP TABLE IF EXISTS `activity_logs`;
+CREATE TABLE `activity_logs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `activity` VARCHAR(255) NOT NULL,
+  `user_name` VARCHAR(150) NOT NULL,
+  `card_id` VARCHAR(50) NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+--
+-- Dumping data for table `activity_logs`
+--
+INSERT INTO `activity_logs` (`activity`, `user_name`, `card_id`, `created_at`) VALUES
+('Transaksi Selesai: G2 Kecoak Foil', 'Ravy', 'C01353', '2026-10-23 19:35:05'),
+('Transaksi Selesai: G1 Drajeweled', 'Ravy', 'C00717', '2026-10-23 19:35:00'),
+('Ready Stock: Plegia Stone Dragon', 'Ravy', 'C68079', '2026-10-23 19:22:32'),
+('Menunggu Kirim: G1 RaizBlaz FOIL', 'Ravy', 'C00270', '2026-10-22 10:58:23');
+
 CREATE TABLE `auction_items` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `auction_id` VARCHAR(50) NOT NULL,
@@ -80,9 +108,9 @@ CREATE TABLE `auction_items` (
 --
 -- Dumping data for table `users`
 --
-INSERT INTO `users` (`id`, `username`, `password`, `name`, `role`) VALUES
-(1, 'admin', 'admin123', 'Pacar Alya', 'Pacar Alya'),
-(2, 'alya', 'alya123', 'Alya', 'Owner');
+INSERT INTO `users` (`id`, `username`, `password`, `name`, `email`, `google_id`, `avatar`, `role`) VALUES
+(3, 'ravywhienelda', '$2y$12$bVrwpy8tyY5ul4KvlA7tOedxVFr5awSRSvQO0ul176Wd/fRCQWdeu', 'Ravy Whienelda', 'ravywhienelda@gmail.com', '109533913730909234013', 'https://lh3.googleusercontent.com/a/ACg8ocKAxxxei6ReRHW2l4Ng40z5-UQvP7TsFLs3LU3pf-YWb8Q9xiIU=s96-c', 'Super Admin'),
+(4, 'satriasiswand', '$2y$12$IUIUWWRlzFl.BBE/.PmPU.oLwgz/tIHMb4hVLgTD7ZdwbZYCHS3Ri', 'satriasiswand', 'satriasiswand@gmail.com', NULL, NULL, 'Staff');
 
 --
 -- Dumping data for table `inventory`

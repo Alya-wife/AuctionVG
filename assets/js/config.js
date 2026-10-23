@@ -5,6 +5,9 @@ const CONFIG = {
     // Mode: false = pakai Database MySQL via api.php, true = mode offline LocalStorage
     USE_LOCAL: false,
 
+    // Google Sign-In Client ID
+    GOOGLE_CLIENT_ID: '711651834929-ijkh41k8k47jaaags97dp8tiohipgji2.apps.googleusercontent.com',
+
     // Google Gemini API Key untuk Card Scanner (Vision AI)
     // Disimpan di LocalStorage browser agar aman
     GEMINI_API_KEY: localStorage.getItem('gemini_api_key') || ''

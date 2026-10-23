@@ -1,3 +1,11 @@
+
+window.setTitipCardLang = function(idx, lang) {
+    if (selectedTitipCards && selectedTitipCards[idx]) {
+        selectedTitipCards[idx].language = lang;
+        selectedTitipCards[idx].type = lang;
+        renderSelectedCardsList();
+    }
+};
 let allCards = [];
 let filteredCards = [];
 let currentView = 'grid';
@@ -215,6 +223,9 @@ function renderGrid(container, page) {
                 <div class="card-meta">
                     <span><strong>Pemilik:</strong> ${card.owner}</span>
                     <span><strong>Diterima:</strong> ${UI.formatDate(card.date)}</span>
+                    <span style="font-size:0.75rem;color:var(--text-muted);display:block;margin-top:2px;">
+                        Ditambahkan oleh: <strong style="color:#e2e8f0;">${card.createdBy || card.created_by || 'Admin'}</strong>
+                    </span>
                 </div>
                 <div class="card-actions">
                     <button class="ca-btn" onclick="editCard('${card.id}')">
@@ -242,7 +253,7 @@ function renderList(container, page) {
                     <th>ID</th>
                     <th>Kartu</th>
                     <th>Set Promo</th>
-                    <th>Pemilik</th>
+                    <th>Pemilik &amp; Penginput</th>
                     <th>Status</th>
                     <th style="text-align:right">Aksi</th>
                 </tr>
@@ -265,7 +276,10 @@ function renderList(container, page) {
                     <td>
                         <span style="font-size:0.82rem;color:#38bdf8;">${c.set || '-'}</span>
                     </td>
-                    <td>${c.owner}</td>
+                    <td>
+                        <strong>${c.owner}</strong>
+                        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">Oleh: <span style="color:#94a3b8;">${c.createdBy || c.created_by || 'Admin'}</span></div>
+                    </td>
                     <td><span class="status-badge status-${sc}">${c.status}</span></td>
                     <td style="text-align:right">
                         <div style="display:flex;gap:8px;justify-content:flex-end;">
@@ -365,7 +379,13 @@ function renderSelectedCardsList() {
                         <span>${c.name}</span>
                         ${qtyBadge}
                     </div>
-                    <div class="selected-card-chip-sub">${c.set || 'Promo'}</div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px;gap:6px;">
+                        <span class="selected-card-chip-sub">${c.set || 'Promo'}</span>
+                        <div class="lang-switch-wrap" onclick="event.stopPropagation();">
+                            <button type="button" class="lang-switch-btn ${((c.language || c.type || 'JP').toUpperCase() === 'JP') ? 'active' : ''}" onclick="setTitipCardLang(${idx}, 'JP')" title="Kartu versi Jepang (JP)">JP</button>
+                            <button type="button" class="lang-switch-btn ${((c.language || c.type || 'JP').toUpperCase() === 'EN' || (c.language || c.type || '').toUpperCase() === 'ENG') ? 'active' : ''}" onclick="setTitipCardLang(${idx}, 'EN')" title="Kartu versi Inggris (ENG)">ENG</button>
+                        </div>
+                    </div>
                 </div>
                 <button type="button" class="btn-remove-selected-card" onclick="removeSelectedTitipCard(${idx})" title="Kurangi atau hapus kartu ini">
                     &times;
@@ -537,6 +557,9 @@ function initCardForm() {
             btn.disabled = true;
             btn.textContent = editingId ? 'Menyimpan perubahan...' : `Menyimpan ${totalCount} kartu...`;
 
+            const currentUser = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+            const currentUserName = currentUser ? (currentUser.name || currentUser.username) : 'Admin';
+
             try {
                 if (editingId) {
                     // Update satu kartu inventory yang sedang diedit
@@ -550,7 +573,8 @@ function initCardForm() {
                         nation: card.nation || '',
                         image: card.image || '',
                         owner: owner,
-                        date: date
+                        date: date,
+                        created_by: currentUserName
                     });
                     UI.showToast(`Data kartu "${card.name}" berhasil diperbarui!`, 'success');
                 } else {
@@ -566,7 +590,8 @@ function initCardForm() {
                                 nation: card.nation || '',
                                 image: card.image || '',
                                 owner: owner,
-                                date: date
+                                date: date,
+                                created_by: currentUserName
                             });
                         }
                     }
@@ -689,6 +714,7 @@ window.viewDetail = function (id) {
             <div class="detail-field"><div class="detail-label">Nation</div><div class="detail-value">${c.nation}</div></div>
             <div class="detail-field"><div class="detail-label">Pemilik</div><div class="detail-value">${c.owner}</div></div>
             <div class="detail-field"><div class="detail-label">Tgl Diterima</div><div class="detail-value">${UI.formatDate(c.date)}</div></div>
+            <div class="detail-field"><div class="detail-label">Ditambahkan Oleh</div><div class="detail-value" style="color:#38bdf8;font-weight:700;">${c.createdBy || c.created_by || 'Admin'}</div></div>
             <div class="detail-field"><div class="detail-label">File Gambar</div><div class="detail-value" style="font-family:monospace;font-size:0.8rem;">assets/images/cards/${c.image || '-'}</div></div>
         </div>`;
 

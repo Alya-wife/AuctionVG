@@ -5,9 +5,10 @@ const UI = {
         { href: 'cards.html', label: 'Database Kartu', icon: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>' },
         { href: 'auction.html', label: 'Lelang', icon: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>' },
         { href: 'shipment.html', label: 'Pengiriman', icon: '<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>' },
+        { href: 'payment.html', label: 'Pembayaran Pemilik', icon: '<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><circle cx="7" cy="15" r="1.5"/><circle cx="12" cy="15" r="1.5"/>' },
         { href: 'owners.html', label: 'Pemilik', icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' },
         { href: 'users.html', label: 'Kelola Admin', icon: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>' },
-        { href: 'scanner-debug.html', label: 'AI Scanner (Debug)', icon: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>' }
+        { href: 'scanner-debug.html', label: 'Scan Kartu', icon: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>' }
     ],
 
     init() {
@@ -36,7 +37,20 @@ const UI = {
         const user = Auth.getUser();
         const path = window.location.pathname;
 
-        const links = this.NAV_LINKS.map(n => `
+        const isSuperAdmin = user && (
+            user.role === 'Super Admin' || 
+            (user.email && user.email.toLowerCase() === 'ravywhienelda@gmail.com')
+        );
+
+        // Staff tidak dapat melihat menu Kelola Admin (users.html) dan Pembayaran Pemilik (payment.html)
+        const visibleLinks = this.NAV_LINKS.filter(n => {
+            if (!isSuperAdmin && (n.href === 'users.html' || n.href === 'payment.html')) {
+                return false;
+            }
+            return true;
+        });
+
+        const links = visibleLinks.map(n => `
             <a href="${n.href}" class="nav-item ${path.includes(n.href.replace('.html','')) ? 'active' : ''}">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${n.icon}</svg>
                 <span>${n.label}</span>
@@ -55,10 +69,14 @@ const UI = {
             <nav class="sidebar-nav">${links}</nav>
             <div class="sidebar-footer">
                 <div class="user-info">
-                    <div class="user-avatar">${user && user.name ? user.name.charAt(0).toUpperCase() : 'P'}</div>
-                    <div class="user-details">
-                        <span class="user-name">${user && user.name ? user.name : 'Pacar Alya'}</span>
-                        <span class="user-role">Pacar Alya</span>
+                    <div class="user-avatar" style="${user && user.avatar ? 'overflow:hidden;padding:0;background:transparent;border:2px solid var(--accent);' : ''}">
+                        ${user && user.avatar 
+                            ? `<img src="${user.avatar}" alt="${user.name || 'User'}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" referrerpolicy="no-referrer" />` 
+                            : (user && user.name ? user.name.charAt(0).toUpperCase() : 'P')}
+                    </div>
+                    <div class="user-details" style="overflow:hidden;">
+                        <span class="user-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${user && user.name ? user.name : 'Pacar Alya'}">${user && user.name ? user.name : 'Pacar Alya'}</span>
+                        <span class="user-role" style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${user && user.email ? user.email : (user && user.role ? user.role : 'Admin')}</span>
                     </div>
                 </div>
                 <button class="btn-logout" id="logoutBtn" title="Keluar">

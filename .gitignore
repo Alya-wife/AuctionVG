@@ -5,3 +5,5 @@ Thumbs.db
 *_dump.json
 *_data.json
 scratch/
+.env
+config/google.php

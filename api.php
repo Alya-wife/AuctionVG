@@ -60,6 +60,12 @@ try {
         case 'login':
             $authController->login($payload);
             break;
+        case 'googleLogin':
+            $authController->googleLogin($payload);
+            break;
+        case 'getGoogleConfig':
+            $authController->getGoogleConfig();
+            break;
         case 'getUsers':
             $authController->getUsers();
             break;
@@ -73,6 +79,9 @@ try {
         // --- Inventory ---
         case 'getInventory':
             $inventoryController->getInventory();
+            break;
+        case 'uploadCardImage':
+            $inventoryController->uploadCardImage($payload);
             break;
         case 'saveCard':
             $inventoryController->saveCard($payload);
@@ -101,6 +110,15 @@ try {
         // --- Dashboard Stats ---
         case 'getStats':
             $statsController->getStats();
+            break;
+        case 'getActivities':
+            $statsController->getActivities();
+            break;
+        case 'getReceivedDates':
+            $statsController->getReceivedDatesSummary();
+            break;
+        case 'getCardsByDate':
+            $statsController->getCardsByDate($payload);
             break;
 
         default:

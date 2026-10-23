@@ -3,7 +3,7 @@ let inventoryData = [];
 document.addEventListener('DOMContentLoaded', () => {
     loadPublicOwners();
     initPublicSearch();
-    initLoginModal();
+    initGoogleSignIn();
     initModals();
 });
 
@@ -54,7 +54,7 @@ function renderPublicOwners() {
         o.cards.push(card);
         if (['Available','Auction'].includes(card.status)) o.available++;
         if (card.status === 'Sold') o.sold++;
-        if (card.status === 'Waiting Shipment') o.shipment++;
+        if (['Waiting Shipment', 'Shipped'].includes(card.status)) o.shipment++;
         if (card.status === 'Waiting Payment') o.payment++;
         if (card.status === 'Completed') o.completed++;
     });
@@ -73,11 +73,9 @@ function renderPublicOwners() {
                 <h3>${o.name}</h3>
                 <p>${o.total} kartu total</p>
                 <div class="owner-badges">
-                    <span class="status-badge status-available">${o.available} Tersedia</span>
-                    <span class="status-badge status-sold">${o.sold} Terjual</span>
-                    ${o.shipment ? `<span class="status-badge status-waiting-shipment">${o.shipment} Kirim</span>` : ''}
-                    ${o.payment  ? `<span class="status-badge status-waiting-payment">${o.payment} Bayar</span>` : ''}
-                    <span class="status-badge status-completed">${o.completed} Selesai</span>
+                    <span class="status-badge status-available">${o.available} Available</span>
+                    <span class="status-badge status-waiting-shipment">${o.shipment} Waiting Shipment</span>
+                    <span class="status-badge status-waiting-payment">${o.payment} Waiting Payment</span>
                 </div>
             </div>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);flex-shrink:0">
@@ -228,6 +226,15 @@ window.openPublicCardDetail = function(cardId) {
         `;
     }
 
+    if (card.createdBy || card.created_by) {
+        metaRows += `
+            <div class="owner-card-detail-row">
+                <span class="label">Ditambahkan Oleh</span>
+                <span class="value" style="color: #38bdf8; font-weight:700;">${card.createdBy || card.created_by}</span>
+            </div>
+        `;
+    }
+
     document.getElementById('publicCardDetailTitle').textContent = card.name || 'Detail Kartu';
     document.getElementById('publicCardDetailBody').innerHTML = `
         <div class="owner-card-detail-layout">
@@ -249,58 +256,72 @@ window.openPublicCardDetail = function(cardId) {
     openModal('modalPublicCardDetail');
 };
 
-// Init login modal
-function initLoginModal() {
-    const showLoginBtn = document.getElementById('showLoginBtn');
-    const loginForm = document.getElementById('loginForm');
-    const togglePassword = document.getElementById('togglePassword');
+// Handler Respon Google Sign-In
+window.handleGoogleLoginResponse = async function(response) {
+    const errorDiv = document.getElementById('loginError');
+    const errorMsg = document.getElementById('loginErrorMsg');
+    const spinner = document.getElementById('loginSpinner');
 
-    showLoginBtn.addEventListener('click', () => {
-        openModal('modalLogin');
-    });
-
-    // Toggle password visibility
-    if (togglePassword) {
-        togglePassword.addEventListener('click', () => {
-            const pwdInput = document.getElementById('password');
-            const type = pwdInput.type === 'password' ? 'text' : 'password';
-            pwdInput.type = type;
-            
-            const eyeIcon = togglePassword.querySelector('svg');
-            if (type === 'text') {
-                eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
-            } else {
-                eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-            }
-        });
+    if (!response || !response.credential) {
+        if (errorDiv) {
+            errorDiv.classList.remove('hidden');
+            errorMsg.textContent = 'Gagal menerima kredensial akun dari Google.';
+        }
+        return;
     }
 
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const btn = document.getElementById('loginBtn');
-        const btnText = document.getElementById('loginBtnText');
-        const spinner = document.getElementById('loginSpinner');
-        const errorDiv = document.getElementById('loginError');
+    if (errorDiv) errorDiv.classList.add('hidden');
+    if (spinner) spinner.classList.remove('hidden');
 
-        btn.disabled = true;
-        btnText.textContent = 'Memverifikasi...';
-        spinner.classList.remove('hidden');
-        errorDiv.classList.add('hidden');
-
-        try {
-            await Auth.login(username, password);
-            // Success - redirect
-            window.location.href = 'dashboard.html';
-        } catch (err) {
+    try {
+        await Auth.googleLogin(response.credential);
+        window.location.href = 'dashboard.html';
+    } catch (err) {
+        if (errorDiv) {
             errorDiv.classList.remove('hidden');
-            document.getElementById('loginErrorMsg').textContent = err.message || 'Login gagal';
-            btn.disabled = false;
-            btnText.textContent = 'Masuk';
-            spinner.classList.add('hidden');
+            errorMsg.textContent = err.message || 'Login dengan Google gagal.';
         }
-    });
+        if (spinner) spinner.classList.add('hidden');
+    }
+};
+
+function initGoogleSignIn() {
+    const clientId = (typeof CONFIG !== 'undefined' && CONFIG.GOOGLE_CLIENT_ID) 
+        ? CONFIG.GOOGLE_CLIENT_ID 
+        : '711651834929-ijkh41k8k47jaaags97dp8tiohipgji2.apps.googleusercontent.com';
+
+    let attempts = 0;
+    function render() {
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+            try {
+                google.accounts.id.initialize({
+                    client_id: clientId,
+                    callback: window.handleGoogleLoginResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+                const container = document.getElementById('googleSignInBtn');
+                if (container) {
+                    container.innerHTML = '';
+                    google.accounts.id.renderButton(container, {
+                        type: 'standard',
+                        theme: 'filled_blue',
+                        size: 'large',
+                        text: 'signin_with',
+                        shape: 'pill',
+                        logo_alignment: 'left',
+                        width: '280'
+                    });
+                }
+            } catch(e) {
+                console.warn('Google Sign-In initialization:', e);
+            }
+        } else if (attempts < 25) {
+            attempts++;
+            setTimeout(render, 250);
+        }
+    }
+    render();
 }
 
 // Modal management

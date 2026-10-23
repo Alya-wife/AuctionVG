@@ -4,6 +4,11 @@ const Auth = {
         localStorage.setItem('ag_user', JSON.stringify(user));
         return user;
     },
+    googleLogin: async function(credential) {
+        const user = await API.request('googleLogin', { credential });
+        localStorage.setItem('ag_user', JSON.stringify(user));
+        return user;
+    },
     logout: function() {
         localStorage.removeItem('ag_user');
         window.location.href = 'index.html';
@@ -13,10 +18,8 @@ const Auth = {
         if (!u) return null;
         try {
             const user = JSON.parse(u);
-            if (user && (user.name === 'Admin' || user.role === 'admin' || user.role === 'Administrator')) {
-                user.name = 'Pacar Alya';
-                user.role = 'Pacar Alya';
-                localStorage.setItem('ag_user', JSON.stringify(user));
+            if (user && user.email && user.email.toLowerCase() === 'ravywhienelda@gmail.com') {
+                user.role = 'Super Admin';
             }
             return user;
         } catch(e) {
@@ -28,9 +31,30 @@ const Auth = {
     },
     checkAuth: function() {
         const user = this.getUser();
-        const onLogin = ['index.html', '/', 'scanner-debug.html'].some(p => window.location.pathname.endsWith(p));
-        if (!user && !onLogin) window.location.href = 'index.html';
-        if (user && onLogin && !window.location.pathname.endsWith('scanner-debug.html')) window.location.href = 'dashboard.html';
+        const path = window.location.pathname;
+        const onLogin = ['index.html', '/', 'scanner-debug.html'].some(p => path.endsWith(p));
+
+        if (!user && !onLogin) {
+            window.location.href = 'index.html';
+            return;
+        }
+        if (user && onLogin && !path.endsWith('scanner-debug.html')) {
+            window.location.href = 'dashboard.html';
+            return;
+        }
+
+        // Role Guard: Staff tidak bisa akses users.html (Kelola Admin) dan payment.html (Pembayaran)
+        if (user) {
+            const isSuperAdmin = (
+                user.role === 'Super Admin' || 
+                (user.email && user.email.toLowerCase() === 'ravywhienelda@gmail.com')
+            );
+            const isRestricted = path.includes('users.html') || path.includes('payment.html');
+            if (!isSuperAdmin && isRestricted) {
+                alert('Akses ditolak: Hanya Super Admin yang dapat mengakses halaman ini.');
+                window.location.href = 'dashboard.html';
+            }
+        }
     }
 };
 document.addEventListener('DOMContentLoaded', () => Auth.checkAuth());

@@ -33,6 +33,11 @@
   const btnScan = document.getElementById('btnScan');
   const btnScanText = document.getElementById('btnScanText');
   const statusMsg = document.getElementById('statusMsg');
+  const scanEngine = document.getElementById('scanEngine');
+  const quickCodeNumber = document.getElementById('quickCodeNumber');
+  const switchCustomPrefix = document.getElementById('switchCustomPrefix');
+  const prefixBadge = document.getElementById('prefixBadge');
+  const btnQuickSearch = document.getElementById('btnQuickSearch');
 
   // Form Elements (Hanya 1 field nama English)
   const nameEn = document.getElementById('nameEn');
@@ -190,6 +195,57 @@
     btnClear.addEventListener('click', clearForm);
     btnSave.addEventListener('click', saveCardToDatabase);
 
+    // Toggle teks tombol scan saat engine dipilih
+    if (scanEngine) {
+      scanEngine.addEventListener('change', () => {
+        if (scanEngine.value === 'ocr') {
+          btnScanText.textContent = 'Scan Kartu';
+        } else {
+          btnScanText.textContent = 'Scan Kartu (Gemini AI)';
+        }
+      });
+    }
+
+    // Event Quick Code Search
+    function getFullQuickCode() {
+      const val = (quickCodeNumber?.value || '').trim();
+      if (!val) return '';
+      if (switchCustomPrefix?.checked) {
+        return val;
+      }
+      if (val.includes('/') || val.includes('-')) return val;
+      return 'D-PR/' + val;
+    }
+
+    if (switchCustomPrefix) {
+      switchCustomPrefix.addEventListener('change', () => {
+        if (switchCustomPrefix.checked) {
+          if (prefixBadge) prefixBadge.style.display = 'none';
+        } else {
+          if (prefixBadge) {
+            prefixBadge.style.display = 'flex';
+            prefixBadge.textContent = 'D-PR/';
+          }
+        }
+        quickCodeNumber?.focus();
+      });
+    }
+
+    if (btnQuickSearch) {
+      btnQuickSearch.addEventListener('click', () => {
+        handleQuickSearch(getFullQuickCode());
+      });
+    }
+
+    if (quickCodeNumber) {
+      quickCodeNumber.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleQuickSearch(getFullQuickCode());
+        }
+      });
+    }
+
     const btnApiKey = document.getElementById('btnApiKey');
     if (btnApiKey) {
       btnApiKey.addEventListener('click', () => {
@@ -222,8 +278,221 @@
     hideStatus();
   }
 
-  // Eksekusi Scan Kartu
+  // PENCARIAN CEPAT KODE KARTU (Autofill Wiki Langsung)
+  async function handleQuickSearch(code) {
+    const cleanCode = (code || '').trim();
+    if (!cleanCode) {
+      alert('Ketik kode kartu terlebih dahulu (cth: D-PR/1705 atau DZ-BT01/001)!');
+      return;
+    }
+
+    setStatus(`Mencari data resmi kartu "${cleanCode}" di Fandom Wiki...`, 'loading');
+    try {
+      const wikiData = await lookupFandom(cleanCode, '');
+      cardCode.value = cleanCode;
+
+      const detectedSet = detectPromoSet(cleanCode);
+      if (detectedSet) cardSet.value = detectedSet;
+
+      if (wikiData && wikiData.title && !wikiData.title.toLowerCase().includes('list of')) {
+        nameEn.value = wikiData.title;
+        if (wikiData.grade && ['0', '1', '2', '3', '4'].includes(String(wikiData.grade).trim())) {
+          grade.value = String(wikiData.grade).trim();
+        }
+        if (wikiData.nation) {
+          nation.value = normalizeNation(wikiData.nation);
+        }
+        setStatus(`Berhasil menemukan: "${wikiData.title}" (${cleanCode})`, 'success');
+      } else {
+        setStatus(`Kode "${cleanCode}" tersimpan, namun tidak ditemukan di Fandom Wiki. Silakan lengkapi sisa form manual.`, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      setStatus(`Pencarian Wiki gagal: ${err.message}`, 'error');
+    }
+  }
+
+  // Eksekusi Scan Kartu (Router OCR atau AI)
   async function scanCard() {
+    const mode = (scanEngine ? scanEngine.value : 'ocr') || 'ocr';
+
+    if (mode === 'ocr') {
+      await scanCardOcr();
+    } else {
+      await scanCardGemini();
+    }
+  }
+
+  // 1. SCAN OCR LOKAL (Tesseract.js - Tanpa AI)
+  async function scanCardOcr() {
+    if (!cardPreview || !cardPreview.complete || cardPreview.naturalWidth === 0) {
+      alert('Pilih gambar kartu terlebih dahulu!');
+      return;
+    }
+
+    if (typeof Tesseract === 'undefined') {
+      alert('Library OCR Tesseract.js sedang dimuat. Pastikan Anda terhubung ke internet saat pertama kali membuka halaman.');
+      return;
+    }
+
+    btnScan.disabled = true;
+    btnScanText.textContent = 'Membaca OCR...';
+    setStatus('Memproses OCR...', 'loading');
+
+    try {
+      const ocrResult = await scanWithTesseract(cardPreview);
+      console.log('[OCR Local Output]', ocrResult);
+
+      let foundCode = ocrResult.cardCode;
+      let foundGrade = ocrResult.grade;
+
+      if (!foundCode) {
+        setStatus('Teks kode belum terdeteksi jelas. Silakan masukkan kode di kotak "Cari Cepat" di atas.', 'error');
+        return;
+      }
+
+      cardCode.value = foundCode;
+      if (quickCodeInput) quickCodeInput.value = foundCode;
+
+      const autoSet = detectPromoSet(foundCode);
+      if (autoSet) cardSet.value = autoSet;
+
+      if (foundGrade && ['0', '1', '2', '3', '4'].includes(foundGrade)) {
+        grade.value = foundGrade;
+      }
+
+      // Langsung cari ke Fandom Wiki
+      setStatus(`Kode terdeteksi "${foundCode}". Mengambil data resmi dari Fandom Wiki...`, 'loading');
+      try {
+        const wikiData = await lookupFandom(foundCode, '');
+        if (wikiData && wikiData.title && !wikiData.title.toLowerCase().includes('list of')) {
+          nameEn.value = wikiData.title;
+          if (wikiData.grade && ['0', '1', '2', '3', '4'].includes(String(wikiData.grade).trim())) {
+            grade.value = String(wikiData.grade).trim();
+          }
+          if (wikiData.nation) {
+            nation.value = normalizeNation(wikiData.nation);
+          }
+          setStatus(`Scan OCR Berhasil: "${wikiData.title}" (${foundCode})`, 'success');
+        } else {
+          setStatus(`Kode terdeteksi: ${foundCode}. Data Wiki belum ditemukan, silakan ketik nama manual.`, 'success');
+        }
+      } catch (wErr) {
+        console.warn('Wiki lookup error:', wErr);
+        setStatus(`Kode terdeteksi: ${foundCode}. (Wiki lookup error)`, 'success');
+      }
+
+    } catch (err) {
+      console.error(err);
+      setStatus(`Gagal scan OCR: ${err.message}`, 'error');
+    } finally {
+      btnScan.disabled = false;
+      btnScanText.textContent = 'Scan Kartu';
+    }
+  }
+
+  // Engine Pemrosesan Canvas & Tesseract.js
+  async function scanWithTesseract(imgEl) {
+    const naturalW = imgEl.naturalWidth || 600;
+    const naturalH = imgEl.naturalHeight || 850;
+
+    // 1. Crop area bawah kartu (posisi umum kode kartu Vanguard: 28% dari bawah)
+    const cropH = Math.round(naturalH * 0.28);
+    const canvasB = document.createElement('canvas');
+    canvasB.width = naturalW;
+    canvasB.height = cropH;
+    const ctxB = canvasB.getContext('2d');
+    ctxB.drawImage(imgEl, 0, naturalH - cropH, naturalW, cropH, 0, 0, naturalW, cropH);
+
+    // Preprocessing kontras sederhana
+    try {
+      const imgData = ctxB.getImageData(0, 0, naturalW, cropH);
+      const d = imgData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        const val = gray > 130 ? 255 : (gray < 70 ? 0 : gray);
+        d[i] = val;
+        d[i + 1] = val;
+        d[i + 2] = val;
+      }
+      ctxB.putImageData(imgData, 0, 0);
+    } catch(e) {}
+
+    setStatus('Membaca teks kode kartu pada gambar...', 'loading');
+    const worker = await Tesseract.createWorker('eng');
+    const retBottom = await worker.recognize(canvasB);
+    const bottomText = retBottom.data ? retBottom.data.text : '';
+    console.log('[Tesseract Bottom Raw]', bottomText);
+
+    let detectedCode = extractCardCode(bottomText);
+
+    // Jika belum ketemu di crop bawah, coba baca seluruh gambar
+    if (!detectedCode) {
+      setStatus('Mencoba membaca area kartu lengkap...', 'loading');
+      const retFull = await worker.recognize(imgEl);
+      const fullText = retFull.data ? retFull.data.text : '';
+      console.log('[Tesseract Full Raw]', fullText);
+      detectedCode = extractCardCode(fullText);
+    }
+
+    // Baca Grade (Pojok Kiri Atas kartu)
+    let detectedGrade = null;
+    try {
+      const gW = Math.round(naturalW * 0.25);
+      const gH = Math.round(naturalH * 0.22);
+      const canvasG = document.createElement('canvas');
+      canvasG.width = gW;
+      canvasG.height = gH;
+      const ctxG = canvasG.getContext('2d');
+      ctxG.drawImage(imgEl, 0, 0, gW, gH, 0, 0, gW, gH);
+      const retG = await worker.recognize(canvasG);
+      const gMatch = (retG.data ? retG.data.text : '').match(/\b([0-4])\b/);
+      if (gMatch) detectedGrade = gMatch[1];
+    } catch(e) {}
+
+    await worker.terminate();
+
+    return {
+      cardCode: detectedCode,
+      grade: detectedGrade,
+      rawText: bottomText
+    };
+  }
+
+  // Regex extractor untuk Kode Kartu Cardfight!! Vanguard
+  function extractCardCode(raw) {
+    if (!raw) return null;
+    let clean = raw.toUpperCase()
+      .replace(/[\r\n]+/g, ' ')
+      .replace(/\s*([/-])\s*/g, '$1');
+
+    // 1. Pola standar: D-PR/1705, DZ-BT01/001, V-PR/001, D-SS01/001
+    const m1 = clean.match(/([A-Z0-9]{1,4}-[A-Z0-9]{1,5}[/-][0-9]{1,4}[A-Z]?)/i);
+    if (m1) return sanitizeCardCode(m1[1]);
+
+    // 2. Pola dengan spasi: D-PR 1705
+    const m2 = clean.match(/([A-Z0-9]{1,4}-[A-Z0-9]{1,5}\s+[0-9]{1,4})/i);
+    if (m2) return sanitizeCardCode(m2[1].replace(/\s+/, '/'));
+
+    // 3. Pola promo PR: PR/1705 -> D-PR/1705
+    const m3 = clean.match(/\b(PR[/-][0-9]{3,4})\b/i);
+    if (m3) return 'D-' + sanitizeCardCode(m3[1]);
+
+    return null;
+  }
+
+  function sanitizeCardCode(code) {
+    if (!code) return '';
+    let s = code.trim().toUpperCase();
+    // Koreksi OCR bila I / L tertukar digit 1 setelah slash/minus
+    s = s.replace(/([/-])([I|L])(\d+)/i, '$11$3');
+    // Koreksi OCR bila huruf O tertukar digit 0 di deretan angka
+    s = s.replace(/(\d+)O(\d*)/gi, '$10$2');
+    return s;
+  }
+
+  // 2. SCAN GEMINI VISION AI (Mode Cadangan)
+  async function scanCardGemini() {
     let activeKey = getApiKey();
     if (!activeKey) {
       const input = prompt(
@@ -248,7 +517,7 @@
     }
 
     btnScan.disabled = true;
-    btnScanText.textContent = 'Sedang Memindai...';
+    btnScanText.textContent = 'Sedang Memindai via AI...';
     setStatus('Menganalisa kartu dengan AI Vision...', 'loading');
 
     try {
@@ -309,8 +578,6 @@ Return ONLY valid JSON:
         generationConfig: { temperature: 0.1, maxOutputTokens: 1024 }
       };
 
-      // Panggil Gemini Vision API dengan multi-model fallback otomatis
-      // Jika suatu model mengalami 'high demand', otomatis beralih ke model cadangan dalam hitungan detik
       const modelsToTry = [
         'gemini-1.5-flash',
         'gemini-1.5-flash-8b',
@@ -340,7 +607,6 @@ Return ONLY valid JSON:
 
           const errMsg = data.error?.message || `HTTP ${res.status}`;
 
-          // Jika API Key bocor / invalid, langsung minta key baru
           if (errMsg.toLowerCase().includes('leak') || errMsg.toLowerCase().includes('api_key_invalid')) {
             const newKey = prompt(
               'API Key ini dinonaktifkan oleh Google karena terdeteksi bocor di GitHub.\n\nSilakan buat API Key baru secara gratis di:\nhttps://aistudio.google.com/app/apikey\n\nMasukkan API Key baru Anda di sini:'
@@ -353,7 +619,6 @@ Return ONLY valid JSON:
             throw new Error(errMsg);
           }
 
-          // Jika model sedang high demand / overloaded / 503 / 429, lanjut ke model berikutnya
           if (errMsg.toLowerCase().includes('high demand') || res.status === 503 || res.status === 429 || res.status === 404) {
             console.warn(`[Gemini Vision] Model ${m} sedang sibuk (${errMsg}), beralih ke model berikutnya...`);
             setStatus(`Model ${m} sedang antre, otomatis beralih ke model cadangan...`, 'loading');
@@ -385,7 +650,6 @@ Return ONLY valid JSON:
       let finalNation = aiData.nation || 'Dark States';
       let finalCode = aiData.card_code || '';
 
-      // Jika JP, lakukan pencarian ke Fandom Wiki untuk validasi nama English resmi
       if (isJp && (finalCode || aiData.name_jp)) {
         setStatus('Mencocokkan nama resmi di Fandom Wiki...', 'loading');
         try {
@@ -409,43 +673,33 @@ Return ONLY valid JSON:
         }
       }
 
-      // 1. Nama Kartu (Hanya English)
       nameEn.value = finalEnglishName;
-
-      // 2. Kode Kartu
       cardCode.value = finalCode;
+      if (typeof language !== 'undefined' && language) { language.value = isJp ? 'JP' : 'EN'; }
 
-      // 3. Bahasa
-      language.value = isJp ? 'JP' : 'EN';
-
-      // 4. Grade (Fix Bug 1: Pastikan angka terpilih di dropdown)
       if (['0', '1', '2', '3', '4'].includes(finalGrade)) {
         grade.value = finalGrade;
       } else {
         grade.value = '1';
       }
 
-      // 5. Nation
       nation.value = normalizeNation(finalNation);
-
-      // 6. Power & Shield
       power.value = aiData.power || '';
       shield.value = aiData.shield || '';
 
-      // 7. Set Promo Otomatis Berdasarkan Digit Nomor Kartu
       const autoSet = detectPromoSet(finalCode);
       if (autoSet) {
         cardSet.value = autoSet;
       }
 
-      setStatus(`Scan selesai! Terdeteksi: ${finalEnglishName} (Grade ${grade.value}, ${nation.value})`, 'success');
+      setStatus(`Scan AI selesai! Terdeteksi: ${finalEnglishName} (Grade ${grade.value}, ${nation.value})`, 'success');
 
     } catch (err) {
       console.error(err);
       setStatus('Error: ' + err.message, 'error');
     } finally {
       btnScan.disabled = false;
-      btnScanText.textContent = 'Scan Kartu';
+      btnScanText.textContent = 'Scan Kartu (Gemini AI)';
     }
   }
 
@@ -552,14 +806,31 @@ Return ONLY valid JSON:
       console.warn('Cache image error:', e);
     }
 
+    // Upload & simpan file fisik WebP ke folder server: assets/images/cards/
+    if (rawDataUrl && typeof API !== 'undefined' && API.request) {
+      try {
+        await API.request('uploadCardImage', {
+          cardId: cId,
+          image_base64: rawDataUrl
+        });
+      } catch (err) {
+        console.warn('Upload gambar kartu ke server:', err);
+      }
+    }
+
+    const currentUser = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+    const currentUserName = currentUser ? (currentUser.name || currentUser.username) : 'Admin';
+
     const cardItem = {
       id: cId,
       name: cName,
       grade: String(grade.value),
       nation: nation.value,
-      language: language.value,
+      language: (typeof language !== 'undefined' && language) ? language.value : 'JP',
       set: cardSet.value.trim() || detectPromoSet(cId) || 'Promo',
-      image: imageKey
+      image: imageKey,
+      createdBy: currentUserName,
+      createdAt: new Date().toISOString()
     };
 
     // Update jika ID sudah ada, atau tambahkan kartu baru

@@ -19,7 +19,13 @@ const API = {
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         try {
-            const body = JSON.stringify({ action, ...payload });
+            const currentUser = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+            const body = JSON.stringify({ 
+                action, 
+                _auth_user: currentUser ? (currentUser.email || currentUser.username) : '',
+                _auth_role: currentUser ? currentUser.role : '',
+                ...payload 
+            });
             const apiUrl = CONFIG.API_URL || 'api.php';
             const res = await fetch(apiUrl, {
                 method: 'POST',

@@ -80,12 +80,9 @@ function renderOwners() {
                 <h3>${o.name}</h3>
                 <p>${o.total} kartu total</p>
                 <div class="owner-badges">
-                    <span class="status-badge status-available">${o.available} Tersedia</span>
-                    ${o.sold ? `<span class="status-badge status-sold">${o.sold} Terjual</span>` : ''}
-                    ${o.payment ? `<span class="status-badge status-waiting-payment">${o.payment} Bayar</span>` : ''}
-                    ${o.shipment ? `<span class="status-badge status-waiting-shipment">${o.shipment} Kirim</span>` : ''}
-                    ${o.payout ? `<span class="status-badge status-auction">${o.payout} Menunggu Uang</span>` : ''}
-                    <span class="status-badge status-completed">${o.completed} Selesai</span>
+                    <span class="status-badge status-available">${o.available} Available</span>
+                    <span class="status-badge status-waiting-shipment">${o.shipment} Waiting Shipment</span>
+                    <span class="status-badge status-waiting-payment">${o.payment} Waiting Payment</span>
                 </div>
             </div>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
@@ -246,6 +243,15 @@ window.openOwnerCardDetail = function(cardId) {
             <div class="owner-card-detail-row">
                 <span class="label">Status Uang</span>
                 <span class="value" style="color: #f59e0b; font-weight:700;">Menunggu uang dibayarkan ke pemilik</span>
+            </div>
+        `;
+    }
+
+    if (card.createdBy || card.created_by) {
+        metaRows += `
+            <div class="owner-card-detail-row">
+                <span class="label">Ditambahkan Oleh</span>
+                <span class="value" style="color: #38bdf8; font-weight:700;">${card.createdBy || card.created_by}</span>
             </div>
         `;
     }
