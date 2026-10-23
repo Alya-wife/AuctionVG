@@ -7,6 +7,141 @@ require_once __DIR__ . '/BaseController.php';
 
 class InventoryController extends BaseController {
 
+    
+    /**
+     * Pastikan tabel cards_master ada dan terisi data awal
+     */
+    private function ensureCardsMasterTable() {
+        $this->pdo->exec("CREATE TABLE IF NOT EXISTS `cards_master` (
+            `id` VARCHAR(50) NOT NULL PRIMARY KEY,
+            `name` VARCHAR(255) NOT NULL,
+            `grade` VARCHAR(10) DEFAULT '3',
+            `set_name` VARCHAR(100) DEFAULT '',
+            `language` VARCHAR(10) DEFAULT 'JP',
+            `nation` VARCHAR(50) DEFAULT '',
+            `power` VARCHAR(20) DEFAULT '',
+            `shield` VARCHAR(20) DEFAULT '',
+            `image` VARCHAR(255) DEFAULT '',
+            `created_by` VARCHAR(100) DEFAULT 'Admin',
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX `idx_set` (`set_name`),
+            INDEX `idx_nation` (`nation`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+        // Jika masih kosong, seeding otomatis dari cards.json
+        try {
+            $chk = $this->pdo->query("SELECT COUNT(*) AS total FROM `cards_master`")->fetch();
+            if ($chk && (int)$chk['total'] === 0) {
+                $jsonFile = __DIR__ . '/../assets/data/cards.json';
+                if (file_exists($jsonFile)) {
+                    $cards = json_decode(file_get_contents($jsonFile), true);
+                    if (!empty($cards) && is_array($cards)) {
+                        $stmt = $this->pdo->prepare("INSERT INTO `cards_master` 
+                            (`id`, `name`, `grade`, `set_name`, `language`, `nation`, `image`, `created_by`) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, 'System')");
+                        foreach ($cards as $c) {
+                            $cId   = $c['id'] ?? '';
+                            $cName = $c['name'] ?? '';
+                            $cGrade = (string)($c['grade'] ?? '3');
+                            $cSet  = $c['set'] ?? ($c['set_name'] ?? '');
+                            $cLang = $c['language'] ?? 'JP';
+                            $cNat  = $c['nation'] ?? '';
+                            $cImg  = $c['image'] ?? '';
+                            if ($cId && $cName) {
+                                try {
+                                    $stmt->execute([$cId, $cName, $cGrade, $cSet, $cLang, $cNat, $cImg]);
+                                } catch (\Exception $e) {}
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (\Exception $e) {}
+    }
+
+    public function getMasterCards() {
+        $this->ensureCardsMasterTable();
+        $stmt = $this->pdo->query("SELECT 
+            id, 
+            IFNULL(name, '') AS `name`, 
+            IFNULL(grade, '3') AS `grade`, 
+            IFNULL(set_name, '') AS `set`, 
+            IFNULL(language, 'JP') AS `language`, 
+            IFNULL(nation, '') AS `nation`, 
+            IFNULL(power, '') AS `power`, 
+            IFNULL(shield, '') AS `shield`, 
+            IFNULL(image, '') AS `image`, 
+            IFNULL(created_by, 'Admin') AS `createdBy`, 
+            IFNULL(created_at, '') AS `createdAt`
+        FROM `cards_master`
+        ORDER BY created_at DESC, id ASC");
+        $rows = $stmt->fetchAll();
+        $this->jsonSuccess($rows);
+    }
+
+    public function saveMasterCard($payload) {
+        $this->ensureCardsMasterTable();
+        $id        = trim($payload['id'] ?? '');
+        $name      = trim($payload['name'] ?? '');
+        $grade     = trim((string)($payload['grade'] ?? '3'));
+        $set       = trim($payload['set'] ?? ($payload['set_name'] ?? ''));
+        $language  = strtoupper(trim($payload['language'] ?? 'JP'));
+        $nation    = trim($payload['nation'] ?? '');
+        $power     = trim($payload['power'] ?? '');
+        $shield    = trim($payload['shield'] ?? '');
+        $image     = trim($payload['image'] ?? '');
+        $createdBy = trim($payload['created_by'] ?? ($payload['createdBy'] ?? 'Admin'));
+
+        if (!$id || !$name) {
+            $this->jsonError('ID / Kode dan Nama kartu wajib diisi');
+        }
+
+        // Jika image berisi data base64, simpan fisik ke assets/images/cards/
+        if (!empty($image) && (strpos($image, 'data:image/') === 0 || strlen($image) > 500)) {
+            $image = $this->saveImageAsWebp($id, $image);
+        }
+
+        $stmt = $this->pdo->prepare("INSERT INTO `cards_master` 
+            (`id`, `name`, `grade`, `set_name`, `language`, `nation`, `power`, `shield`, `image`, `created_by`) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE 
+                `name` = VALUES(`name`),
+                `grade` = VALUES(`grade`),
+                `set_name` = VALUES(`set_name`),
+                `language` = VALUES(`language`),
+                `nation` = VALUES(`nation`),
+                `power` = VALUES(`power`),
+                `shield` = VALUES(`shield`),
+                `image` = VALUES(`image`),
+                `updated_at` = CURRENT_TIMESTAMP");
+        $stmt->execute([$id, $name, $grade, $set, $language, $nation, $power, $shield, $image, $createdBy]);
+
+        $this->jsonSuccess([
+            'id'        => $id,
+            'name'      => $name,
+            'grade'     => $grade,
+            'set'       => $set,
+            'language'  => $language,
+            'nation'    => $nation,
+            'power'     => $power,
+            'shield'    => $shield,
+            'image'     => $image,
+            'createdBy' => $createdBy
+        ]);
+    }
+
+    public function deleteMasterCard($payload) {
+        $this->ensureCardsMasterTable();
+        $id = trim($payload['id'] ?? '');
+        if (!$id) {
+            $this->jsonError('ID kartu wajib diisi');
+        }
+        $stmt = $this->pdo->prepare("DELETE FROM `cards_master` WHERE `id` = ?");
+        $stmt->execute([$id]);
+        $this->jsonSuccess(true);
+    }
+
     public function getInventory() {
         $stmt = $this->pdo->query("SELECT 
             id, 

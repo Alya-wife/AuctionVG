@@ -316,7 +316,7 @@ const CardDB = {
     return `assets/images/cards/${cleanName}`;
   },
 
-  updateCard(id, updatedData) {
+  async updateCard(id, updatedData) {
     this.init();
     const idx = this._cards.findIndex(c => c.id === id);
     if (idx !== -1) {
@@ -324,26 +324,64 @@ const CardDB = {
       try {
         localStorage.setItem('nitip_card_database', JSON.stringify(this._cards));
       } catch (e) {}
+
+      // Simpan ke MySQL server
+      if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
+        try {
+          await API.request('saveMasterCard', { id, ...this._cards[idx] });
+        } catch (err) {
+          console.warn('Gagal simpan update kartu ke MySQL server:', err);
+        }
+      }
+
+      window.dispatchEvent(new CustomEvent('cards_database_synced', { detail: this._cards }));
       return this._cards[idx];
     }
     return null;
   },
 
-  deleteCard(id) {
+  async deleteCard(id) {
     this.init();
     this._cards = this._cards.filter(c => c.id !== id);
     try {
       localStorage.setItem('nitip_card_database', JSON.stringify(this._cards));
     } catch (e) {}
+
+    // Hapus dari MySQL server
+    if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
+      try {
+        await API.request('deleteMasterCard', { id });
+      } catch (err) {
+        console.warn('Gagal hapus kartu di MySQL server:', err);
+      }
+    }
+
+    window.dispatchEvent(new CustomEvent('cards_database_synced', { detail: this._cards }));
     return true;
   },
 
-  addCard(card) {
+  async addCard(card) {
     this.init();
-    this._cards.push(card);
+    const existingIdx = this._cards.findIndex(c => c.id === card.id);
+    if (existingIdx !== -1) {
+      this._cards[existingIdx] = { ...this._cards[existingIdx], ...card };
+    } else {
+      this._cards.unshift(card);
+    }
     try {
       localStorage.setItem('nitip_card_database', JSON.stringify(this._cards));
     } catch (e) {}
+
+    // Simpan ke MySQL server
+    if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
+      try {
+        await API.request('saveMasterCard', card);
+      } catch (err) {
+        console.warn('Gagal simpan kartu baru ke MySQL server:', err);
+      }
+    }
+
+    window.dispatchEvent(new CustomEvent('cards_database_synced', { detail: this._cards }));
     return card;
   }
 };

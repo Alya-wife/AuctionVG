@@ -850,21 +850,23 @@ Return ONLY valid JSON:
       nation: nation.value,
       language: (typeof language !== 'undefined' && language) ? language.value : 'JP',
       set: cardSet.value.trim() || detectPromoSet(cId) || 'Promo',
+      power: (power && power.value) ? power.value.trim() : '',
+      shield: (shield && shield.value) ? shield.value.trim() : '',
       image: imageKey,
       createdBy: currentUserName,
       createdAt: new Date().toISOString()
     };
 
-    // Update jika ID sudah ada, atau tambahkan kartu baru
+    // Update jika ID sudah ada, atau tambahkan kartu baru ke MySQL server
     const existing = CardDB.getById(cId);
     if (existing) {
-      CardDB.updateCard(cId, cardItem);
-      setStatus(`Kartu "${cardItem.name}" (${cardItem.id}) berhasil diperbarui di database!`, 'success');
-      alert(`Kartu "${cardItem.name}" (${cardItem.id}) berhasil diperbarui di Database!`);
+      await CardDB.updateCard(cId, cardItem);
+      setStatus(`Kartu "${cardItem.name}" (${cardItem.id}) berhasil diperbarui di database server!`, 'success');
+      alert(`Kartu "${cardItem.name}" (${cardItem.id}) berhasil diperbarui di Database Server!`);
     } else {
-      CardDB.addCard(cardItem);
-      setStatus(`Kartu baru "${cardItem.name}" (${cardItem.id}) berhasil ditambahkan ke database!`, 'success');
-      alert(`Kartu baru "${cardItem.name}" (${cardItem.id}) berhasil ditambahkan ke Database!`);
+      await CardDB.addCard(cardItem);
+      setStatus(`Kartu baru "${cardItem.name}" (${cardItem.id}) berhasil ditambahkan ke database server!`, 'success');
+      alert(`Kartu baru "${cardItem.name}" (${cardItem.id}) berhasil ditambahkan ke Database Server!`);
     }
 
     populatePromoSetDatalist();

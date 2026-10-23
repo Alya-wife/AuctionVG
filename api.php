@@ -77,6 +77,17 @@ try {
             break;
 
         // --- Inventory ---
+        // --- Master Cards (Katalog Pusat) ---
+        case 'getMasterCards':
+            $inventoryController->getMasterCards();
+            break;
+        case 'saveMasterCard':
+            $inventoryController->saveMasterCard($payload);
+            break;
+        case 'deleteMasterCard':
+            $inventoryController->deleteMasterCard($payload);
+            break;
+
         case 'getInventory':
             $inventoryController->getInventory();
             break;

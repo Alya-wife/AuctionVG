@@ -339,5 +339,16 @@ window.deleteMasterCard = function(cardId) {
     populateSetFilterDropdown();
     applyCatalogFilters();
 
+    // Dengarkan event sinkronisasi data master dari server MySQL
+    window.addEventListener('cards_database_synced', () => {
+        allMasterCards = CardDB.getAll();
+        populateSetFilterDropdown();
+        applyCatalogFilters();
+    });
+
+    if (CardDB.syncFromServer) {
+        CardDB.syncFromServer();
+    }
+
     UI.showToast(`Kartu "${card.name}" berhasil dihapus dari database.`, 'success');
 };
