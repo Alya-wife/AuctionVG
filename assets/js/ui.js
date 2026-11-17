@@ -6,6 +6,7 @@ const UI = {
         { href: 'auction.html', label: 'Lelang', icon: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>' },
         { href: 'shipment.html', label: 'Pengiriman', icon: '<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>' },
         { href: 'payment.html', label: 'Pembayaran Pemilik', icon: '<rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><circle cx="7" cy="15" r="1.5"/><circle cx="12" cy="15" r="1.5"/>' },
+        { href: 'league.html', label: 'Liga Turnamen', icon: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H7.5c-.83 0-1.5.67-1.5 1.5V22h12v-2.5c0-.83-.67-1.5-1.5-1.5H15c-.55 0-1-.45-1-1v-2.34"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/>' },
         { href: 'owners.html', label: 'Pemilik', icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' },
         { href: 'users.html', label: 'Kelola Admin', icon: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>' },
         { href: 'scanner-debug.html', label: 'Scan Kartu', icon: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>' }
@@ -97,6 +98,37 @@ const UI = {
         if (closeBtn)  closeBtn.addEventListener('click', close);
         if (overlay)   overlay.addEventListener('click', close);
         if (logoutBtn) logoutBtn.addEventListener('click', () => { if (confirm('Yakin ingin keluar?')) Auth.logout(); });
+
+        // Mobile Bottom Navigation Bar (Muncul khusus di smartphone)
+        if (!document.getElementById('mobileAdminBottomNav')) {
+            const bottomNav = document.createElement('nav');
+            bottomNav.id = 'mobileAdminBottomNav';
+            bottomNav.className = 'mobile-admin-bottom-nav';
+            bottomNav.innerHTML = `
+                <a href="dashboard.html" class="mabn-item ${path.includes('dashboard') ? 'active' : ''}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="inventory.html" class="mabn-item ${path.includes('inventory') ? 'active' : ''}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                    <span>Inventory</span>
+                </a>
+                <a href="payment.html" class="mabn-item ${path.includes('payment') ? 'active' : ''}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    <span>Bayar</span>
+                </a>
+                <a href="auction.html" class="mabn-item ${path.includes('auction') ? 'active' : ''}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <span>Lelang</span>
+                </a>
+                <button type="button" class="mabn-item btn-toggle-drawer" id="mabnToggleDrawer">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    <span>Menu</span>
+                </button>
+            `;
+            document.body.appendChild(bottomNav);
+            document.getElementById('mabnToggleDrawer')?.addEventListener('click', open);
+        }
     },
 
     initModals() {
@@ -347,4 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isLogin = ['index.html', '/'].some(p => location.pathname.endsWith(p));
     if (!isLogin) UI.init();
 });
+
+
+
 

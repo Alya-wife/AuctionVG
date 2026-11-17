@@ -8,7 +8,7 @@
   <meta name="description" content="Database master kartu Vanguard per set promo" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261027_mobile3" />
   <style>
     .catalog-grid {
       display: grid;
@@ -106,7 +106,7 @@
         <div class="filter-bar">
           <div class="search-box">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="cardSearchInput" placeholder="Cari nama kartu di database..." />
+            <input type="text" id="cardSearchInput" autocomplete="off" />
           </div>
           <select id="cardFilterSet" class="filter-select">
             <option value="">Semua Set Promo</option>
@@ -115,10 +115,11 @@
             <option value="">Semua Nation</option>
             <option value="Dragon Empire">Dragon Empire</option>
             <option value="Dark States">Dark States</option>
-            <option value="Stoicheia">Stoicheia</option>
-            <option value="Lyrical Monasterio">Lyrical Monasterio</option>
             <option value="Brandt Gate">Brandt Gate</option>
             <option value="Keter Sanctuary">Keter Sanctuary</option>
+            <option value="Stoicheia">Stoicheia</option>
+            <option value="Lyrical Monasterio">Lyrical Monasterio</option>
+            <option value="Elemental Cray">Elemental Cray</option>
           </select>
           <select id="cardFilterGrade" class="filter-select">
             <option value="">Semua Grade</option>
@@ -193,10 +194,11 @@
             <select id="masterNation" required>
               <option value="Dragon Empire">Dragon Empire</option>
               <option value="Dark States">Dark States</option>
-              <option value="Stoicheia">Stoicheia</option>
-              <option value="Lyrical Monasterio">Lyrical Monasterio</option>
               <option value="Brandt Gate">Brandt Gate</option>
               <option value="Keter Sanctuary">Keter Sanctuary</option>
+              <option value="Stoicheia">Stoicheia</option>
+              <option value="Lyrical Monasterio">Lyrical Monasterio</option>
+              <option value="Elemental Cray">Elemental Cray</option>
             </select>
           </div>
         </div>
@@ -234,7 +236,7 @@
   <script src="../assets/js/cards-data.js?v=20261023_live4"></script>
   <script src="../assets/js/auth.js"></script>
   <script src="../assets/js/ui.js"></script>
-  <script src="../assets/js/cards-page.js?v=20261023_live4"></script>
+  <script src="../assets/js/cards-page.js?v=20261024_nation"></script>
 </body>
 </html>
 

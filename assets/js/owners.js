@@ -1,16 +1,13 @@
 let inventoryData = [];
 let currentOwnerCards = [];
 let currentOwnerName = '';
-let currentFilterTab = 'all';
+let currentFilterTab = 'available';
 
 const STATUS_TABS = [
-    { id: 'all', label: 'Semua', filter: () => true },
     { id: 'available', label: 'Available', filter: c => ['Available', 'Auction'].includes(c.status) },
-    { id: 'sold', label: 'Terjual', filter: c => c.status === 'Sold' },
-    { id: 'payment', label: 'Menunggu Dibayar', filter: c => c.status === 'Waiting Payment' },
-    { id: 'shipment', label: 'Menunggu Dikirim', filter: c => ['Waiting Shipment', 'Shipped'].includes(c.status) },
-    { id: 'payout', label: 'Menunggu Uang ke Pemilik', filter: c => !c.payoutDate && ['Completed', 'Waiting Payment', 'Sold', 'Waiting Shipment'].includes(c.status) },
-    { id: 'completed', label: 'Selesai', filter: c => c.status === 'Completed' }
+    { id: 'shipment', label: 'Waiting Shipment', filter: c => ['Waiting Shipment', 'Shipped'].includes(c.status) },
+    { id: 'payment', label: 'Waiting Payment', filter: c => c.status === 'Waiting Payment' },
+    { id: 'completed', label: 'Completed', filter: c => c.status === 'Completed' }
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -83,6 +80,7 @@ function renderOwners() {
                     <span class="status-badge status-available">${o.available} Available</span>
                     <span class="status-badge status-waiting-shipment">${o.shipment} Waiting Shipment</span>
                     <span class="status-badge status-waiting-payment">${o.payment} Waiting Payment</span>
+                    <span class="status-badge status-completed">${o.completed} Completed</span>
                 </div>
             </div>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
@@ -97,7 +95,7 @@ function escapeQuotes(str) {
 window.openOwnerDetail = function(ownerName) {
     currentOwnerName = ownerName;
     currentOwnerCards = inventoryData.filter(c => c.owner === ownerName);
-    currentFilterTab = 'all';
+    currentFilterTab = 'available';
 
     document.getElementById('ownerDetailName').textContent = ownerName;
     document.getElementById('ownerDetailTotal').textContent = `${currentOwnerCards.length} kartu total`;
@@ -141,10 +139,13 @@ function renderOwnerCardsGrid() {
         return;
     }
 
-    // Group identical cards: same name, status, and sales metadata
+    // Group identical cards: same name, language, and status
     const grouped = [];
     filtered.forEach(c => {
-        const key = `${c.name}___${c.status}___${c.buyer || ''}___${c.price || ''}___${c.trackingNumber || ''}___${c.payoutDate || ''}`;
+        const normName = (c.name || '').trim().toLowerCase();
+        const normLang = (c.type || c.language || 'JP').toUpperCase();
+        const normStatus = (c.status || '').trim().toLowerCase();
+        const key = `${normName}___${normLang}___${normStatus}`;
         const existing = grouped.find(g => g.groupKey === key);
         if (existing) {
             existing.count++;
@@ -162,12 +163,13 @@ function renderOwnerCardsGrid() {
     grid.innerHTML = grouped.map(c => {
         const imgUrl = (window.CardDB && CardDB.getImageUrl) ? CardDB.getImageUrl(c.image) : (c.image || 'assets/images/cards/placeholder_card.svg');
         const sc = UI.statusClass(c.status);
+        const isFoil = c.isFoil || /\bfoil\b/i.test(c.name || '');
 
         return `
             <div class="owner-card-visual-item" onclick="openOwnerCardDetail('${c.id}')" title="Klik untuk lihat detail">
                 <img src="${imgUrl}" alt="" onerror="this.onerror=null; this.src='assets/images/cards/placeholder_card.svg';" />
                 ${c.count > 1 ? `<div class="owner-card-visual-qty">${c.count}x</div>` : ''}
-                <div class="owner-card-visual-status status-badge status-${sc}">${c.status}</div>
+                ${isFoil ? `<div class="owner-card-visual-foil">Foil</div>` : ''}
             </div>
         `;
     }).join('');

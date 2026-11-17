@@ -613,7 +613,8 @@ Follow these exact instructions:
      * Green = "Stoicheia"
      * Slate / Gray / White = "Brandt Gate"
      * Yellow / Gold = "Keter Sanctuary"
-   - Must be one of: "Dragon Empire", "Dark States", "Keter Sanctuary", "Stoicheia", "Brandt Gate", "Lyrical Monasterio".
+     * Neutral / Gray / Cray = "Elemental Cray"
+   - Must be one of: "Dragon Empire", "Dark States", "Brandt Gate", "Keter Sanctuary", "Stoicheia", "Lyrical Monasterio", "Elemental Cray".
 
 5. LANGUAGE:
    - "JP" if text is Japanese, "EN" if text is English.
@@ -746,10 +747,11 @@ Return strictly JSON without markdown backticks:
     const s = input.toLowerCase();
     if (s.includes('dragon')) return 'Dragon Empire';
     if (s.includes('dark')) return 'Dark States';
-    if (s.includes('lyrical')) return 'Lyrical Monasterio';
-    if (s.includes('stoicheia') || s.includes('ストイケイア')) return 'Stoicheia';
     if (s.includes('brandt')) return 'Brandt Gate';
     if (s.includes('keter') || s.includes('leter')) return 'Keter Sanctuary';
+    if (s.includes('stoicheia') || s.includes('ストイケイア')) return 'Stoicheia';
+    if (s.includes('lyrical')) return 'Lyrical Monasterio';
+    if (s.includes('elemental') || s.includes('cray')) return 'Elemental Cray';
     return 'Dark States';
   }
 

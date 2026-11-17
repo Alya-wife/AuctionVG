@@ -141,4 +141,216 @@ class StatsController extends BaseController {
             'cards'                 => $cards
         ]);
     }
+
+    /**
+     * Mengambil ringkasan total uang penjualan dan komisi jastip
+     */
+    public function getIncomeSummary($payload = []) {
+        try {
+            $year  = !empty($payload['year']) ? (int)$payload['year'] : 0;
+            $month = !empty($payload['month']) ? (int)$payload['month'] : 0;
+
+            $where = ["1=1"];
+            $params = [];
+
+            if ($year > 0) {
+                $where[] = "YEAR(COALESCE(NULLIF(sold_date, ''), NULLIF(date, ''), created_at)) = ?";
+                $params[] = $year;
+            }
+            if ($month > 0) {
+                $where[] = "MONTH(COALESCE(NULLIF(sold_date, ''), NULLIF(date, ''), created_at)) = ?";
+                $params[] = $month;
+            }
+
+            $whereSql = implode(' AND ', $where);
+
+            $stmt = $this->pdo->prepare("SELECT
+                IFNULL(SUM(CASE WHEN price > 0 THEN price ELSE 0 END), 0) AS total_sales,
+                IFNULL(SUM(CASE WHEN commission > 0 THEN commission ELSE 0 END), 0) AS total_commission,
+                COUNT(CASE WHEN price > 0 THEN 1 END) AS sold_count,
+                COUNT(CASE WHEN commission > 0 THEN 1 END) AS comm_count,
+                IFNULL(SUM(CASE WHEN status = 'Completed' AND price > 0 THEN price ELSE 0 END), 0) AS completed_sales,
+                IFNULL(SUM(CASE WHEN status = 'Completed' AND commission > 0 THEN commission ELSE 0 END), 0) AS completed_commission,
+                IFNULL(SUM(CASE WHEN status IN ('Waiting Payment', 'Waiting Shipment') AND price > 0 THEN price ELSE 0 END), 0) AS pending_sales,
+                IFNULL(SUM(CASE WHEN status IN ('Waiting Payment', 'Waiting Shipment') AND commission > 0 THEN commission ELSE 0 END), 0) AS pending_commission
+            FROM inventory
+            WHERE {$whereSql}");
+            $stmt->execute($params);
+            $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // Ambil daftar tahun unik yang tersedia di database
+            $years = [];
+            try {
+                $yrStmt = $this->pdo->query("SELECT DISTINCT YEAR(COALESCE(NULLIF(sold_date, ''), NULLIF(date, ''), created_at)) AS yr 
+                    FROM inventory 
+                    WHERE (price > 0 OR commission > 0 OR sold_date IS NOT NULL) 
+                    ORDER BY yr DESC");
+                while ($yRow = $yrStmt->fetch(PDO::FETCH_ASSOC)) {
+                    if (!empty($yRow['yr'])) {
+                        $years[] = (int)$yRow['yr'];
+                    }
+                }
+            } catch (\Exception $e) {}
+
+            $currentYear = (int)date('Y');
+            if (!in_array($currentYear, $years)) {
+                $years[] = $currentYear;
+                rsort($years);
+            }
+
+            $this->jsonSuccess([
+                'totalSales'          => (float)($data['total_sales'] ?? 0),
+                'totalCommission'     => (float)($data['total_commission'] ?? 0),
+                'soldCount'           => (int)($data['sold_count'] ?? 0),
+                'commCount'           => (int)($data['comm_count'] ?? 0),
+                'completedSales'      => (float)($data['completed_sales'] ?? 0),
+                'completedCommission' => (float)($data['completed_commission'] ?? 0),
+                'pendingSales'        => (float)($data['pending_sales'] ?? 0),
+                'pendingCommission'   => (float)($data['pending_commission'] ?? 0),
+                'availableYears'      => $years,
+                'filterYear'          => $year,
+                'filterMonth'         => $month
+            ]);
+        } catch (\Exception $e) {
+            $this->jsonError('Gagal memuat ringkasan penghasilan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Mengambil daftar transaksi penjualan & komisi kartu
+     */
+    public function getIncomeTransactions($payload = []) {
+        try {
+            $year  = !empty($payload['year']) ? (int)$payload['year'] : 0;
+            $month = !empty($payload['month']) ? (int)$payload['month'] : 0;
+
+            $where = ["(price > 0 OR commission > 0 OR status IN ('Waiting Payment', 'Waiting Shipment', 'Completed', 'Sold'))"];
+            $params = [];
+
+            if ($year > 0) {
+                $where[] = "YEAR(COALESCE(NULLIF(sold_date, ''), NULLIF(date, ''), created_at)) = ?";
+                $params[] = $year;
+            }
+            if ($month > 0) {
+                $where[] = "MONTH(COALESCE(NULLIF(sold_date, ''), NULLIF(date, ''), created_at)) = ?";
+                $params[] = $month;
+            }
+
+            $whereSql = implode(' AND ', $where);
+
+            $stmt = $this->pdo->prepare("SELECT
+                id, name, grade, set_name, type, nation, owner, date,
+                status, buyer, price, commission, sold_date, payout_date,
+                tracking_number, payout_proof_url
+            FROM inventory
+            WHERE {$whereSql}
+            ORDER BY (CASE WHEN sold_date IS NOT NULL THEN sold_date ELSE '1970-01-01' END) DESC, id DESC");
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Format data
+            foreach ($rows as &$r) {
+                $r['price'] = (float)($r['price'] ?? 0);
+                $r['commission'] = (float)($r['commission'] ?? 0);
+            }
+
+            $this->jsonSuccess($rows);
+        } catch (\Exception $e) {
+            $this->jsonError('Gagal memuat detail transaksi: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Simpan / Perbarui Transaksi Penjualan & Komisi (CRUD Update/Create)
+     */
+    public function saveIncomeTransaction($payload = []) {
+        $id         = trim($payload['id'] ?? '');
+        $price      = (float)($payload['price'] ?? 0);
+        $commission = (float)($payload['commission'] ?? 0);
+        $buyer      = trim($payload['buyer'] ?? '');
+        $owner      = trim($payload['owner'] ?? '');
+        $status     = trim($payload['status'] ?? 'Completed');
+        
+        $rawSold    = trim((string)($payload['sold_date'] ?? ''));
+        $soldDate   = ($rawSold !== '' && $rawSold !== 'null') ? substr($rawSold, 0, 10) : date('Y-m-d');
+        
+        $rawPayout  = trim((string)($payload['payout_date'] ?? ''));
+        $payoutDate = ($rawPayout !== '' && $rawPayout !== 'null') ? substr($rawPayout, 0, 10) : null;
+
+        if (!$id) {
+            $this->jsonError('ID kartu wajib diisi');
+        }
+
+        try {
+            $fields = [
+                "price = ?",
+                "commission = ?",
+                "buyer = ?",
+                "status = ?",
+                "sold_date = ?",
+                "payout_date = ?"
+            ];
+            $params = [$price, $commission, $buyer, $status, $soldDate, $payoutDate];
+
+            if ($owner !== '') {
+                $fields[] = "owner = ?";
+                $params[] = $owner;
+            }
+
+            $params[] = $id;
+
+            $stmt = $this->pdo->prepare("UPDATE inventory SET " . implode(', ', $fields) . " WHERE id = ?");
+            $stmt->execute($params);
+
+            try {
+                $logStmt = $this->pdo->prepare("INSERT INTO activity_logs (activity, user_name, card_id) VALUES (?, ?, ?)");
+                $logStmt->execute(["Update Penghasilan: $id - Rp " . number_format($price,0,',','.') . " (Komisi: Rp " . number_format($commission,0,',','.') . ")", 'Admin', $id]);
+            } catch (\Exception $ex) {}
+
+            $this->jsonSuccess([
+                'id'         => $id,
+                'price'      => $price,
+                'commission' => $commission,
+                'buyer'      => $buyer,
+                'owner'      => $owner,
+                'status'     => $status,
+                'sold_date'  => $soldDate,
+                'payout_date'=> $payoutDate
+            ]);
+        } catch (\Exception $e) {
+            $this->jsonError('Gagal menyimpan transaksi: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Hapus / Reset Transaksi Penjualan & Komisi (CRUD Delete)
+     */
+    public function deleteIncomeTransaction($payload = []) {
+        $id = trim($payload['id'] ?? '');
+        if (!$id) {
+            $this->jsonError('ID kartu wajib diisi');
+        }
+
+        try {
+            $stmt = $this->pdo->prepare("UPDATE inventory SET
+                price = 0,
+                commission = 0,
+                buyer = NULL,
+                sold_date = NULL,
+                payout_date = NULL,
+                status = 'Available'
+            WHERE id = ?");
+            $stmt->execute([$id]);
+
+            try {
+                $logStmt = $this->pdo->prepare("INSERT INTO activity_logs (activity, user_name, card_id) VALUES (?, ?, ?)");
+                $logStmt->execute(["Reset Penjualan: $id kembali Available", 'Admin', $id]);
+            } catch (\Exception $ex) {}
+
+            $this->jsonSuccess(['id' => $id, 'status' => 'Available']);
+        } catch (\Exception $e) {
+            $this->jsonError('Gagal mereset transaksi: ' . $e->getMessage());
+        }
+    }
 }
+

@@ -26,6 +26,7 @@ require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/InventoryController.php';
 require_once __DIR__ . '/controllers/AuctionController.php';
 require_once __DIR__ . '/controllers/StatsController.php';
+require_once __DIR__ . '/controllers/LeagueController.php';
 
 // Parse Request Payload
 $rawInput = file_get_contents('php://input');
@@ -53,6 +54,7 @@ $authController      = new AuthController($pdo);
 $inventoryController = new InventoryController($pdo);
 $auctionController   = new AuctionController($pdo);
 $statsController     = new StatsController($pdo);
+$leagueController    = new LeagueController($pdo);
 
 try {
     switch ($action) {
@@ -79,7 +81,7 @@ try {
         // --- Inventory ---
         // --- Master Cards (Katalog Pusat) ---
         case 'getMasterCards':
-            $inventoryController->getMasterCards();
+            $inventoryController->getMasterCards($payload);
             break;
         case 'saveMasterCard':
             $inventoryController->saveMasterCard($payload);
@@ -109,6 +111,15 @@ try {
         case 'batchUpdateCardStatus':
             $inventoryController->batchUpdateCardStatus($payload);
             break;
+        case 'cancelSale':
+            $inventoryController->cancelSale($payload);
+            break;
+        case 'getLastSoldPrices':
+            $inventoryController->getLastSoldPrices();
+            break;
+        case 'saveLastSoldPrice':
+            $inventoryController->saveLastSoldPrice($payload);
+            break;
 
         // --- Auctions ---
         case 'getAuctions':
@@ -121,7 +132,7 @@ try {
             $auctionController->finishAuction($payload);
             break;
 
-        // --- Dashboard Stats ---
+        // --- Dashboard Stats & Income ---
         case 'getStats':
             $statsController->getStats();
             break;
@@ -133,6 +144,62 @@ try {
             break;
         case 'getCardsByDate':
             $statsController->getCardsByDate($payload);
+            break;
+        case 'getIncomeStats':
+            $statsController->getIncomeSummary($payload);
+            break;
+        case 'getIncomeTransactions':
+            $statsController->getIncomeTransactions($payload);
+            break;
+        case 'saveIncomeTransaction':
+            $statsController->saveIncomeTransaction($payload);
+            break;
+        case 'deleteIncomeTransaction':
+            $statsController->deleteIncomeTransaction($payload);
+            break;
+
+        // --- Tournament League & Rankings ---
+        case 'getLeagueData':
+            $leagueController->getLeagueData($payload);
+            break;
+        case 'getTournamentDetail':
+            $leagueController->getTournamentDetail($payload);
+            break;
+        case 'saveTournament':
+            $leagueController->saveTournament($payload);
+            break;
+        case 'deleteTournament':
+            $leagueController->deleteTournament($payload);
+            break;
+        case 'getLeaguePlayers':
+            $leagueController->getLeaguePlayers();
+            break;
+        case 'saveLeaguePlayer':
+            $leagueController->saveLeaguePlayer($payload);
+            break;
+        case 'getPointRules':
+            $leagueController->getPointRulesApi();
+            break;
+        case 'savePointRules':
+            $leagueController->savePointRules($payload);
+            break;
+        case 'getSeasonData':
+            $leagueController->getSeasonData($payload);
+            break;
+        case 'getPrizeData':
+            $leagueController->getPrizeData($payload);
+            break;
+        case 'savePrizeSettings':
+            $leagueController->savePrizeSettings($payload);
+            break;
+        case 'claimPrize':
+            $leagueController->claimPrize($payload);
+            break;
+        case 'deletePrizeClaim':
+            $leagueController->deletePrizeClaim($payload);
+            break;
+        case 'getActiveSeasonLeaderboard':
+            $leagueController->getActiveSeasonLeaderboard();
             break;
 
         default:

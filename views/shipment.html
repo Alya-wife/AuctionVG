@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
@@ -7,7 +7,7 @@
   <title>Pengiriman – NitipPro Card Inventory</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/style.css" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261029_v2" />
   <style>
     /* ── Filter Bar ── */
     .filter-bar {
@@ -174,6 +174,26 @@
       margin-top: 6px;
       text-align: center;
     }
+
+    /* ── Action Rollback Button ── */
+    .btn-cancel-sale {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 9px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1.5px solid rgba(239, 68, 68, 0.35);
+      color: #f87171;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-cancel-sale:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #ef4444;
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
   </style>
 </head>
 <body>
@@ -303,7 +323,7 @@
   <script src="../assets/js/cards-data.js?v=20261023_live4"></script>
   <script src="../assets/js/auth.js"></script>
   <script src="../assets/js/ui.js"></script>
-  <script src="../assets/js/shipment.js"></script>
+  <script src="../assets/js/shipment.js?v=20261029_v2"></script>
 </body>
 </html>
 

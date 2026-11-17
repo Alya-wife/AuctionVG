@@ -6,8 +6,16 @@ window.setTitipCardLang = function(idx, lang) {
         renderSelectedCardsList();
     }
 };
+
+window.toggleTitipCardFoil = function(idx) {
+    if (selectedTitipCards && selectedTitipCards[idx]) {
+        selectedTitipCards[idx].isFoil = !selectedTitipCards[idx].isFoil;
+        renderSelectedCardsList();
+    }
+};
 let allCards = [];
 let filteredCards = [];
+let groupedFilteredCards = [];
 let currentView = 'grid';
 let currentStatusFilter = 'Available'; // Default: tampilkan Available
 const PAGE_SIZE = 12;
@@ -140,7 +148,7 @@ function applyFilters() {
             (!setVal || cSet === setVal) &&
             (!gradeVal || cGrade === gradeVal) &&
             (!typeVal || cType === typeVal.toUpperCase()) &&
-            (!nation || c.nation === nation) &&
+            (!nation || c.nation === nation || (nation.toLowerCase().includes('elemental') && (c.nation || '').toLowerCase().includes('elemental'))) &&
             (!status || c.status === status);
     });
 
@@ -156,14 +164,49 @@ function applyFilters() {
         return 0;
     });
 
-    document.getElementById('totalCount').textContent = `${filteredCards.length} kartu`;
+    // Kelompokkan kartu sebelum pagination agar kartu identik selalu terkumpul & memunculkan badge jumlah (2x, 3x, dst)
+    groupedFilteredCards = [];
+    filteredCards.forEach(card => {
+        const normName = (card.name || '').trim().toLowerCase();
+        const normLang = (card.type || card.language || 'JP').toUpperCase();
+        const normStatus = (card.status || '').trim().toLowerCase();
+
+        // Pada status Completed, semua kartu dengan nama & bahasa yang sama dikelompokkan
+        // Pada status lainnya, dikelompokkan per nama, bahasa, dan pemilik
+        const key = (normStatus === 'completed')
+            ? `${normName}___${normLang}___completed`
+            : `${normName}___${normLang}___${(card.owner || '').trim().toLowerCase()}___${normStatus}`;
+
+        const existing = groupedFilteredCards.find(g => g.groupKey === key);
+        if (existing) {
+            existing.count++;
+            existing.cardIds.push(card.id);
+            if (card.owner && !existing.allOwners.includes(card.owner)) {
+                existing.allOwners.push(card.owner);
+            }
+        } else {
+            groupedFilteredCards.push({
+                ...card,
+                count: 1,
+                groupKey: key,
+                cardIds: [card.id],
+                allOwners: card.owner ? [card.owner] : []
+            });
+        }
+    });
+
+    const countLabel = (groupedFilteredCards.length < filteredCards.length)
+        ? `${groupedFilteredCards.length} kartu (${filteredCards.length} total)`
+        : `${filteredCards.length} kartu`;
+    document.getElementById('totalCount').textContent = countLabel;
+
     renderCards();
     renderPagination();
 }
 
 function paginated() {
     const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredCards.slice(start, start + PAGE_SIZE);
+    return groupedFilteredCards.slice(start, start + PAGE_SIZE);
 }
 
 function renderCards() {
@@ -186,42 +229,28 @@ function renderCards() {
 function renderGrid(container, page) {
     container.className = 'inventory-grid';
 
-    // Kelompokkan kartu identik (nama, pemilik, dan status sama) agar tidak dobel
-    const grouped = [];
-    page.forEach(card => {
-        const key = `${card.name}___${card.owner}___${card.status}`;
-        const existing = grouped.find(g => g.groupKey === key);
-        if (existing) {
-            existing.count++;
-            existing.cardIds.push(card.id);
-        } else {
-            grouped.push({
-                ...card,
-                count: 1,
-                groupKey: key,
-                cardIds: [card.id]
-            });
-        }
-    });
-
-    container.innerHTML = grouped.map(card => {
+    container.innerHTML = page.map(card => {
         const sc = UI.statusClass(card.status);
         const qtyBadge = card.count > 1 ? `<span style="margin-left:8px;background:rgba(56,189,248,0.2);color:#38bdf8;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:800;border:1px solid rgba(56,189,248,0.4);">${card.count}x</span>` : '';
+        const isFoil = card.isFoil || /\bfoil\b/i.test(card.name || '');
+        const ownersDisplay = (card.allOwners && card.allOwners.length > 1) ? card.allOwners.join(', ') : card.owner;
 
         return `
         <div class="card-item">
             <div class="card-img-wrap" onclick="viewDetail('${card.id}')">
                 ${UI.renderTypeBox(card, 'md')}
+                
                 <span class="card-status-badge status-badge status-${sc}">${card.status}</span>
             </div>
             <div class="card-info">
                 ${card.set ? `<div class="card-set-tag" title="${card.set}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>${card.set}</div>` : ''}
                 <div class="card-title" onclick="viewDetail('${card.id}')" style="display:flex;align-items:center;">
                     <span>${card.name}</span>
+                    ${isFoil ? `<span class="badge-foil">FOIL</span>` : ''}
                     ${qtyBadge}
                 </div>
                 <div class="card-meta">
-                    <span><strong>Pemilik:</strong> ${card.owner}</span>
+                    <span><strong>Pemilik:</strong> ${ownersDisplay}</span>
                     <span><strong>Diterima:</strong> ${UI.formatDate(card.date)}</span>
                     <span style="font-size:0.75rem;color:var(--text-muted);display:block;margin-top:2px;">
                         Ditambahkan oleh: <strong style="color:#e2e8f0;">${card.createdBy || card.created_by || 'Admin'}</strong>
@@ -262,22 +291,31 @@ function renderList(container, page) {
             ${page.map(c => {
         const sc = UI.statusClass(c.status);
         const langBadge = `<span class="badge-lang ${(c.type || 'JP').toLowerCase()}" style="font-size:0.65rem;padding:1px 4px;margin-left:4px;">${c.type || 'JP'}</span>`;
+        const qtyBadge = c.count > 1 ? `<span style="margin-left:6px;background:rgba(56,189,248,0.2);color:#38bdf8;padding:2px 7px;border-radius:12px;font-size:0.75rem;font-weight:800;border:1px solid rgba(56,189,248,0.4);">${c.count}x</span>` : '';
+        const isFoil = c.isFoil || /\bfoil\b/i.test(c.name || '');
+        const foilBadge = isFoil ? `<span class="badge-foil">FOIL</span>` : '';
+        const ownersDisplay = (c.allOwners && c.allOwners.length > 1) ? c.allOwners.join(', ') : c.owner;
+
         return `<tr>
                     <td>
-                        ${UI.renderTypeBox(c, 'sm')}
+                        <div style="position:relative;display:inline-block;">
+                            ${UI.renderTypeBox(c, 'sm')}
+                        </div>
                     </td>
                     <td class="text-muted">${c.id}</td>
                     <td>
                         <div style="font-weight:600;cursor:pointer;display:flex;align-items:center;" onclick="viewDetail('${c.id}')">
                             <span>${c.name}</span>
                             ${langBadge}
+                            ${foilBadge}
+                            ${qtyBadge}
                         </div>
                     </td>
                     <td>
                         <span style="font-size:0.82rem;color:#38bdf8;">${c.set || '-'}</span>
                     </td>
                     <td>
-                        <strong>${c.owner}</strong>
+                        <strong>${ownersDisplay}</strong>
                         <div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">Oleh: <span style="color:#94a3b8;">${c.createdBy || c.created_by || 'Admin'}</span></div>
                     </td>
                     <td><span class="status-badge status-${sc}">${c.status}</span></td>
@@ -295,7 +333,7 @@ function renderList(container, page) {
 }
 
 function renderPagination() {
-    const total = Math.ceil(filteredCards.length / PAGE_SIZE);
+    const total = Math.ceil(groupedFilteredCards.length / PAGE_SIZE);
     const pag = document.getElementById('pagination');
     if (total <= 1) { pag.innerHTML = ''; return; }
 
@@ -312,7 +350,7 @@ function renderPagination() {
 }
 
 window.goPage = function (p) {
-    const total = Math.ceil(filteredCards.length / PAGE_SIZE);
+    const total = Math.ceil(groupedFilteredCards.length / PAGE_SIZE);
     if (p < 1 || p > total) return;
     currentPage = p;
     renderCards();
@@ -373,7 +411,9 @@ function renderSelectedCardsList() {
 
         return `
             <div class="selected-card-chip">
-                <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src=CardDB.getImageUrl('');" />
+                <div class="selected-card-chip-img-wrap ${c.isFoil ? 'is-foil' : ''}" style="position:relative;width:36px;height:50px;flex-shrink:0;border-radius:4px;overflow:hidden;">
+                    <img src="${imgUrl}" alt="${c.name}" onerror="this.onerror=null; this.src=CardDB.getImageUrl('');" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                </div>
                 <div class="selected-card-chip-info">
                     <div class="selected-card-chip-name" title="${c.name}" style="display:flex;align-items:center;">
                         <span>${c.name}</span>
@@ -381,9 +421,14 @@ function renderSelectedCardsList() {
                     </div>
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px;gap:6px;">
                         <span class="selected-card-chip-sub">${c.set || 'Promo'}</span>
-                        <div class="lang-switch-wrap" onclick="event.stopPropagation();">
-                            <button type="button" class="lang-switch-btn ${((c.language || c.type || 'JP').toUpperCase() === 'JP') ? 'active' : ''}" onclick="setTitipCardLang(${idx}, 'JP')" title="Kartu versi Jepang (JP)">JP</button>
-                            <button type="button" class="lang-switch-btn ${((c.language || c.type || 'JP').toUpperCase() === 'EN' || (c.language || c.type || '').toUpperCase() === 'ENG') ? 'active' : ''}" onclick="setTitipCardLang(${idx}, 'EN')" title="Kartu versi Inggris (ENG)">ENG</button>
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;" onclick="event.stopPropagation();">
+                            <div class="lang-switch-wrap">
+                                <button type="button" class="lang-switch-btn ${((c.language || c.type || 'JP').toUpperCase() === 'JP') ? 'active' : ''}" onclick="setTitipCardLang(${idx}, 'JP')" title="JP">JP</button>
+                                <button type="button" class="lang-switch-btn ${((c.language || c.type || 'JP').toUpperCase() === 'EN' || (c.language || c.type || '').toUpperCase() === 'ENG') ? 'active' : ''}" onclick="setTitipCardLang(${idx}, 'EN')" title="ENG">ENG</button>
+                            </div>
+                            <button type="button" class="foil-toggle-btn ${c.isFoil ? 'active is-foil' : ''}" onclick="toggleTitipCardFoil(${idx})">
+                                ${c.isFoil ? 'Foil' : 'Non-Foil'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -430,7 +475,8 @@ window.togglePickerCard = function(cardId) {
             language: card.language || card.type || 'JP',
             nation: card.nation || '',
             image: card.image || '',
-            count: 1
+            count: 1,
+            isFoil: false
         });
     }
 
@@ -494,9 +540,44 @@ function initCardForm() {
         const filtered = allCards.filter(c => {
             const matchQ = !q || c.name.toLowerCase().includes(q) || (c.id && c.id.toLowerCase().includes(q));
             const matchSet = !setVal || c.set === setVal;
-            const matchNation = !nationVal || c.nation === nationVal;
+            const matchNation = !nationVal || c.nation === nationVal || 
+                (nationVal.toLowerCase().includes('elemental') && (c.nation || '').toLowerCase().includes('elemental'));
             const matchGrade = !gradeVal || c.grade?.toString() === gradeVal;
             return matchQ && matchSet && matchNation && matchGrade;
+        });
+
+        // Urutkan kartu berdasarkan Nation: Dragon Empire, Dark States, Brandt Gate, Keter Sanctuary, Stoicheia, Lyrical Monasterio, Elemental Cray
+        const NATION_ORDER_MAP = {
+            'dragon empire': 1,
+            'dark states': 2,
+            'brandt gate': 3,
+            'keter sanctuary': 4,
+            'stoicheia': 5,
+            'lyrical monasterio': 6,
+            'elemental cray': 7,
+            'cray elemental': 7
+        };
+        const getNationRank = (nation) => {
+            if (!nation) return 99;
+            const n = String(nation).trim().toLowerCase();
+            return NATION_ORDER_MAP[n] !== undefined ? NATION_ORDER_MAP[n] : 50;
+        };
+
+        filtered.sort((a, b) => {
+            const rankA = getNationRank(a.nation);
+            const rankB = getNationRank(b.nation);
+            if (rankA !== rankB) return rankA - rankB;
+
+            const natCompare = (a.nation || '').localeCompare(b.nation || '');
+            if (natCompare !== 0) return natCompare;
+
+            const gA = parseInt(a.grade, 10);
+            const gB = parseInt(b.grade, 10);
+            if (!isNaN(gA) && !isNaN(gB) && gA !== gB) {
+                return gB - gA;
+            }
+
+            return (a.name || '').localeCompare(b.name || '');
         });
 
         if (!filtered.length) {
@@ -591,9 +672,11 @@ function initCardForm() {
                 if (editingId) {
                     // Update satu kartu inventory yang sedang diedit
                     const card = selectedTitipCards[0];
+                    const baseName = (card.name || '').replace(/\s+(FOIL|Foil|foil)$/i, '').trim();
+                    const finalName = card.isFoil ? `${baseName} FOIL` : baseName;
                     await API.request('saveCard', {
                         id: editingId,
-                        name: card.name,
+                        name: finalName,
                         set: card.set || '',
                         grade: card.grade !== undefined ? card.grade : '3',
                         type: (card.language || card.type || 'JP').toUpperCase(),
@@ -603,14 +686,16 @@ function initCardForm() {
                         date: date,
                         created_by: currentUserName
                     });
-                    UI.showToast(`Data kartu "${card.name}" berhasil diperbarui!`, 'success');
+                    UI.showToast(`Data kartu "${finalName}" berhasil diperbarui!`, 'success');
                 } else {
                     // Simpan satu atau banyak kartu titipan sekaligus (termasuk kelipatan 2x, 3x)
                     for (const card of selectedTitipCards) {
+                        const baseName = (card.name || '').replace(/\s+(FOIL|Foil|foil)$/i, '').trim();
+                        const finalName = card.isFoil ? `${baseName} FOIL` : baseName;
                         const qty = card.count || 1;
                         for (let q = 0; q < qty; q++) {
                             await API.request('saveCard', {
-                                name: card.name,
+                                name: finalName,
                                 set: card.set || '',
                                 grade: card.grade !== undefined ? card.grade : '3',
                                 type: (card.language || card.type || 'JP').toUpperCase(),
@@ -662,14 +747,18 @@ window.editCard = function (id) {
         };
     }
 
+    const isCardFoil = c.isFoil || /\bfoil\b/i.test(c.name || '');
+    const cleanMasterName = (c.name || master.name || '').replace(/\s+(FOIL|Foil|foil)$/i, '').trim();
     selectedTitipCards = [{
         id: master.id,
-        name: master.name,
-        set: master.set || 'Promo',
-        grade: master.grade !== undefined ? master.grade : '3',
-        language: master.language || master.type || 'JP',
-        nation: master.nation || '',
-        image: master.image || ''
+        name: cleanMasterName,
+        set: c.set || master.set || 'Promo',
+        grade: c.grade !== undefined ? c.grade : (master.grade || '3'),
+        language: c.type || master.language || 'JP',
+        nation: c.nation || master.nation || '',
+        image: c.image || master.image || '',
+        count: 1,
+        isFoil: isCardFoil
     }];
 
     const titleEl = document.getElementById('modalCardTitle');

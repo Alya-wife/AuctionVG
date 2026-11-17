@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
@@ -8,7 +8,7 @@
   <meta name="description" content="Kelola inventory kartu Vanguard konsinyasi" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/style.css?v=20261023_perfectratio" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261027_mobile3" />
   <style>
     /* ── Status Filter Pills ── */
     .status-filter-group {
@@ -70,6 +70,47 @@
       border-color: #6b7a90;
       background: rgba(107,122,144,.12);
       color: #9aacbe;
+    }
+
+    /* ── Foil Toggle Button & Foil Badge ── */
+    .foil-toggle-btn {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      border-radius: 4px;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      background: rgba(15, 23, 42, 0.95);
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      line-height: 1.2;
+    }
+    .foil-toggle-btn:hover {
+      color: #fff;
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.15);
+    }
+    .foil-toggle-btn.is-foil,
+    .foil-toggle-btn.active {
+      background: #0284c7 !important;
+      border-color: #38bdf8 !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+    }
+    .badge-foil {
+      display: inline-flex;
+      align-items: center;
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      margin-left: 6px;
     }
 
     /* === FIX: Aspect Ratio Kartu Koleksi Utuh (Tidak Terpotong) === */
@@ -189,10 +230,11 @@
             <option value="">Semua Nation</option>
             <option value="Dragon Empire">Dragon Empire</option>
             <option value="Dark States">Dark States</option>
-            <option value="Stoicheia">Stoicheia</option>
-            <option value="Lyrical Monasterio">Lyrical Monasterio</option>
             <option value="Brandt Gate">Brandt Gate</option>
             <option value="Keter Sanctuary">Keter Sanctuary</option>
+            <option value="Stoicheia">Stoicheia</option>
+            <option value="Lyrical Monasterio">Lyrical Monasterio</option>
+            <option value="Elemental Cray">Elemental Cray</option>
           </select>
           <button class="btn-ghost" id="resetFilter">Reset</button>
         </div>
@@ -312,10 +354,11 @@
                   <option value="">Semua Nation</option>
                   <option value="Dragon Empire">Dragon Empire</option>
                   <option value="Dark States">Dark States</option>
-                  <option value="Stoicheia">Stoicheia</option>
-                  <option value="Lyrical Monasterio">Lyrical Monasterio</option>
                   <option value="Brandt Gate">Brandt Gate</option>
                   <option value="Keter Sanctuary">Keter Sanctuary</option>
+                  <option value="Stoicheia">Stoicheia</option>
+                  <option value="Lyrical Monasterio">Lyrical Monasterio</option>
+                  <option value="Elemental Cray">Elemental Cray</option>
                 </select>
                 <select id="modalPickerGrade" class="filter-select">
                   <option value="">Grade</option>
@@ -393,8 +436,8 @@
   <script src="../assets/js/api.js?v=20261023_live4"></script>
   <script src="../assets/js/cards-data.js?v=20261023_live4"></script>
   <script src="../assets/js/auth.js?v=20261023_live4"></script>
-  <script src="../assets/js/ui.js?v=20261023_live4"></script>
-  <script src="../assets/js/inventory.js?v=20261023_perfectratio"></script>
+  <script src="../assets/js/ui.js?v=20261024_0120"></script>
+  <script src="../assets/js/inventory.js?v=20261024_nation"></script>
 </body>
 </html>
 

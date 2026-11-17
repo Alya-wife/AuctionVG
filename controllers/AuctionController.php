@@ -50,7 +50,7 @@ class AuctionController extends BaseController {
         $fbUrl   = trim($payload['fbUrl'] ?? '');
         $cardIds = $payload['cardIds'] ?? [];
         $id      = 'A' . round(microtime(true) * 1000);
-        $date    = date('Y-m-d');
+        $date    = !empty($payload['date']) ? $payload['date'] : date('Y-m-d');
 
         $this->pdo->beginTransaction();
         try {

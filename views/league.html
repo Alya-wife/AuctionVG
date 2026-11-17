@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Liga Turnamen – NitipPro Vanguard</title>
+  <meta name="description" content="Sistem Liga Turnamen, Peringkat Poin Pemain, dan Prize Pool Vanguard" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261117_seasonprize" />
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="page-title">
+          <h2>Liga Turnamen &amp; Ranking Poin</h2>
+        </div>
+        <div class="top-bar-right" style="gap: 8px;">
+          <button type="button" class="btn-ghost" id="btnManagePlayers" style="padding: 7px 12px; font-size: 0.8rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Master Pemain</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-body league-container">
+
+        <!-- 4 TAB NAVIGASI UTAMA -->
+        <div class="league-nav-tabs">
+          <button type="button" class="league-tab-btn active" data-tab="tabInput2Cards" id="tabBtnInput">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span>Input &amp; Rekap Mingguan</span>
+          </button>
+          <button type="button" class="league-tab-btn" data-tab="tabSeasonRekap" id="tabBtnSeason">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+            <span>Rekap Season</span>
+          </button>
+          <button type="button" class="league-tab-btn" data-tab="tabPrize" id="tabBtnPrize">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>Hadiah Turnamen</span>
+          </button>
+          <button type="button" class="league-tab-btn" data-tab="tabEditPoints" id="tabBtnPoints">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Edit Poin</span>
+          </button>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TAB 1: INPUT HASIL & REKAP MINGGUAN (2 CARD: KIRI INPUT, KANAN REKAP) -->
+        <!-- ============================================================ -->
+        <div class="league-tab-pane active" id="tabInput2Cards">
+
+          <!-- Toolbar Filter Periode -->
+          <div class="league-toolbar">
+            <div class="league-filter-group">
+              <div class="income-filter-label-group">
+                <span class="income-filter-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                </span>
+                <span class="income-filter-title">Periode Liga:</span>
+              </div>
+
+              <!-- Custom Dropdown Tahun -->
+              <div class="custom-dropdown" id="dropdownLeagueYear">
+                <button type="button" class="custom-dropdown-btn" id="btnLeagueYearTrigger">
+                  <span class="custom-dropdown-label" id="labelLeagueYear">2026</span>
+                  <svg class="custom-dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="custom-dropdown-menu" id="menuLeagueYear"></div>
+              </div>
+
+              <!-- Custom Dropdown Bulan -->
+              <div class="custom-dropdown" id="dropdownLeagueMonth">
+                <button type="button" class="custom-dropdown-btn" id="btnLeagueMonthTrigger">
+                  <span class="custom-dropdown-label" id="labelLeagueMonth">November</span>
+                  <svg class="custom-dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="custom-dropdown-menu" id="menuLeagueMonth">
+                  <div class="custom-dropdown-item" data-value="1">Januari</div>
+                  <div class="custom-dropdown-item" data-value="2">Februari</div>
+                  <div class="custom-dropdown-item" data-value="3">Maret</div>
+                  <div class="custom-dropdown-item" data-value="4">April</div>
+                  <div class="custom-dropdown-item" data-value="5">Mei</div>
+                  <div class="custom-dropdown-item" data-value="6">Juni</div>
+                  <div class="custom-dropdown-item" data-value="7">Juli</div>
+                  <div class="custom-dropdown-item" data-value="8">Agustus</div>
+                  <div class="custom-dropdown-item" data-value="9">September</div>
+                  <div class="custom-dropdown-item" data-value="10">Oktober</div>
+                  <div class="custom-dropdown-item is-selected" data-value="11">November</div>
+                  <div class="custom-dropdown-item" data-value="12">Desember</div>
+                </div>
+              </div>
+
+              <span class="income-period-tag" id="leaguePeriodTag">November 2026</span>
+            </div>
+
+            <!-- Quick Stats Pills -->
+            <div class="league-actions-group">
+              <div class="badge-card-count" id="statTourneyCount" style="padding: 6px 12px; font-size: 0.8rem; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25);">
+                0 Turnamen
+              </div>
+              <div class="badge-card-count" id="statPlayerCount" style="padding: 6px 12px; font-size: 0.8rem; background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25);">
+                0 Pemain Aktif
+              </div>
+            </div>
+          </div>
+
+          <!-- 2 CARD SIDE-BY-SIDE LAYOUT -->
+          <div class="league-2cards-grid">
+
+            <!-- ============================================================ -->
+            <!-- CARD 1 (KIRI): INPUT HASIL TURNAMEN (LANGSUNG DI HALAMAN) -->
+            <!-- ============================================================ -->
+            <div class="league-card-box" id="cardInputTurnamen">
+              <div class="league-card-header">
+                <div>
+                  <h3 id="inputCardTitle">Input Hasil Turnamen</h3>
+                </div>
+                <button type="button" class="btn-toggle-quick-paste" id="btnToggleQuickPaste">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                  <span>Tempel Cepat</span>
+                </button>
+              </div>
+
+              <!-- Quick Week Selector Pills -->
+              <div class="week-pill-selector">
+                <button type="button" class="week-pill-btn active" data-week="1" id="pillWeek1">Minggu 1</button>
+                <button type="button" class="week-pill-btn" data-week="2" id="pillWeek2">Minggu 2</button>
+                <button type="button" class="week-pill-btn" data-week="3" id="pillWeek3">Minggu 3</button>
+                <button type="button" class="week-pill-btn" data-week="4" id="pillWeek4">Minggu 4</button>
+                <button type="button" class="week-pill-btn" data-week="5" id="pillWeek5">Minggu 5</button>
+              </div>
+
+              <!-- Status Banner Minggu yang Dipilih -->
+              <div class="week-status-banner is-empty" id="weekStatusBanner">
+                <span id="weekStatusText">Minggu 1: Belum ada data</span>
+                <button type="button" class="btn-ghost" id="btnDeleteCurrentWeek" style="display:none; padding: 2px 8px; font-size: 0.72rem; color: #f87171; border-color: rgba(239,68,68,0.3);">
+                  Hapus Sesi Ini
+                </button>
+              </div>
+
+              <!-- Form Fields -->
+              <form id="inlineTournamentForm" onsubmit="handleSaveTournamentInline(event)">
+                <input type="hidden" id="tourneyEditId" />
+
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label for="tourneyDate" style="font-size: 0.78rem; font-weight: 600;">Tanggal Turnamen *</label>
+                  <input type="date" id="tourneyDate" required style="padding: 7px 10px; font-size: 0.82rem; width: 100%; box-sizing: border-box;" />
+                </div>
+                <input type="hidden" id="tourneyTitle" />
+
+                <!-- Collapsible Quick Paste Textarea -->
+                <div class="quick-paste-box" id="quickPasteWrapper" style="display: none;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.74rem; font-weight: 600; color: #38bdf8;">
+                      Tempel daftar nama berurutan (1 baris per nama):
+                    </span>
+                    <button type="button" class="btn-primary" id="btnApplyQuickPaste" style="padding: 3px 8px; font-size: 0.72rem;">
+                      Terapkan &rarr;
+                    </button>
+                  </div>
+                  <textarea id="quickPasteInput" class="quick-paste-textarea" style="height: 60px;" placeholder="Baris 1 = Juara 1&#10;Baris 2 = Juara 2&#10;Baris 3 = Juara 3..."></textarea>
+                </div>
+
+                <!-- Daftar Slot Peringkat Peserta -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 0.78rem; font-weight: 700; color: #f1f5f9;">
+                    Urutan Juara (<span id="slotCountLabel">8</span> Peserta)
+                  </span>
+                  <div style="display: flex; gap: 6px;">
+                    <button type="button" class="btn-ghost" id="btnQuickRegisterPlayer" style="padding: 3px 8px; font-size: 0.72rem; color: #38bdf8; border-color: rgba(56, 189, 248, 0.35);">
+                      + Daftarkan Pemain
+                    </button>
+                    <button type="button" class="btn-ghost" id="btnAddSlotRow" style="padding: 3px 8px; font-size: 0.72rem;">
+                      + Tambah Slot
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Kontainer List Slot Peserta -->
+                <div id="slotRowsContainer" style="margin-bottom: 12px;"></div>
+
+                <!-- Action Bar Tambah Slot Pemain (Tanpa Batas) -->
+                <div class="add-slot-actions-bar" style="display: flex; gap: 8px; margin-bottom: 14px; align-items: center;">
+                  <button type="button" class="btn-ghost" id="btnBottomAddSlot" style="flex: 1; justify-content: center; padding: 8px 12px; font-size: 0.82rem; border-color: rgba(99, 102, 241, 0.45); color: #818cf8; background: rgba(99, 102, 241, 0.1);">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>+ Tambah Pemain</span>
+                  </button>
+                  <button type="button" class="btn-ghost" id="btnAdd4Slots" title="Tambah 4 slot sekaligus" style="padding: 8px 12px; font-size: 0.78rem; border-color: rgba(255, 255, 255, 0.1); color: var(--text-muted);">
+                    + 4 Pemain
+                  </button>
+                  <button type="button" class="btn-ghost" id="btnResetTo8Slots" title="Reset kembali ke 8 slot default" style="padding: 8px 10px; font-size: 0.78rem; border-color: rgba(255, 255, 255, 0.1); color: var(--text-muted);">
+                    Reset 8
+                  </button>
+                </div>
+
+                <!-- Tombol Simpan -->
+                <button type="submit" class="btn-primary" id="btnSaveInlineSubmit" style="width: 100%; justify-content: center; padding: 10px; font-size: 0.88rem;">
+                  <span id="btnSaveInlineText">Simpan Hasil Minggu 1</span>
+                </button>
+              </form>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- CARD 2 (KANAN): HASIL HITUNGAN, PERGERAKAN TREN & REKAP BULAN -->
+            <!-- ============================================================ -->
+            <div class="league-card-box" id="cardLeaderboardRekap">
+              <div class="league-card-header">
+                <div>
+                  <h3 id="rekapCardTitle">Rekap &amp; Leaderboard</h3>
+                </div>
+                <div class="search-box" style="width: 170px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="leaderboardSearch" placeholder="Cari pemain..." autocomplete="off" style="font-size: 0.78rem;" />
+                </div>
+              </div>
+
+              <!-- Mini Podium Top 3 di Atas Tabel -->
+              <div class="mini-podium-strip" id="miniPodiumStrip"></div>
+
+              <!-- Keterangan Tren Panah (Tanpa simbol + atau -) -->
+              <div style="font-size: 0.74rem; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; padding: 2px 4px; flex-wrap: wrap; gap: 8px;">
+                <span>Tren Peringkat:</span>
+                <div style="display: flex; gap: 8px;">
+                  <span class="trend-pill up" title="Naik peringkat"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-8 8h6v8h4v-8h6z"/></svg> Naik</span>
+                  <span class="trend-pill down" title="Turun peringkat"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l8-8h-6v-8h-4v8h-6z"/></svg> Turun</span>
+                  <span class="trend-pill same" title="Peringkat tetap">&mdash; Tetap</span>
+                </div>
+              </div>
+
+              <!-- Tabel Rekap Leaderboard (Tanpa Scroll Samping & Scroll Bawah) -->
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 78px;">Rank</th>
+                      <th>Nama Pemain</th>
+                      <th style="text-align: center; width: 44px;">W1</th>
+                      <th style="text-align: center; width: 44px;">W2</th>
+                      <th style="text-align: center; width: 44px;">W3</th>
+                      <th style="text-align: center; width: 44px;">W4</th>
+                      <th style="text-align: right; width: 88px;">Total Poin</th>
+                      <th style="text-align: center; width: 36px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="leaderboardTableBody">
+                    <tr>
+                      <td colspan="8" style="text-align: center; padding: 36px; color: var(--text-muted);">
+                        <div class="spinner-sm" style="margin: 0 auto 8px;"></div>
+                        Memuat rekap...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination Bar (10 Pemain per Halaman: Page 1 Rank 1-10, Page 2 Rank 11-20 dst) -->
+              <div class="league-pagination-bar" id="leaderboardPaginationBar" style="display: none;">
+                <span class="league-pagination-info" id="leaderboardPaginationInfo">Menampilkan 1 - 10 dari 12 pemain</span>
+                <div class="pagination" id="leaderboardPaginationButtons"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TAB 2: REKAP BULANAN & SEASON (SELAMA 3 BULAN) -->
+        <!-- ============================================================ -->
+        <div class="league-tab-pane" id="tabSeasonRekap" style="display: none;">
+
+          <!-- Season Toolbar -->
+          <div class="season-toolbar">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">Tahun:</span>
+                <select id="seasonYearSelect" class="form-input" style="padding: 6px 10px; font-size: 0.82rem; width: 90px;"></select>
+              </div>
+
+              <!-- Season Selector Pills (3 Bulan Tiap Season) -->
+              <div class="season-pills-group">
+                <button type="button" class="season-pill-btn" data-season="1" id="btnSeason1">Season 1 (Jan - Mar)</button>
+                <button type="button" class="season-pill-btn" data-season="2" id="btnSeason2">Season 2 (Apr - Jun)</button>
+                <button type="button" class="season-pill-btn" data-season="3" id="btnSeason3">Season 3 (Jul - Sep)</button>
+                <button type="button" class="season-pill-btn active" data-season="4" id="btnSeason4">Season 4 (Okt - Des)</button>
+              </div>
+            </div>
+
+            <!-- Season Stats Badges -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="income-period-tag" id="seasonPeriodTag" style="font-weight: 700;">Season 4 (2026)</span>
+              <div class="badge-card-count" id="statSeasonPlayers" style="padding: 6px 12px; font-size: 0.8rem; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25);">
+                0 Pemain
+              </div>
+            </div>
+          </div>
+
+          <!-- Podium Season Top 3 -->
+          <div class="season-podium-strip" id="seasonPodiumStrip"></div>
+
+          <!-- Tabel Rekap Season & Rincian Tiap Bulan -->
+          <div class="card" style="padding: 18px 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 style="margin-bottom: 2px;" id="seasonTableTitle">Klasemen Season</h3>
+              </div>
+              <div class="search-box" style="width: 200px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="seasonSearchInput" placeholder="Cari pemain di season..." autocomplete="off" style="font-size: 0.78rem;" />
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 78px; text-align: center;">Rank</th>
+                    <th>Nama Pemain</th>
+                    <th style="text-align: center; width: 95px;" id="thSeasonMonth1">Bulan 1</th>
+                    <th style="text-align: center; width: 95px;" id="thSeasonMonth2">Bulan 2</th>
+                    <th style="text-align: center; width: 95px;" id="thSeasonMonth3">Bulan 3</th>
+                    <th style="text-align: right; width: 120px;">Total Season Poin</th>
+                    <th style="text-align: center; width: 75px;">Main</th>
+                  </tr>
+                </thead>
+                <tbody id="seasonTableBody">
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted);">
+                      <div class="spinner-sm" style="margin: 0 auto 8px;"></div>
+                      Memuat data season...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TAB 3: HADIAH TURNAMEN (PRIZE POOL TOTAL 3 BULAN / SEASON) -->
+        <!-- ============================================================ -->
+        <div class="league-tab-pane" id="tabPrize" style="display: none;">
+
+          <!-- Prize Toolbar Season 3 Bulan -->
+          <div class="season-toolbar">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">Tahun:</span>
+                <select id="prizeYearSelect" class="form-input" style="padding: 6px 10px; font-size: 0.82rem; width: 90px;"></select>
+              </div>
+
+              <!-- Season Selector Pills (3 Bulan Tiap Season) -->
+              <div class="season-pills-group">
+                <button type="button" class="season-pill-btn prize-season-btn" data-season="1" id="btnPrizeSeason1">Season 1 (Jan - Mar)</button>
+                <button type="button" class="season-pill-btn prize-season-btn" data-season="2" id="btnPrizeSeason2">Season 2 (Apr - Jun)</button>
+                <button type="button" class="season-pill-btn prize-season-btn" data-season="3" id="btnPrizeSeason3">Season 3 (Jul - Sep)</button>
+                <button type="button" class="season-pill-btn prize-season-btn active" data-season="4" id="btnPrizeSeason4">Season 4 (Okt - Des)</button>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <span class="income-period-tag" id="prizePeriodTag" style="font-weight: 700;">Season 4 (2026)</span>
+              <button type="button" class="btn-ghost" id="btnOpenSeasonPrizeSettings" onclick="openPrizeSettingsModal()" style="padding: 6px 12px; font-size: 0.78rem;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Atur Potongan Hadiah Season</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Ringkasan Statistik Prize Pool Season (3 Bulan) -->
+          <div class="prize-summary-grid">
+            <div class="prize-summary-box pool">
+              <span class="pbox-label">Total Tiket Masuk Season</span>
+              <span class="pbox-value" id="statPrizeGrossPool">Rp 0</span>
+              <span class="pbox-sub" id="statPrizePlayerCount">0 Peserta</span>
+            </div>
+            <div class="prize-summary-box cut">
+              <span class="pbox-label">Potongan Kas Toko / Operasional</span>
+              <span class="pbox-value" id="statPrizeCut">Rp 0</span>
+              <span class="pbox-sub" id="statPrizeCutNote">Biaya operasional kas toko</span>
+            </div>
+            <div class="prize-summary-box prizes">
+              <span class="pbox-label">Total Hadiah Bersih Season</span>
+              <span class="pbox-value" id="statPrizeNetPool">Rp 0</span>
+              <span class="pbox-sub" id="statPrizeNetSub">Top 3 Klasemen Season</span>
+            </div>
+          </div>
+
+          <!-- Podium Distribusi Juara Season 3 Bulan -->
+          <div class="card" style="padding: 20px; margin-bottom: 20px;">
+            <div style="margin-bottom: 14px;">
+              <h3 style="margin-bottom: 2px;">Pembagian Hadiah Juara Season</h3>
+            </div>
+            <div class="prize-podium-grid" id="seasonPrizePodium"></div>
+          </div>
+
+          <!-- Daftar Histori Kontribusi Turnamen Mingguan (Selama 3 Bulan) -->
+          <div class="card" style="padding: 20px;">
+            <div style="margin-bottom: 14px;">
+              <h3 style="margin-bottom: 2px;">Histori Turnamen Mingguan</h3>
+            </div>
+            <div id="prizeWeeksContainer">
+              <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                <div class="spinner-sm" style="margin: 0 auto 8px;"></div>
+                Memuat histori turnamen season...
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TAB 4: EDIT POIN TURNAMEN -->
+        <!-- ============================================================ -->
+        <div class="league-tab-pane" id="tabEditPoints" style="display: none;">
+
+          <div class="edit-points-container">
+            <!-- Left: Point Rules Form -->
+            <div class="card" style="padding: 22px;">
+              <div style="margin-bottom: 18px;">
+                <h3 style="margin-bottom: 4px;">Pengaturan Distribusi Poin Turnamen</h3>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">
+                  Sesuaikan perolehan poin untuk masing-masing peringkat juara turnamen mingguan.
+                </span>
+              </div>
+
+              <form id="pointRulesForm" onsubmit="handleSavePointRules(event)">
+                <div class="point-setting-row">
+                  <div class="point-setting-info">
+                    <span class="slot-rank-num rank-1" style="width: 32px; height: 32px; font-size: 0.95rem;">1</span>
+                    <div>
+                      <div class="point-setting-label">Peringkat 1 (Juara 1 / 1st Place)</div>
+                      <div class="point-setting-sub">Pemenang utama setiap turnamen mingguan</div>
+                    </div>
+                  </div>
+                  <div class="point-input-wrapper">
+                    <input type="number" id="ruleRank1" min="0" max="999" required />
+                    <span style="font-weight: 700; color: var(--text-muted); font-size: 0.85rem;">Pt</span>
+                  </div>
+                </div>
+
+                <div class="point-setting-row">
+                  <div class="point-setting-info">
+                    <span class="slot-rank-num rank-2" style="width: 32px; height: 32px; font-size: 0.95rem;">2</span>
+                    <div>
+                      <div class="point-setting-label">Peringkat 2 (Juara 2 / Runner Up)</div>
+                      <div class="point-setting-sub">Posisi kedua turnamen mingguan</div>
+                    </div>
+                  </div>
+                  <div class="point-input-wrapper">
+                    <input type="number" id="ruleRank2" min="0" max="999" required />
+                    <span style="font-weight: 700; color: var(--text-muted); font-size: 0.85rem;">Pt</span>
+                  </div>
+                </div>
+
+                <div class="point-setting-row">
+                  <div class="point-setting-info">
+                    <span class="slot-rank-num rank-3" style="width: 32px; height: 32px; font-size: 0.95rem;">3</span>
+                    <div>
+                      <div class="point-setting-label">Peringkat 3 (Juara 3 / 3rd Place)</div>
+                      <div class="point-setting-sub">Posisi ketiga turnamen mingguan</div>
+                    </div>
+                  </div>
+                  <div class="point-input-wrapper">
+                    <input type="number" id="ruleRank3" min="0" max="999" required />
+                    <span style="font-weight: 700; color: var(--text-muted); font-size: 0.85rem;">Pt</span>
+                  </div>
+                </div>
+
+                <div class="point-setting-row">
+                  <div class="point-setting-info">
+                    <span class="slot-rank-num" style="width: 32px; height: 32px; font-size: 0.95rem; background: rgba(234, 88, 12, 0.2); color: #fb923c; border-color: rgba(234, 88, 12, 0.4);">4</span>
+                    <div>
+                      <div class="point-setting-label">Peringkat 4 (Juara 4 / 4th Place)</div>
+                      <div class="point-setting-sub">Posisi keempat turnamen mingguan</div>
+                    </div>
+                  </div>
+                  <div class="point-input-wrapper">
+                    <input type="number" id="ruleRank4" min="0" max="999" required />
+                    <span style="font-weight: 700; color: var(--text-muted); font-size: 0.85rem;">Pt</span>
+                  </div>
+                </div>
+
+                <div class="point-setting-row">
+                  <div class="point-setting-info">
+                    <span class="slot-rank-num" style="width: 32px; height: 32px; font-size: 0.85rem; background: rgba(100, 116, 139, 0.2); color: #cbd5e1; border-color: rgba(100, 116, 139, 0.4);">5-6</span>
+                    <div>
+                      <div class="point-setting-label">Peringkat 5 &ndash; 6 (Top 6)</div>
+                      <div class="point-setting-sub">Pemain yang finish di peringkat 5 dan 6</div>
+                    </div>
+                  </div>
+                  <div class="point-input-wrapper">
+                    <input type="number" id="ruleRank56" min="0" max="999" required />
+                    <span style="font-weight: 700; color: var(--text-muted); font-size: 0.85rem;">Pt</span>
+                  </div>
+                </div>
+
+                <div class="point-setting-row">
+                  <div class="point-setting-info">
+                    <span class="slot-rank-num" style="width: 32px; height: 32px; font-size: 0.85rem; background: rgba(71, 85, 105, 0.2); color: #94a3b8; border-color: rgba(71, 85, 105, 0.4);">7-8</span>
+                    <div>
+                      <div class="point-setting-label">Peringkat 7 &ndash; 8 (Top 8)</div>
+                      <div class="point-setting-sub">Pemain yang finish di peringkat 7 dan 8</div>
+                    </div>
+                  </div>
+                  <div class="point-input-wrapper">
+                    <input type="number" id="ruleRank78" min="0" max="999" required />
+                    <span style="font-weight: 700; color: var(--text-muted); font-size: 0.85rem;">Pt</span>
+                  </div>
+                </div>
+
+                <div class="point-setting-row">
+                  <div class="point-setting-info">
+                    <span class="slot-rank-num" style="width: 32px; height: 32px; font-size: 0.85rem; background: rgba(30, 41, 59, 0.6); color: #64748b; border-color: rgba(255, 255, 255, 0.08);">9+</span>
+                    <div>
+                      <div class="point-setting-label">Peringkat 9 ke Atas (Partisipasi)</div>
+                      <div class="point-setting-sub">Poin kehadiran untuk setiap peserta peringkat 9 seterusnya</div>
+                    </div>
+                  </div>
+                  <div class="point-input-wrapper">
+                    <input type="number" id="ruleRank9Plus" min="0" max="999" required />
+                    <span style="font-weight: 700; color: var(--text-muted); font-size: 0.85rem;">Pt</span>
+                  </div>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 20px;">
+                  <button type="submit" class="btn-primary" id="btnSavePointRules" style="flex: 1; justify-content: center; padding: 11px;">
+                    Simpan Aturan Poin
+                  </button>
+                  <button type="button" class="btn-ghost" id="btnResetDefaultRules" style="padding: 11px 16px;">
+                    Reset Default
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Right: Preview & Live Calculation Info -->
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div class="card" style="padding: 20px;">
+                <h4 style="margin-bottom: 8px; color: #38bdf8;">Pratinjau Badge Poin</h4>
+                <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px;">
+                  Berikut tampilan badge poin yang akan terlihat pada form input turnamen dan hasil rekap:
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;" id="previewBadgeList"></div>
+              </div>
+
+              <div class="card" style="padding: 20px; background: rgba(15, 23, 42, 0.5);">
+                <h4 style="margin-bottom: 6px;">Aturan Poin Liga Vanguard</h4>
+                <ul style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.6; padding-left: 18px; margin: 0;">
+                  <li>Poin dihitung otomatis saat nama pemain dimasukkan pada urutan slot peringkat.</li>
+                  <li>Perubahan poin yang disimpan akan berlaku untuk input turnamen baru maupun perhitungan ulang.</li>
+                  <li>Rekap akumulasi bulanan dan season selama 3 bulan akan otomatis menyelaraskan poin.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL: EDIT POTONGAN & HADIAH TURNAMEN (PRIZE SETTINGS) -->
+  <div class="modal-overlay" id="modalPrizeSettings" style="z-index: 1060;">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <div>
+          <h3 id="modalPrizeTitle" style="margin-bottom: 2px;">Atur Hadiah &amp; Potongan</h3>
+          <span style="font-size: 0.78rem; color: var(--text-muted);">Sesuaikan biaya masuk, potongan kas/toko, dan persentase juara</span>
+        </div>
+        <button class="modal-close" id="modalPrizeClose">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form class="modal-form" id="prizeSettingsForm" onsubmit="handleSavePrizeSettings(event)" style="padding: 16px 20px;">
+        <input type="hidden" id="prizeTourneyId" />
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size: 0.78rem; font-weight: 600;">Biaya Masuk per Pemain (Rp)</label>
+          <input type="number" id="prizeEntryFee" class="form-input" min="0" step="1000" required />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size: 0.78rem; font-weight: 600;">Potongan Kas Toko / Fee Admin (Rp)</label>
+          <input type="number" id="prizeCutAmount" class="form-input" min="0" step="1000" placeholder="0" />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size: 0.78rem; font-weight: 600;">Keterangan / Penjelasan Potongan</label>
+          <input type="text" id="prizeCutNote" class="form-input" placeholder="cth. Kas Toko 10% / Operasional" />
+        </div>
+
+        <div style="font-size: 0.78rem; font-weight: 700; color: #f1f5f9; margin-bottom: 8px;">
+          Persentase Pembagian Hadiah Bersih:
+        </div>
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+          <div style="flex: 1;">
+            <label style="font-size: 0.72rem; color: #facc15;">Juara 1 (%)</label>
+            <input type="number" id="prizePct1" class="form-input" min="0" max="100" required value="50" />
+          </div>
+          <div style="flex: 1;">
+            <label style="font-size: 0.72rem; color: #cbd5e1;">Juara 2 (%)</label>
+            <input type="number" id="prizePct2" class="form-input" min="0" max="100" required value="30" />
+          </div>
+          <div style="flex: 1;">
+            <label style="font-size: 0.72rem; color: #fb923c;">Juara 3 (%)</label>
+            <input type="number" id="prizePct3" class="form-input" min="0" max="100" required value="20" />
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn-ghost" onclick="UI.closeModal('modalPrizeSettings')">Batal</button>
+          <button type="submit" class="btn-primary" id="btnSubmitPrizeSettings">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: DETAIL RIWAYAT PEMAIN -->
+  <div class="modal-overlay" id="modalPlayerDetail" style="z-index: 1060;">
+    <div class="modal-box" style="max-width: 500px;">
+      <div class="modal-header">
+        <div>
+          <h3 id="playerDetailName" style="margin-bottom: 2px;">Detail Pemain</h3>
+          <span id="playerDetailSub" style="font-size: 0.78rem; color: var(--text-muted);">Statistik performa liga bulan ini</span>
+        </div>
+        <button class="modal-close" id="modalPlayerDetailClose">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-form" style="padding: 16px 20px;" id="playerDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: MASTER PEMAIN (DAFTAR NAMA) -->
+  <div class="modal-overlay" id="modalPlayersManage" style="z-index: 1060;">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-header">
+        <div>
+          <h3 style="margin-bottom: 2px;">Master Daftar Pemain</h3>
+          <span style="font-size: 0.78rem; color: var(--text-muted);">Kelola nama-nama pemain turnamen</span>
+        </div>
+        <button class="modal-close" id="modalPlayersClose">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-form" style="padding: 16px 20px;">
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <input type="text" id="newPlayerNameInput" placeholder="Tambah nama pemain baru..." style="flex: 1;" />
+          <button type="button" class="btn-primary" id="btnSaveNewPlayer" style="padding: 8px 16px; white-space: nowrap;">
+            + Tambah
+          </button>
+        </div>
+        <div style="max-height: 48vh; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama Pemain</th>
+                <th style="text-align: center;">Ikut Turnamen</th>
+                <th style="text-align: right;">Total Poin Karir</th>
+              </tr>
+            </thead>
+            <tbody id="masterPlayersTableBody">
+              <tr>
+                <td colspan="4" style="text-align: center; padding: 24px; color: var(--text-muted);">Memuat pemain...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PENCAIRAN / PENGURANGAN HADIAH PEMAIN (TOMBOL MINUS) -->
+  <div class="modal-overlay" id="modalClaimPrize" style="z-index: 1060;">
+    <div class="modal-box" style="max-width: 460px;">
+      <div class="modal-header">
+        <div>
+          <h3 id="modalClaimPrizeTitle" style="margin-bottom: 2px;">Pencairan / Potong Hadiah</h3>
+          <span id="modalClaimPrizePlayer" style="font-size: 0.8rem; color: #38bdf8; font-weight: 700;"></span>
+        </div>
+        <button type="button" class="modal-close" id="modalClaimPrizeClose" onclick="closeLeagueModal('modalClaimPrize')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form class="modal-form" id="claimPrizeForm" onsubmit="handleSavePrizeClaim(event)" style="padding: 16px 20px;">
+        <input type="hidden" id="claimRankPosition" />
+        <input type="hidden" id="claimPlayerName" />
+
+        <!-- Saldo Summary Box -->
+        <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px;">
+            <span style="color: var(--text-muted);">Total Hadiah Awal:</span>
+            <strong id="claimModalTotalAmount" style="color: #f8fafc;">Rp 0</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
+            <span style="color: var(--text-muted);">Sudah Digunakan/Dicairkan:</span>
+            <span id="claimModalClaimedAmount" style="color: #f87171; font-weight: 600;">Rp 0</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.88rem; border-top: 1px dashed rgba(255,255,255,0.12); padding-top: 6px;">
+            <span style="color: #f8fafc; font-weight: 700;">Sisa Saldo Hadiah:</span>
+            <strong id="claimModalRemainingAmount" style="color: #34d399; font-size: 1.05rem;">Rp 0</strong>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label for="claimInputAmount" style="font-size: 0.8rem; font-weight: 600;">Jumlah Pencairan / Pengurangan (Rp) *</label>
+          <input type="text" id="claimInputAmount" required placeholder="Contoh: 30.000" class="form-input" inputmode="numeric" style="font-size: 0.95rem; font-weight: 700;" autocomplete="off" />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="claimInputNotes" style="font-size: 0.8rem; font-weight: 600;">Keperluan / Keterangan</label>
+          <input type="text" id="claimInputNotes" placeholder="Contoh: Beli Booster Box / Ambil Cash / Beli Sleeves" class="form-input" />
+        </div>
+
+        <button type="submit" class="btn-primary" id="btnSubmitPrizeClaim" style="width: 100%; justify-content: center; padding: 10px; font-weight: 700;">
+          Simpan Pengurangan Hadiah
+        </button>
+
+        <!-- Riwayat Pencairan Juara Ini -->
+        <div style="margin-top: 18px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
+          <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px;">Riwayat Pencairan Hadiah Ini:</div>
+          <div id="claimModalHistoryList" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Datalist Autocomplete -->
+  <datalist id="playersDatalist"></datalist>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/api.js?v=20261117_v4"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/ui.js?v=20261117_v4"></script>
+  <script src="../assets/js/league.js?v=20261117_claimnotes"></script>
+</body>
+</html>

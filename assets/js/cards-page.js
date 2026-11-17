@@ -66,19 +66,60 @@ function populateSetFilterDropdown() {
     }
 }
 
+let searchDebounceTimer = null;
+
 function initCatalogFilters() {
-    ['cardSearch', 'cardFilterSet', 'cardFilterNation', 'cardFilterGrade', 'cardFilterLang'].forEach(id => {
+    const searchInput = document.getElementById('cardSearchInput') || document.getElementById('cardSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const val = (searchInput.value || '').trim();
+            clearTimeout(searchDebounceTimer);
+
+            // Jika kosong, langsung tampilkan semua kartu
+            if (val.length === 0) {
+                applyCatalogFilters();
+                return;
+            }
+
+            // Jika kurang dari 3 huruf, jangan filter dulu (minimal 3 huruf sesuai instruksi)
+            if (val.length < 3) {
+                return;
+            }
+
+            // Minimal 3 huruf: filter langsung & jalankan AJAX debounced ke server
+            applyCatalogFilters();
+            searchDebounceTimer = setTimeout(async () => {
+                try {
+                    if (typeof API !== 'undefined' && API.request && (!window.CONFIG || !window.CONFIG.USE_LOCAL)) {
+                        const ajaxCards = await API.request('getMasterCards', { search: val });
+                        if (Array.isArray(ajaxCards) && ajaxCards.length > 0) {
+                            ajaxCards.forEach(ac => {
+                                if (!allMasterCards.some(m => m.id === ac.id)) {
+                                    allMasterCards.unshift(ac);
+                                }
+                            });
+                            applyCatalogFilters();
+                        }
+                    }
+                } catch(e) {
+                    console.warn('AJAX search cards error:', e);
+                }
+            }, 250);
+        });
+    }
+
+    ['cardFilterSet', 'cardFilterNation', 'cardFilterGrade', 'cardFilterLang'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            el.addEventListener('input', applyCatalogFilters);
             el.addEventListener('change', applyCatalogFilters);
         }
     });
 
-    const resetBtn = document.getElementById('resetCardFilter');
+    const resetBtn = document.getElementById('btnResetFilter') || document.getElementById('resetCardFilter');
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
-            ['cardSearch', 'cardFilterSet', 'cardFilterNation', 'cardFilterGrade', 'cardFilterLang'].forEach(id => {
+            if (searchInput) searchInput.value = '';
+            ['cardFilterSet', 'cardFilterNation', 'cardFilterGrade', 'cardFilterLang'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
@@ -88,19 +129,54 @@ function initCatalogFilters() {
 }
 
 function applyCatalogFilters() {
-    const q = (document.getElementById('cardSearch')?.value || '').toLowerCase().trim();
+    const searchEl = document.getElementById('cardSearchInput') || document.getElementById('cardSearch');
+    const rawQ = (searchEl?.value || '').toLowerCase().trim();
+    // Hanya gunakan filter teks jika panjang >= 3
+    const q = (rawQ.length >= 3) ? rawQ : '';
     const setVal = document.getElementById('cardFilterSet')?.value || '';
     const nationVal = document.getElementById('cardFilterNation')?.value || '';
     const gradeVal = document.getElementById('cardFilterGrade')?.value || '';
     const langVal = document.getElementById('cardFilterLang')?.value || '';
 
     filteredMasterCards = allMasterCards.filter(c => {
-        const matchQ = !q || c.name.toLowerCase().includes(q) || (c.id && c.id.toLowerCase().includes(q));
+        const matchQ = !q || (c.name && c.name.toLowerCase().includes(q)) || (c.id && c.id.toLowerCase().includes(q)) || (c.set && c.set.toLowerCase().includes(q));
         const matchSet = !setVal || c.set === setVal;
-        const matchNation = !nationVal || c.nation === nationVal;
+        const matchNation = !nationVal || c.nation === nationVal || (nationVal.toLowerCase().includes('elemental') && (c.nation || '').toLowerCase().includes('elemental'));
         const matchGrade = !gradeVal || String(c.grade) === gradeVal;
         const matchLang = !langVal || (c.language || c.type || 'JP').toUpperCase() === langVal.toUpperCase();
         return matchQ && matchSet && matchNation && matchGrade && matchLang;
+    });
+
+    // Urutkan kartu master berdasarkan Nation: Dragon Empire, Dark States, Brandt Gate, Keter Sanctuary, Stoicheia, Lyrical Monasterio, Elemental Cray
+    const NATION_ORDER_MAP = {
+        'dragon empire': 1,
+        'dark states': 2,
+        'brandt gate': 3,
+        'keter sanctuary': 4,
+        'stoicheia': 5,
+        'lyrical monasterio': 6,
+        'elemental cray': 7,
+        'cray elemental': 7
+    };
+    const getNationRank = (nation) => {
+        if (!nation) return 99;
+        const n = String(nation).trim().toLowerCase();
+        return NATION_ORDER_MAP[n] !== undefined ? NATION_ORDER_MAP[n] : 50;
+    };
+
+    filteredMasterCards.sort((a, b) => {
+        const rankA = getNationRank(a.nation);
+        const rankB = getNationRank(b.nation);
+        if (rankA !== rankB) return rankA - rankB;
+
+        const natCompare = (a.nation || '').localeCompare(b.nation || '');
+        if (natCompare !== 0) return natCompare;
+
+        const gA = parseInt(a.grade, 10);
+        const gB = parseInt(b.grade, 10);
+        if (!isNaN(gA) && !isNaN(gB) && gA !== gB) return gB - gA;
+
+        return (a.name || '').localeCompare(b.name || '');
     });
 
     renderCatalogGrid();
@@ -147,14 +223,14 @@ function renderCatalogGrid() {
 
 // ──────────── MODAL: TAMBAH / EDIT MASTER KARTU ────────────
 function initMasterModal() {
-    const btnOpen = document.getElementById('btnOpenAddMasterModal');
+    const btnOpen = document.getElementById('btnOpenNewMaster') || document.getElementById('btnOpenAddMasterModal');
     const modalClose = document.getElementById('modalMasterClose');
-    const cancelBtn = document.getElementById('modalMasterCancel');
-    const masterForm = document.getElementById('masterCardForm');
+    const cancelBtn = document.getElementById('cancelMasterBtn') || document.getElementById('modalMasterCancel');
+    const masterForm = document.getElementById('masterForm') || document.getElementById('masterCardForm');
 
-    const btnBrowse = document.getElementById('btnBrowseMasterImage');
-    const masterFileInput = document.getElementById('masterCardFileInput');
-    const masterDropzone = document.getElementById('masterImageDropzone');
+    const btnBrowse = document.getElementById('btnBrowseMasterImg') || document.getElementById('btnBrowseMasterImage');
+    const masterFileInput = document.getElementById('masterFileInput') || document.getElementById('masterCardFileInput');
+    const masterDropzone = document.getElementById('masterDropzone') || document.getElementById('masterImageDropzone');
     const webpStatus = document.getElementById('masterWebpStatus');
 
     if (btnOpen) {

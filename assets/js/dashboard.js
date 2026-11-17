@@ -10,9 +10,12 @@ let selectedCardsList = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     initTopBar();
+    initViewSwitcher();
+    initIncomeFilters();
     await loadStats();
     await initDateBlock();
     await loadRecentActivities();
+    loadIncomeStats();
 
     document.getElementById('btnRefreshActivities')?.addEventListener('click', async () => {
         const btn = document.getElementById('btnRefreshActivities');
@@ -300,3 +303,565 @@ function formatDateYMD(d) {
     const day   = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   PENGHASILAN & KOMISI (SWITCHER, 2 BOXES, AND CRUD TRANSACTIONS)
+   ────────────────────────────────────────────────────────────────────────── */
+let currentDashView = 'calendar';
+let allIncomeTransactions = [];
+let allAvailableInventoryCards = [];
+let selectedIncomeYear = new Date().getFullYear();
+let selectedIncomeMonth = ''; // '' = Semua Bulan, '1'..'12' = Bulan tertentu
+let availableIncomeYears = [new Date().getFullYear()];
+
+const INDONESIAN_MONTH_NAMES = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
+function updateIncomePeriodBadge() {
+    const badgeTextEl = document.getElementById('incomePeriodBadgeText');
+    const modalTitleEl = document.getElementById('modalIncomeMonthTitle');
+
+    let text = 'Semua Periode';
+    if (!selectedIncomeYear && !selectedIncomeMonth) {
+        text = 'Semua Periode';
+    } else if (selectedIncomeYear && !selectedIncomeMonth) {
+        text = `Tahun ${selectedIncomeYear}`;
+    } else if (!selectedIncomeYear && selectedIncomeMonth) {
+        const mIdx = parseInt(selectedIncomeMonth, 10) - 1;
+        text = INDONESIAN_MONTH_NAMES[mIdx] || 'Semua Bulan';
+    } else {
+        const mIdx = parseInt(selectedIncomeMonth, 10) - 1;
+        text = `${INDONESIAN_MONTH_NAMES[mIdx]} ${selectedIncomeYear}`;
+    }
+
+    if (badgeTextEl) badgeTextEl.textContent = text;
+    if (modalTitleEl) modalTitleEl.textContent = text;
+}
+
+function initViewSwitcher() {
+    const btnCal = document.getElementById('btnSwitchCalendar');
+    const btnInc = document.getElementById('btnSwitchIncome');
+
+    btnCal?.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchDashView('calendar');
+    });
+
+    btnInc?.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchDashView('income');
+    });
+}
+
+window.switchDashView = function(view) {
+    currentDashView = view;
+    const btnCal = document.getElementById('btnSwitchCalendar');
+    const btnInc = document.getElementById('btnSwitchIncome');
+    const viewCal = document.getElementById('dashCalendarView');
+    const viewInc = document.getElementById('dashIncomeView');
+
+    if (view === 'calendar') {
+        btnCal?.classList.add('active');
+        btnInc?.classList.remove('active');
+        if (viewCal) viewCal.style.display = 'flex';
+        if (viewInc) viewInc.style.display = 'none';
+    } else {
+        btnInc?.classList.add('active');
+        btnCal?.classList.remove('active');
+        if (viewCal) viewCal.style.display = 'none';
+        if (viewInc) viewInc.style.display = 'flex';
+        loadIncomeStats();
+    }
+};
+
+function setupCustomDropdown(dropdownId, onSelect) {
+    const dropdown = document.getElementById(dropdownId);
+    if (!dropdown) return;
+    const trigger = dropdown.querySelector('.custom-dropdown-btn');
+    const menu = dropdown.querySelector('.custom-dropdown-menu');
+
+    trigger?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Tutup dropdown lain yang sedang terbuka
+        document.querySelectorAll('.custom-dropdown.is-open').forEach(d => {
+            if (d !== dropdown) d.classList.remove('is-open');
+        });
+        dropdown.classList.toggle('is-open');
+    });
+
+    menu?.addEventListener('click', (e) => {
+        const item = e.target.closest('.custom-dropdown-item');
+        if (!item) return;
+        const val = item.dataset.value ?? '';
+        const label = item.textContent.trim();
+
+        menu.querySelectorAll('.custom-dropdown-item').forEach(it => it.classList.remove('is-selected'));
+        item.classList.add('is-selected');
+
+        const labelEl = trigger.querySelector('.custom-dropdown-label');
+        if (labelEl) labelEl.textContent = label;
+
+        dropdown.classList.remove('is-open');
+
+        if (typeof onSelect === 'function') {
+            onSelect(val, label);
+        }
+    });
+}
+
+function populateIncomeYearDropdown(years) {
+    if (Array.isArray(years) && years.length) {
+        availableIncomeYears = years;
+    }
+    const menu = document.getElementById('menuIncomeYear');
+    if (!menu) return;
+
+    let html = `<div class="custom-dropdown-item ${selectedIncomeYear === '' ? 'is-selected' : ''}" data-value="">Semua Tahun</div>`;
+    availableIncomeYears.forEach(y => {
+        const isSel = String(y) === String(selectedIncomeYear);
+        html += `<div class="custom-dropdown-item ${isSel ? 'is-selected' : ''}" data-value="${y}">${y}</div>`;
+    });
+    menu.innerHTML = html;
+
+    const labelEl = document.getElementById('labelIncomeYear');
+    if (labelEl) {
+        labelEl.textContent = selectedIncomeYear !== '' ? selectedIncomeYear : 'Semua Tahun';
+    }
+}
+
+function setIncomeMonthSelection(monthVal) {
+    selectedIncomeMonth = monthVal;
+    const menu = document.getElementById('menuIncomeMonth');
+    if (menu) {
+        menu.querySelectorAll('.custom-dropdown-item').forEach(it => {
+            const isSel = (it.dataset.value ?? '') === String(monthVal);
+            it.classList.toggle('is-selected', isSel);
+        });
+    }
+    const labelEl = document.getElementById('labelIncomeMonth');
+    if (labelEl) {
+        if (!monthVal) {
+            labelEl.textContent = 'Semua Bulan';
+        } else {
+            const mIdx = parseInt(monthVal, 10) - 1;
+            labelEl.textContent = INDONESIAN_MONTH_NAMES[mIdx] || 'Semua Bulan';
+        }
+    }
+}
+
+function initIncomeFilters() {
+    // Inisialisasi Custom Dropdown Tahun
+    setupCustomDropdown('dropdownIncomeYear', (val) => {
+        selectedIncomeYear = val !== '' ? parseInt(val, 10) : '';
+        updateIncomePeriodBadge();
+        loadIncomeStats();
+    });
+
+    // Inisialisasi Custom Dropdown Bulan
+    setupCustomDropdown('dropdownIncomeMonth', (val) => {
+        selectedIncomeMonth = val !== '' ? parseInt(val, 10) : '';
+        updateIncomePeriodBadge();
+        loadIncomeStats();
+    });
+
+    // Klik di luar menutup dropdown
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.custom-dropdown')) {
+            document.querySelectorAll('.custom-dropdown.is-open').forEach(d => d.classList.remove('is-open'));
+        }
+    });
+
+    // Tombol Reset Filter
+    document.getElementById('btnResetIncomeFilter')?.addEventListener('click', () => {
+        selectedIncomeYear = '';
+        selectedIncomeMonth = '';
+        populateIncomeYearDropdown(availableIncomeYears);
+        setIncomeMonthSelection('');
+        updateIncomePeriodBadge();
+        loadIncomeStats();
+    });
+
+    populateIncomeYearDropdown(availableIncomeYears);
+}
+
+async function loadIncomeStats() {
+    updateIncomePeriodBadge();
+
+    const payload = {};
+    if (selectedIncomeYear) {
+        payload.year = selectedIncomeYear;
+    }
+    if (selectedIncomeMonth) {
+        payload.month = selectedIncomeMonth;
+    }
+
+    try {
+        const res = await API.request('getIncomeStats', payload);
+
+        if (Array.isArray(res?.availableYears) && res.availableYears.length) {
+            populateIncomeYearDropdown(res.availableYears);
+        }
+
+        const salesEl    = document.getElementById('totalSalesVal');
+        const salesSubEl = document.getElementById('totalSalesSub');
+        const commEl     = document.getElementById('totalCommissionVal');
+        const commSubEl  = document.getElementById('totalCommissionSub');
+        const compEl     = document.getElementById('incomeCompletedTxt');
+        const pendEl     = document.getElementById('incomePendingTxt');
+
+        if (salesEl)    salesEl.textContent    = 'Rp ' + Number(res?.totalSales || 0).toLocaleString('id-ID');
+        if (salesSubEl) salesSubEl.textContent = `${res?.soldCount || 0} kartu terjual`;
+        if (commEl)     commEl.textContent     = 'Rp ' + Number(res?.totalCommission || 0).toLocaleString('id-ID');
+        if (commSubEl)  commSubEl.textContent  = `${res?.commCount || 0} kartu ber-komisi`;
+        if (compEl)     compEl.textContent     = 'Rp ' + Number(res?.completedSales || 0).toLocaleString('id-ID');
+        if (pendEl)     pendEl.textContent     = 'Rp ' + Number(res?.pendingSales || 0).toLocaleString('id-ID');
+    } catch(e) {
+        console.warn('Gagal memuat income stats:', e);
+    }
+}
+
+window.openIncomeDetailModal = async function() {
+    UI.openModal('modalIncomeDetail');
+    updateIncomePeriodBadge();
+
+    const tbody = document.getElementById('incomeTableBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);"><div class="spinner" style="margin:0 auto 10px;"></div>Memuat data transaksi...</td></tr>';
+
+    try {
+        const payload = {};
+        if (selectedIncomeYear) payload.year = selectedIncomeYear;
+        if (selectedIncomeMonth) payload.month = selectedIncomeMonth;
+        const transactions = await API.request('getIncomeTransactions', payload);
+        allIncomeTransactions = Array.isArray(transactions) ? transactions : [];
+        applyIncomeFilterAndRender();
+    } catch(e) {
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:#ef4444;">Gagal memuat transaksi: ${e.message}</td></tr>`;
+    }
+};
+
+function applyIncomeFilterAndRender() {
+    const q       = (document.getElementById('incomeSearchInput')?.value || '').toLowerCase().trim();
+    const st      = (document.getElementById('incomeStatusFilter')?.value || '').trim();
+
+    const filterYr = selectedIncomeYear ? parseInt(selectedIncomeYear, 10) : 0;
+    const filterMo = selectedIncomeMonth ? parseInt(selectedIncomeMonth, 10) : 0;
+
+    let filtered = allIncomeTransactions.filter(t => {
+        const matchQ = !q || 
+            (t.name && t.name.toLowerCase().includes(q)) ||
+            (t.id && t.id.toLowerCase().includes(q)) ||
+            (t.owner && t.owner.toLowerCase().includes(q)) ||
+            (t.buyer && t.buyer.toLowerCase().includes(q));
+
+        const matchSt = !st || t.status === st;
+
+        let matchYr = true;
+        let matchMo = true;
+        const dStr = t.sold_date || t.date || '';
+        if (dStr && (filterYr > 0 || filterMo > 0)) {
+            const d = new Date(dStr);
+            if (!isNaN(d.getTime())) {
+                if (filterYr > 0 && d.getFullYear() !== filterYr) matchYr = false;
+                if (filterMo > 0 && (d.getMonth() + 1) !== filterMo) matchMo = false;
+            }
+        }
+
+        return matchQ && matchSt && matchYr && matchMo;
+    });
+
+    // Update modal summary pills
+    let totalSales = 0, totalComm = 0;
+    filtered.forEach(item => {
+        totalSales += Number(item.price || 0);
+        totalComm += Number(item.commission || 0);
+    });
+
+    const imsSales = document.getElementById('imsTotalSales');
+    const imsComm  = document.getElementById('imsTotalComm');
+    const imsTrx   = document.getElementById('imsTotalTrx');
+    if (imsSales) imsSales.textContent = 'Rp ' + totalSales.toLocaleString('id-ID');
+    if (imsComm)  imsComm.textContent  = 'Rp ' + totalComm.toLocaleString('id-ID');
+    if (imsTrx)   imsTrx.textContent   = `${filtered.length} kartu`;
+
+    renderIncomeTable(filtered);
+}
+
+function renderIncomeTable(items) {
+    const tbody = document.getElementById('incomeTableBody');
+    if (!tbody) return;
+
+    if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--text-muted);">Tidak ada data transaksi yang sesuai filter.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = items.map(item => {
+        const sc = UI.statusClass(item.status);
+        const priceFmt = 'Rp ' + Number(item.price || 0).toLocaleString('id-ID');
+        const commFmt = item.commission > 0 ? ('Rp ' + Number(item.commission).toLocaleString('id-ID')) : '<span style="color:var(--text-muted);">-</span>';
+        const dateFmt = item.sold_date ? UI.formatDate(item.sold_date) : '-';
+
+        return `
+            <tr>
+                <td data-label="Kartu">
+                    <div style="font-weight:700;color:#f8fafc;">${item.name || '-'}</div>
+                    <small style="color:#38bdf8;font-family:monospace;">${item.id}</small>
+                </td>
+                <td data-label="Pemilik"><span style="color:var(--text-main);">${item.owner || '-'}</span></td>
+                <td data-label="Pembeli"><strong style="color:#e2e8f0;">${item.buyer || '-'}</strong></td>
+                <td data-label="Harga Jual" class="cell-price">${priceFmt}</td>
+                <td data-label="Komisi" class="cell-comm">${commFmt}</td>
+                <td data-label="Status"><span class="status-badge status-${sc}">${item.status || 'Completed'}</span></td>
+                <td data-label="Tgl Jual" class="cell-date">${dateFmt}</td>
+                <td data-label="Aksi" class="cell-action">
+                    <button type="button" class="btn-income-action edit" onclick="editIncomeTransaction('${item.id}')" title="Edit Transaksi">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Edit
+                    </button>
+                    <button type="button" class="btn-income-action delete" onclick="deleteIncomeTransaction('${item.id}', '${(item.name || '').replace(/'/g, "\\'")}')" title="Hapus / Reset Penjualan">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                        Hapus
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+window.openAddIncomeModal = async function() {
+    document.getElementById('incomeFormTitle').textContent = 'Catat Penjualan Kartu Baru';
+    document.getElementById('incomeCardSelectGroup').style.display = 'block';
+    document.getElementById('incomeCardStaticGroup').style.display = 'none';
+
+    // Reset Form
+    document.getElementById('incomeEditCardId').value = '';
+    const selectEl = document.getElementById('incomeCardSelect');
+    if (selectEl) {
+        selectEl.disabled = false;
+        selectEl.value = '';
+    }
+    const ownerEl = document.getElementById('incomeOwner');
+    if (ownerEl) ownerEl.value = '';
+
+    document.getElementById('incomeBuyer').value = '';
+    document.getElementById('incomePrice').value = '';
+    document.getElementById('incomeCommission').value = '';
+    document.getElementById('incomeStatus').value = 'Completed';
+    document.getElementById('incomeSoldDate').value = formatDateYMD(new Date());
+    document.getElementById('incomePayoutDate').value = '';
+
+    // Load available cards
+    if (selectEl) {
+        selectEl.innerHTML = '<option value="">Memuat kartu available...</option>';
+        try {
+            const allInv = await API.request('getInventory');
+            allAvailableInventoryCards = Array.isArray(allInv) ? allInv.filter(c => c.status === 'Available') : [];
+            if (!allAvailableInventoryCards.length) {
+                selectEl.innerHTML = '<option value="">Tidak ada kartu berstatus Available</option>';
+            } else {
+                selectEl.innerHTML = '<option value="">-- Pilih Kartu yang Terjual --</option>' +
+                    allAvailableInventoryCards.map(c => `
+                        <option value="${c.id}">${c.name} (${c.id}) - Owner: ${c.owner || 'Anonim'}</option>
+                    `).join('');
+            }
+        } catch(e) {
+            selectEl.innerHTML = '<option value="">Gagal memuat kartu</option>';
+        }
+    }
+
+    UI.openModal('modalIncomeForm');
+};
+
+window.editIncomeTransaction = function(cardId) {
+    const item = allIncomeTransactions.find(t => t.id === cardId);
+    if (!item) return;
+
+    document.getElementById('incomeFormTitle').textContent = 'Edit Transaksi Penjualan';
+    
+    // Sembunyikan dropdown kartu dan nonaktifkan agar tidak kena validasi form
+    document.getElementById('incomeCardSelectGroup').style.display = 'none';
+    const selectEl = document.getElementById('incomeCardSelect');
+    if (selectEl) {
+        selectEl.disabled = true;
+    }
+
+    // Tampilkan informasi kartu statis
+    document.getElementById('incomeCardStaticGroup').style.display = 'block';
+    document.getElementById('incomeCardStaticName').textContent = `${item.name || 'Kartu'} (${item.id}) - Pemilik: ${item.owner || '-'}`;
+
+    document.getElementById('incomeEditCardId').value = item.id;
+    const ownerEl = document.getElementById('incomeOwner');
+    if (ownerEl) ownerEl.value = item.owner || '';
+
+    document.getElementById('incomeBuyer').value = item.buyer || '';
+    document.getElementById('incomePrice').value = item.price || 0;
+    document.getElementById('incomeCommission').value = item.commission || 0;
+    document.getElementById('incomeStatus').value = item.status || 'Completed';
+
+    // Format tanggal strictly YYYY-MM-DD untuk input date
+    const rawSoldDate = String(item.sold_date || '').split(' ')[0].split('T')[0];
+    document.getElementById('incomeSoldDate').value = rawSoldDate || formatDateYMD(new Date());
+
+    const rawPayoutDate = String(item.payout_date || '').split(' ')[0].split('T')[0];
+    document.getElementById('incomePayoutDate').value = rawPayoutDate || '';
+
+    UI.openModal('modalIncomeForm');
+};
+
+window.handleSaveIncome = async function(e) {
+    if (e) e.preventDefault();
+
+    const isEdit = document.getElementById('incomeCardStaticGroup').style.display !== 'none';
+    const cardId = isEdit 
+        ? document.getElementById('incomeEditCardId').value.trim()
+        : document.getElementById('incomeCardSelect').value.trim();
+
+    if (!cardId) {
+        UI.showToast('Silahkan pilih kartu yang terjual', 'warning');
+        return;
+    }
+
+    const priceVal = Number(document.getElementById('incomePrice').value || 0);
+    const commVal = Number(document.getElementById('incomeCommission').value || 0);
+    const buyerVal = (document.getElementById('incomeBuyer').value || '').trim();
+    const ownerVal = (document.getElementById('incomeOwner')?.value || '').trim();
+    const statusVal = document.getElementById('incomeStatus').value;
+    const soldDateVal = document.getElementById('incomeSoldDate').value;
+    const payoutDateVal = document.getElementById('incomePayoutDate').value || null;
+
+    if (!buyerVal) {
+        UI.showToast('Nama pembeli wajib diisi', 'warning');
+        return;
+    }
+    if (!soldDateVal) {
+        UI.showToast('Tanggal terjual wajib diisi', 'warning');
+        return;
+    }
+
+    const payload = {
+        id: cardId,
+        owner: ownerVal,
+        buyer: buyerVal,
+        price: priceVal,
+        commission: commVal,
+        status: statusVal,
+        sold_date: soldDateVal,
+        payout_date: payoutDateVal
+    };
+
+    const submitBtn = document.getElementById('btnSaveIncomeSubmit');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Menyimpan...'; }
+
+    try {
+        await API.request('saveIncomeTransaction', payload);
+        UI.showToast('Transaksi penjualan berhasil disimpan!', 'success');
+        UI.closeModal('modalIncomeForm');
+
+        // Refresh stats box di dashboard
+        await loadIncomeStats();
+
+        // Refresh tabel detail jika modal detail sedang aktif
+        if (document.getElementById('modalIncomeDetail')?.classList.contains('active')) {
+            const filterPayload = {};
+            if (selectedIncomeYear) filterPayload.year = selectedIncomeYear;
+            if (selectedIncomeMonth) filterPayload.month = selectedIncomeMonth;
+            const transactions = await API.request('getIncomeTransactions', filterPayload);
+            allIncomeTransactions = Array.isArray(transactions) ? transactions : [];
+            applyIncomeFilterAndRender();
+        }
+    } catch(err) {
+        console.error('Save income transaction error:', err);
+        UI.showToast('Gagal menyimpan transaksi: ' + err.message, 'error');
+    } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Simpan Transaksi'; }
+    }
+};
+
+window.deleteIncomeTransaction = async function(cardId, cardName) {
+    if (!confirm(`Yakin ingin mereset/menghapus transaksi penjualan kartu "${cardName}"?\nKartu akan dikembalikan ke status Available.`)) {
+        return;
+    }
+
+    try {
+        await API.request('deleteIncomeTransaction', { id: cardId });
+        UI.showToast(`Transaksi kartu ${cardId} berhasil direset ke Available`, 'success');
+        
+        await loadIncomeStats();
+        const filterPayload = {};
+        if (selectedIncomeYear) filterPayload.year = selectedIncomeYear;
+        if (selectedIncomeMonth) filterPayload.month = selectedIncomeMonth;
+        const transactions = await API.request('getIncomeTransactions', filterPayload);
+        allIncomeTransactions = Array.isArray(transactions) ? transactions : [];
+        applyIncomeFilterAndRender();
+    } catch(err) {
+        UI.showToast('Gagal mereset transaksi: ' + err.message, 'error');
+    }
+};
+
+// Listeners for income search & filter inside modal
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('incomeSearchInput')?.addEventListener('input', applyIncomeFilterAndRender);
+    document.getElementById('incomeStatusFilter')?.addEventListener('change', applyIncomeFilterAndRender);
+    document.getElementById('modalIncomeDetailClose')?.addEventListener('click', () => UI.closeModal('modalIncomeDetail'));
+    document.getElementById('modalIncomeFormClose')?.addEventListener('click', () => UI.closeModal('modalIncomeForm'));
+
+    // Auto-fill owner saat memilih kartu baru di dropdown
+    document.getElementById('incomeCardSelect')?.addEventListener('change', (e) => {
+        const cardId = e.target.value;
+        const card = allAvailableInventoryCards.find(c => c.id === cardId);
+        if (card && card.owner) {
+            const ownerEl = document.getElementById('incomeOwner');
+            if (ownerEl && !ownerEl.value) ownerEl.value = card.owner;
+        }
+    });
+
+    // Navigasi periode di dalam modal
+    document.getElementById('modalBtnPrevIncomeMonth')?.addEventListener('click', () => {
+        if (!selectedIncomeYear) selectedIncomeYear = new Date().getFullYear();
+        let curM = selectedIncomeMonth ? parseInt(selectedIncomeMonth, 10) : (new Date().getMonth() + 1);
+        curM--;
+        if (curM < 1) {
+            curM = 12;
+            selectedIncomeYear--;
+        }
+        setIncomeMonthSelection(String(curM));
+        populateIncomeYearDropdown(availableIncomeYears);
+        updateIncomePeriodBadge();
+        loadIncomeStats();
+        if (document.getElementById('modalIncomeDetail')?.classList.contains('active')) {
+            openIncomeDetailModal();
+        }
+    });
+
+    document.getElementById('modalBtnNextIncomeMonth')?.addEventListener('click', () => {
+        if (!selectedIncomeYear) selectedIncomeYear = new Date().getFullYear();
+        let curM = selectedIncomeMonth ? parseInt(selectedIncomeMonth, 10) : (new Date().getMonth() + 1);
+        curM++;
+        if (curM > 12) {
+            curM = 1;
+            selectedIncomeYear++;
+        }
+        setIncomeMonthSelection(String(curM));
+        populateIncomeYearDropdown(availableIncomeYears);
+        updateIncomePeriodBadge();
+        loadIncomeStats();
+        if (document.getElementById('modalIncomeDetail')?.classList.contains('active')) {
+            openIncomeDetailModal();
+        }
+    });
+
+    document.getElementById('modalBtnIncomeAllTime')?.addEventListener('click', () => {
+        selectedIncomeYear = '';
+        selectedIncomeMonth = '';
+        setIncomeMonthSelection('');
+        populateIncomeYearDropdown(availableIncomeYears);
+        updateIncomePeriodBadge();
+        loadIncomeStats();
+        if (document.getElementById('modalIncomeDetail')?.classList.contains('active')) {
+            openIncomeDetailModal();
+        }
+    });
+});
+

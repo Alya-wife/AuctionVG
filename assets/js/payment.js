@@ -12,6 +12,12 @@
 let payCards    = [];     // semua kartu Waiting Payment
 let selectedIds = new Set(); // ID yang dicentang
 
+function formatNationWithLang(nation, typeOrLang) {
+    const raw = (typeOrLang || 'JP').toString().trim().toUpperCase();
+    const lang = (raw === 'EN' || raw === 'ENG') ? 'ENG' : (raw || 'JP');
+    return nation ? `${nation} | ${lang}` : lang;
+}
+
 // ─── Init ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     load();
@@ -177,7 +183,7 @@ function renderTable(cards) {
                     </td>
                     <td>
                         <div style="font-weight:600">${c.name}</div>
-                        <div class="text-sm text-muted">${c.nation}</div>
+                        <div class="text-sm text-muted">${formatNationWithLang(c.nation, c.type)}</div>
                     </td>
                     <td>${c.owner || '-'}</td>
                     <td>${c.buyer || '-'}</td>
@@ -321,7 +327,7 @@ window.openPayModal = function(id) {
     document.getElementById('paymentForm').reset();
     document.getElementById('payCardId').value        = c.id;
     document.getElementById('payRawPrice').value      = c.price || 0;
-    document.getElementById('payCardName').textContent = c.name;
+    document.getElementById('payCardName').textContent = c.name + (c.nation ? ` (${formatNationWithLang(c.nation, c.type)})` : '');
     document.getElementById('payOwner').textContent   = c.owner;
     document.getElementById('payPrice').textContent   = UI.formatCurrency(c.price || 0);
     document.getElementById('payDate').value          = new Date().toISOString().split('T')[0];
@@ -353,13 +359,22 @@ function initBatchForm() {
     });
 }
 
-function updateBatchTransferTotal(selected, commissionPerCard) {
-    const total = selected.reduce((sum, c) => {
-        const price = Number(c.price) || 0;
-        return sum + Math.max(0, price - commissionPerCard);
-    }, 0);
+function updateBatchTransferTotal(selected, totalCommission = 0) {
+    const gross = selected.reduce((sum, c) => sum + (Number(c.price) || 0), 0);
+    const comm  = Math.max(0, Number(totalCommission) || 0);
+    const net   = Math.max(0, gross - comm);
+
     const el = document.getElementById('batchTransferTotal');
-    if (el) el.textContent = UI.formatCurrency(total);
+    if (el) el.textContent = UI.formatCurrency(net);
+
+    const elSub = document.getElementById('batchTransferSub');
+    if (elSub) {
+        if (comm > 0) {
+            elSub.textContent = `(Total Penjualan: ${UI.formatCurrency(gross)} - Potongan Komisi: ${UI.formatCurrency(comm)})`;
+        } else {
+            elSub.textContent = `(Total Penjualan: ${UI.formatCurrency(gross)})`;
+        }
+    }
 }
 
 function openBatchModal() {
@@ -370,19 +385,19 @@ function openBatchModal() {
 
     const selected = payCards.filter(c => selectedIds.has(c.id));
 
-    // Render daftar kartu dengan input komisi per item
+    // Render daftar kartu
     const listEl = document.getElementById('batchPayCardList');
     listEl.innerHTML = selected.map(c => `
         <div class="batch-card-item">
             <div style="flex:1">
-                <div class="bci-name">${c.name} <span style="color:var(--text-secondary);font-size:.75rem">(${c.nation})</span></div>
+                <div class="bci-name">${c.name} <span style="color:var(--text-secondary);font-size:.75rem">(${formatNationWithLang(c.nation, c.type)})</span></div>
                 <div class="bci-owner">Pemilik: ${c.owner || '-'} · Pembeli: ${c.buyer || '-'}</div>
             </div>
             <div class="bci-price">${c.price ? UI.formatCurrency(c.price) : '-'}</div>
         </div>`).join('');
 
     const noteEl = document.getElementById('batchPaySummaryNote');
-    noteEl.textContent = `${selected.length} kartu akan dikonfirmasi pembayaran. Masukkan komisi per kartu jika ada.`;
+    noteEl.textContent = `${selected.length} kartu akan dikonfirmasi pembayaran. Masukkan potongan komisi langsung dari total jika ada.`;
 
     document.getElementById('batchPayForm').reset();
     document.getElementById('batchPayDate').value = new Date().toISOString().split('T')[0];
@@ -404,19 +419,34 @@ async function handleBatchSubmit(e) {
     btn.disabled = true;
 
     try {
-        const batchCommission = UI.parseCurrency(document.getElementById('batchPayCommission').value);
+        const totalCommission = UI.parseCurrency(document.getElementById('batchPayCommission').value) || 0;
+        const totalCards = ids.length;
+
+        // Bagi total komisi ke masing-masing kartu secara proporsional atau rata agar total di database akurat
+        let remainingComm = totalCommission;
+        const commPerCardMap = {};
+        ids.forEach((id, index) => {
+            if (index === totalCards - 1) {
+                commPerCardMap[id] = Math.max(0, remainingComm);
+            } else {
+                const portion = Math.round(totalCommission / totalCards);
+                commPerCardMap[id] = portion;
+                remainingComm -= portion;
+            }
+        });
 
         try {
             await API.request('batchUpdateCardStatus', {
                 ids,
                 status: 'Completed',
                 extra: {
-                    payoutDate:  payDate,
-                    commission:  batchCommission
+                    payoutDate:      payDate,
+                    totalCommission: totalCommission,
+                    commissions:     commPerCardMap
                 }
             });
         } catch (batchErr) {
-            // Fallback sequential jika batch endpoint belum ada
+            // Fallback sequential jika batch endpoint error
             console.warn('[Batch Payment] Fallback ke sequential:', batchErr.message);
             for (const id of ids) {
                 await API.request('updateCardStatus', {
@@ -424,7 +454,7 @@ async function handleBatchSubmit(e) {
                     status: 'Completed',
                     extra: {
                         payoutDate: payDate,
-                        commission: batchCommission
+                        commission: commPerCardMap[id] || 0
                     }
                 });
             }

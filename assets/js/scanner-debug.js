@@ -555,7 +555,8 @@
   * Green (hijau) = "Stoicheia"
   * Grey / Slate (abu-abu) = "Brandt Gate"
   * Yellow / Gold (kuning) = "Keter Sanctuary"
-- Output 'nation' matching one of the 6 exact names above.
+  * Neutral / Gray / Cray = "Elemental Cray"
+- Output 'nation' matching one of the 7 exact names above (Dragon Empire, Dark States, Brandt Gate, Keter Sanctuary, Stoicheia, Lyrical Monasterio, Elemental Cray).
 
 5. POWER & SHIELD:
 - Normal units have Power (e.g. 8000, 13000) and Shield (e.g. 5000, 10000).
@@ -774,12 +775,13 @@ Return ONLY valid JSON:
 
   function normalizeNation(str) {
     const s = (str || '').toLowerCase();
-    if (s.includes('dark')) return 'Dark States';
     if (s.includes('dragon')) return 'Dragon Empire';
-    if (s.includes('lyrical')) return 'Lyrical Monasterio';
-    if (s.includes('stoicheia') || s.includes('ストイケイア')) return 'Stoicheia';
+    if (s.includes('dark')) return 'Dark States';
     if (s.includes('brandt')) return 'Brandt Gate';
     if (s.includes('keter') || s.includes('leter')) return 'Keter Sanctuary';
+    if (s.includes('stoicheia') || s.includes('ストイケイア')) return 'Stoicheia';
+    if (s.includes('lyrical')) return 'Lyrical Monasterio';
+    if (s.includes('elemental') || s.includes('cray')) return 'Elemental Cray';
     return 'Dark States';
   }
 

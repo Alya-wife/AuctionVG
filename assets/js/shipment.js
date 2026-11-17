@@ -11,6 +11,12 @@
 let shipCards   = [];     // semua kartu Waiting Shipment
 let selectedIds = new Set(); // ID kartu yang dicentang
 
+function formatNationWithLang(nation, typeOrLang) {
+    const raw = (typeOrLang || 'JP').toString().trim().toUpperCase();
+    const lang = (raw === 'EN' || raw === 'ENG') ? 'ENG' : (raw || 'JP');
+    return nation ? `${nation} | ${lang}` : lang;
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     load();
@@ -108,6 +114,9 @@ function applyFilters() {
 
 // ─── Render Tabel ─────────────────────────────────────────────────────────────
 function renderTable(container, cards) {
+    const user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+    const isAdmin = user && (user.role === 'Admin' || user.role === 'Super Admin' || user.role !== 'Staff');
+
     container.innerHTML = `
         <table class="data-table">
             <thead>
@@ -131,16 +140,26 @@ function renderTable(container, cards) {
                     </td>
                     <td>
                         <div style="font-weight:600">${c.name}</div>
-                        <div class="text-sm text-muted">${c.nation}</div>
+                        <div class="text-sm text-muted">${formatNationWithLang(c.nation, c.type)}</div>
                     </td>
                     <td>${c.owner}</td>
                     <td>${c.buyer || '-'}</td>
                     <td>${UI.formatDate(c.soldDate)}</td>
                     <td>${c.price ? UI.formatCurrency(c.price) : '-'}</td>
                     <td style="text-align:right">
-                        <button class="btn-primary btn-sm" onclick="openShipModal('${c.id}')">
-                            Konfirmasi Kirim
-                        </button>
+                        <div style="display:inline-flex;align-items:center;gap:6px;justify-content:flex-end;">
+                            <button class="btn-primary btn-sm" onclick="openShipModal('${c.id}')">
+                                Konfirmasi Kirim
+                            </button>
+                            ${isAdmin ? `
+                            <button type="button" class="btn-cancel-sale" onclick="cancelShipmentSale('${c.id}', '${(c.name || '').replace(/'/g, "\\'")}')" title="Batalkan Pembelian (Barang Kembali ke Inventori)">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="1 4 1 10 7 10"></polyline>
+                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                                </svg>
+                            </button>
+                            ` : ''}
+                        </div>
                     </td>
                 </tr>`).join('')}
             </tbody>
@@ -266,10 +285,23 @@ window.openShipModal = function(id) {
     if (!c) return;
     document.getElementById('shipmentForm').reset();
     document.getElementById('shipCardId').value       = c.id;
-    document.getElementById('shipCardName').textContent = c.name;
+    document.getElementById('shipCardName').textContent = c.name + (c.nation ? ` (${formatNationWithLang(c.nation, c.type)})` : '');
     document.getElementById('shipBuyer').value        = c.buyer || '';
     document.getElementById('shipDate').value         = new Date().toISOString().split('T')[0];
     UI.openModal('modalShipment');
+};
+
+window.cancelShipmentSale = async function(id, name) {
+    const ok = confirm(`Batalkan pembelian untuk kartu "${name}"?\n\nPembelian ini tidak jadi, dan barang akan dikembalikan ke inventori dengan status Available seperti biasa.`);
+    if (!ok) return;
+
+    try {
+        await API.request('cancelSale', { id });
+        UI.showToast(`Pembelian dibatalkan. Kartu "${name}" telah kembali ke inventori.`, 'success');
+        await load();
+    } catch(err) {
+        UI.showToast('Gagal membatalkan pembelian: ' + err.message, 'error');
+    }
 };
 
 // ─── Batch Shipment ───────────────────────────────────────────────────────────
@@ -291,7 +323,7 @@ function openBatchModal() {
     listEl.innerHTML = selected.map(c => `
         <div class="batch-card-item">
             <div>
-                <div class="bci-name">${c.name} <span style="color:var(--text-secondary);font-size:.75rem">(${c.nation})</span></div>
+                <div class="bci-name">${c.name} <span style="color:var(--text-secondary);font-size:.75rem">(${formatNationWithLang(c.nation, c.type)})</span></div>
                 <div class="bci-buyer">Pembeli: ${c.buyer || '-'}</div>
             </div>
             <div class="bci-price">${c.price ? UI.formatCurrency(c.price) : '-'}</div>

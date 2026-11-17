@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
@@ -7,7 +7,7 @@
   <title>Pembayaran – NitipPro Card Inventory</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../assets/css/style.css?v=20261023_sb" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261027_mobile3" />
   <style>
     /* ── Filter Bar ── */
     .filter-bar {
@@ -455,12 +455,12 @@
             <input type="date" id="batchPayDate" required />
           </div>
           <div class="form-group">
-            <label for="batchPayCommission">Komisi per Kartu (Rp)</label>
+            <label for="batchPayCommission">Potongan Komisi (Rp)</label>
             <div class="commission-input-wrap">
               <span class="prefix">Rp</span>
               <input type="text" class="currency-input" id="batchPayCommission" placeholder="0" />
             </div>
-            <div class="commission-hint">Dipotong dari tiap kartu. Opsional.</div>
+            <div class="commission-hint">Dipotong langsung dari total transfer. Opsional.</div>
           </div>
         </div>
 
@@ -468,6 +468,7 @@
         <div class="batch-total-box">
           <div class="batch-total-label">Total Transfer ke Semua Pemilik</div>
           <div class="batch-total-amount" id="batchTransferTotal">Rp 0</div>
+          <div class="batch-total-sub" id="batchTransferSub" style="font-size:0.75rem; color:var(--text-secondary, #8898aa); margin-top:3px;"></div>
         </div>
 
         <div class="modal-footer">
@@ -489,7 +490,7 @@
   <script src="../assets/js/cards-data.js?v=20261023_live4"></script>
   <script src="../assets/js/auth.js?v=20261023_live4"></script>
   <script src="../assets/js/ui.js?v=20261023_live4"></script>
-  <script src="../assets/js/payment.js"></script>
+  <script src="../assets/js/payment.js?v=20261024_batchcomm"></script>
 </body>
 </html>
 

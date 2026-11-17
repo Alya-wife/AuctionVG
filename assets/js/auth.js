@@ -38,10 +38,6 @@ const Auth = {
             window.location.href = 'index.html';
             return;
         }
-        if (user && onLogin && !path.endsWith('scanner-debug.html')) {
-            window.location.href = 'dashboard.html';
-            return;
-        }
 
         // Role Guard: Staff tidak bisa akses users.html (Kelola Admin) dan payment.html (Pembayaran)
         if (user) {

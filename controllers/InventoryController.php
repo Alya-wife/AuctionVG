@@ -30,22 +30,44 @@ class InventoryController extends BaseController {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
     }
 
-    public function getMasterCards() {
+    public function getMasterCards($payload = []) {
         $this->ensureCardsMasterTable();
-        $stmt = $this->pdo->query("SELECT 
-            id, 
-            IFNULL(name, '') AS `name`, 
-            IFNULL(grade, '3') AS `grade`, 
-            IFNULL(set_name, '') AS `set`, 
-            IFNULL(language, 'JP') AS `language`, 
-            IFNULL(nation, '') AS `nation`, 
-            IFNULL(power, '') AS `power`, 
-            IFNULL(shield, '') AS `shield`, 
-            IFNULL(image, '') AS `image`, 
-            IFNULL(created_by, 'Admin') AS `createdBy`, 
-            IFNULL(created_at, '') AS `createdAt`
-        FROM `cards_master`
-        ORDER BY created_at DESC, id ASC");
+        $search = trim($payload['search'] ?? ($_GET['search'] ?? ($_GET['q'] ?? '')));
+        
+        if (!empty($search)) {
+            $like = '%' . $search . '%';
+            $stmt = $this->pdo->prepare("SELECT 
+                id, 
+                IFNULL(name, '') AS `name`, 
+                IFNULL(grade, '3') AS `grade`, 
+                IFNULL(set_name, '') AS `set`, 
+                IFNULL(language, 'JP') AS `language`, 
+                IFNULL(nation, '') AS `nation`, 
+                IFNULL(power, '') AS `power`, 
+                IFNULL(shield, '') AS `shield`, 
+                IFNULL(image, '') AS `image`, 
+                IFNULL(created_by, 'Admin') AS `createdBy`, 
+                IFNULL(created_at, '') AS `createdAt`
+            FROM `cards_master`
+            WHERE `name` LIKE ? OR `id` LIKE ? OR `set_name` LIKE ?
+            ORDER BY created_at DESC, id ASC");
+            $stmt->execute([$like, $like, $like]);
+        } else {
+            $stmt = $this->pdo->query("SELECT 
+                id, 
+                IFNULL(name, '') AS `name`, 
+                IFNULL(grade, '3') AS `grade`, 
+                IFNULL(set_name, '') AS `set`, 
+                IFNULL(language, 'JP') AS `language`, 
+                IFNULL(nation, '') AS `nation`, 
+                IFNULL(power, '') AS `power`, 
+                IFNULL(shield, '') AS `shield`, 
+                IFNULL(image, '') AS `image`, 
+                IFNULL(created_by, 'Admin') AS `createdBy`, 
+                IFNULL(created_at, '') AS `createdAt`
+            FROM `cards_master`
+            ORDER BY created_at DESC, id ASC");
+        }
         $rows = $stmt->fetchAll();
         $this->jsonSuccess($rows);
     }
@@ -485,6 +507,45 @@ class InventoryController extends BaseController {
         $this->jsonSuccess(true);
     }
 
+    public function cancelSale($payload) {
+        $id = trim($payload['id'] ?? '');
+        if (!$id) {
+            $this->jsonError('ID kartu wajib diisi');
+        }
+
+        $stmt = $this->pdo->prepare("SELECT name, buyer, price FROM inventory WHERE id = ?");
+        $stmt->execute([$id]);
+        $card = $stmt->fetch();
+
+        $sql = "UPDATE inventory SET 
+            status = 'Available', 
+            buyer = NULL, 
+            price = 0, 
+            sold_date = NULL, 
+            ship_date = NULL, 
+            tracking_number = NULL, 
+            commission = 0, 
+            payout_date = NULL, 
+            payout_proof_url = NULL 
+            WHERE id = ?";
+        $upStmt = $this->pdo->prepare($sql);
+        $upStmt->execute([$id]);
+
+        try {
+            $upItem = $this->pdo->prepare("UPDATE auction_items SET sold = 0, buyer = NULL, price = 0 WHERE card_id = ?");
+            $upItem->execute([$id]);
+        } catch (\Exception $e) {}
+
+        try {
+            $cardName = $card['name'] ?? $id;
+            $userName = trim($payload['_auth_user'] ?? ($payload['userName'] ?? 'Admin'));
+            $logStmt = $this->pdo->prepare("INSERT INTO activity_logs (activity, user_name, card_id) VALUES (?, ?, ?)");
+            $logStmt->execute(["Batal Beli: {$cardName} kembali ke Available", $userName, $id]);
+        } catch (\Exception $e) {}
+
+        $this->jsonSuccess(['message' => 'Pembelian berhasil dibatalkan dan barang kembali ke inventori']);
+    }
+
     public function batchUpdateCardStatus($payload) {
         $ids    = $payload['ids'] ?? [];
         $status = trim($payload['status'] ?? '');
@@ -517,20 +578,85 @@ class InventoryController extends BaseController {
             $fields[] = "`payout_proof_url` = ?";
             $values[] = trim($extra['payoutProofUrl']);
         }
-        if (isset($extra['commission'])) {
+        $hasCustomCommissions = false;
+        if (isset($extra['commissions']) && is_array($extra['commissions'])) {
+            $hasCustomCommissions = true;
+        } else if (isset($extra['totalCommission'])) {
+            $hasCustomCommissions = true;
+            $tot = (float)$extra['totalCommission'];
+            $cnt = count($ids);
+            $extra['commissions'] = [];
+            $per = $cnt > 0 ? round($tot / $cnt, 2) : 0;
+            $rem = $tot;
+            foreach ($ids as $i => $cid) {
+                $cVal = ($i === $cnt - 1) ? $rem : $per;
+                $rem -= $cVal;
+                $extra['commissions'][$cid] = max(0, $cVal);
+            }
+        } else if (isset($extra['commission'])) {
             $fields[] = "`commission` = ?";
             $values[] = (float)$extra['commission'];
         }
 
-        if (empty($fields)) {
+        if (empty($fields) && !$hasCustomCommissions) {
             $this->jsonSuccess(['updated' => 0]);
         }
 
-        $inPlaceholders = implode(',', array_fill(0, count($ids), '?'));
-        $sql = "UPDATE inventory SET " . implode(', ', $fields) . " WHERE id IN ($inPlaceholders)";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(array_merge($values, array_values($ids)));
+        if (!empty($fields)) {
+            $inPlaceholders = implode(',', array_fill(0, count($ids), '?'));
+            $sql = "UPDATE inventory SET " . implode(', ', $fields) . " WHERE id IN ($inPlaceholders)";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute(array_merge($values, array_values($ids)));
+        }
 
-        $this->jsonSuccess(['updated' => $stmt->rowCount()]);
+        if ($hasCustomCommissions && !empty($extra['commissions'])) {
+            $cStmt = $this->pdo->prepare("UPDATE inventory SET `commission` = ? WHERE `id` = ?");
+            foreach ($extra['commissions'] as $cid => $comm) {
+                $cStmt->execute([(float)$comm, $cid]);
+            }
+        }
+
+        $this->jsonSuccess(['updated' => count($ids)]);
+    }
+
+    private function ensureLastSoldTable() {
+        $this->pdo->exec("CREATE TABLE IF NOT EXISTS `card_last_sold` (
+            `card_name` VARCHAR(255) NOT NULL PRIMARY KEY,
+            `price` DECIMAL(12,2) NOT NULL DEFAULT 0,
+            `updated_by` VARCHAR(100) DEFAULT 'Admin',
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+    }
+
+    public function getLastSoldPrices() {
+        $this->ensureLastSoldTable();
+        $stmt = $this->pdo->query("SELECT card_name, price, updated_at FROM `card_last_sold`");
+        $rows = $stmt->fetchAll();
+        $map = [];
+        foreach ($rows as $r) {
+            $map[$r['card_name']] = [
+                'price' => (float)$r['price'],
+                'updated_at' => $r['updated_at'] ?? null
+            ];
+        }
+        $this->jsonSuccess($map);
+    }
+
+    public function saveLastSoldPrice($payload) {
+        $name = trim($payload['card_name'] ?? ($payload['name'] ?? ''));
+        $price = (float)($payload['price'] ?? 0);
+        $user = trim($payload['user'] ?? ($payload['updated_by'] ?? 'Admin'));
+
+        if (!$name) {
+            $this->jsonError('Nama kartu wajib diisi');
+        }
+
+        $this->ensureLastSoldTable();
+        $stmt = $this->pdo->prepare("INSERT INTO `card_last_sold` (`card_name`, `price`, `updated_by`) 
+            VALUES (?, ?, ?) 
+            ON DUPLICATE KEY UPDATE `price` = VALUES(`price`), `updated_by` = VALUES(`updated_by`)");
+        $stmt->execute([$name, $price, $user]);
+
+        $this->jsonSuccess(['card_name' => $name, 'price' => $price]);
     }
 }
